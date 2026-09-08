@@ -1,99 +1,61 @@
-// Client-side Excel (.xlsx) export via SheetJS. Runs entirely in the browser so
-// it works on a static GitHub Pages host with no server. Walks the same schema
-// used to render the form, so every applicable field is exported.
-
 import * as XLSX from "xlsx";
-import { getFamily } from "./catalog";
-import { allApplicableFields, OrderValues, SECTIONS } from "./schema";
-import { composeCompact, composeSpaced, TypeStringFields } from "./typeString";
+import { allFields } from "./schema";
+import { t } from "./copy";
+import { typeFromValues } from "./typeString";
+import type { Lang, OrderValues, SheetDef } from "./types";
 
-export const APP_VERSION = "0.1.0";
-export const SCHEMA_VERSION = "1";
+export const APP_VERSION = "1.0.0";
+export const SCHEMA_VERSION = "2";
 
-function typeFields(values: OrderValues): TypeStringFields {
-  return {
-    family: values.family ?? "",
-    phases: values.phases ?? "",
-    currentA: values.oltc_current_a ? Number(values.oltc_current_a) : "",
-    connection: values.oltc_connection ?? "",
-    umKv: values.oltc_um_kv ? Number(values.oltc_um_kv) : "",
-    selectorGrade: values.oltc_selector_grade ?? "",
-    tapCode: buildTapCode(values),
-  };
-}
+const LANGS: Lang[] = ["zh", "en", "ru", "vi"];
 
-export function buildTapCode(values: OrderValues): string {
-  const pitch = values.oltc_tap_pitch;
-  const positions = values.oltc_tap_positions;
-  const mid = values.oltc_tap_mid;
-  if (!pitch || !positions || !mid) return "";
-  let co = "";
-  if (values.regulation === "reversing") co = "W";
-  else if (values.regulation === "coarse_fine") co = "G";
-  return `${pitch}${positions}${mid}${co}`;
-}
+export function buildWorkbook(sheet: SheetDef, values: OrderValues): XLSX.WorkBook {
+  const { spaced, compact } = typeFromValues(sheet.id, values);
 
-function typeStrings(values: OrderValues): { spaced: string; compact: string } {
-  const f = typeFields(values);
-  if (!f.family) return { spaced: "", compact: "" };
-  return { spaced: composeSpaced(f), compact: composeCompact(f) };
-}
-
-export function buildWorkbook(values: OrderValues): XLSX.WorkBook {
-  const family = values.family ?? "";
-  const fam = getFamily(family);
-  const { spaced, compact } = typeStrings(values);
-
-  // Sheet 1 — human-readable, grouped by section.
-  const readableRows: (string | number)[][] = [];
-  readableRows.push(["Section", "Field (EN)", "Field (RU)", "Value", "Unit"]);
-  for (const section of SECTIONS) {
-    const fields = allApplicableFields(family)
-      .filter((x) => x.section.id === section.id)
-      .map((x) => x.field);
-    if (fields.length === 0) continue;
-    readableRows.push([`— ${section.titleEn} / ${section.titleRu} —`, "", "", "", ""]);
-    for (const field of fields) {
-      readableRows.push([
-        section.titleEn,
-        field.labelEn,
-        field.labelRu,
-        values[field.key] ?? "",
-        field.unit ?? "",
-      ]);
-    }
+  const readable: (string | number)[][] = [[
+    "Section ZH", "Section EN", "Field ZH", "Field EN", "Field RU", "Field VI", "Value", "Unit", "Key",
+  ]];
+  for (const { section, field } of allFields(sheet, values)) {
+    readable.push([
+      t(section.title, "zh"),
+      t(section.title, "en"),
+      t(field.label, "zh"),
+      t(field.label, "en"),
+      t(field.label, "ru"),
+      t(field.label, "vi"),
+      values[field.key] ?? "",
+      field.unit ?? "",
+      field.key,
+    ]);
   }
-  // Append the composed type string block.
-  readableRows.push(["— Type designation —", "", "", "", ""]);
-  readableRows.push(["Type designation", "Spaced", "", spaced, ""]);
-  readableRows.push(["Type designation", "Compact", "", compact, ""]);
-  const ws1 = XLSX.utils.aoa_to_sheet(readableRows);
-  ws1["!cols"] = [{ wch: 28 }, { wch: 34 }, { wch: 30 }, { wch: 26 }, { wch: 8 }];
+  readable.push(["型号 / Type", "Type designation", "完整空格写法", "Spaced", "Через пробел", "Cách", spaced, "", "type_spaced"]);
+  readable.push(["型号 / Type", "Type designation", "紧凑写法", "Compact", "Компактно", "Gọn", compact, "", "type_compact"]);
+  const ws1 = XLSX.utils.aoa_to_sheet(readable);
+  ws1["!cols"] = [22, 24, 28, 28, 28, 28, 32, 8, 22].map((wch) => ({ wch }));
   ws1["!freeze"] = { xSplit: 0, ySplit: 1 };
 
-  // Sheet 2 — machine-readable flat row: one column per field.
-  const flatHeaders: string[] = ["type_string_spaced", "type_string_compact"];
-  const flatValues: (string | number)[] = [spaced, compact];
-  for (const { field } of allApplicableFields(family)) {
-    flatHeaders.push(field.key);
-    flatValues.push(values[field.key] ?? "");
+  const headers = ["sheet_id", "type_spaced", "type_compact"];
+  const row: (string | number)[] = [sheet.id, spaced, compact];
+  for (const { field } of allFields(sheet, values)) {
+    headers.push(field.key);
+    row.push(values[field.key] ?? "");
   }
-  const ws2 = XLSX.utils.aoa_to_sheet([flatHeaders, flatValues]);
-  ws2["!cols"] = flatHeaders.map(() => ({ wch: 18 }));
+  const ws2 = XLSX.utils.aoa_to_sheet([headers, row]);
+  ws2["!cols"] = headers.map(() => ({ wch: 18 }));
 
-  // Sheet 3 — meta / provenance.
-  const meta: (string | number)[][] = [
+  const meta = [
     ["Key", "Value"],
     ["app_version", APP_VERSION],
     ["schema_version", SCHEMA_VERSION],
+    ["sheet_id", sheet.id],
+    ["sheet_title_zh", t(sheet.meta.title, "zh")],
     ["exported_at", new Date().toISOString()],
-    ["family", family],
-    ["family_category", fam?.category ?? ""],
-    ["type_string_spaced", spaced],
-    ["type_string_compact", compact],
+    ["type_spaced", spaced],
+    ["type_compact", compact],
+    ["languages", LANGS.join(",")],
   ];
   const ws3 = XLSX.utils.aoa_to_sheet(meta);
-  ws3["!cols"] = [{ wch: 20 }, { wch: 40 }];
+  ws3["!cols"] = [{ wch: 22 }, { wch: 48 }];
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws1, "Order Sheet");
@@ -102,10 +64,11 @@ export function buildWorkbook(values: OrderValues): XLSX.WorkBook {
   return wb;
 }
 
-export function exportExcel(values: OrderValues): void {
-  const wb = buildWorkbook(values);
-  const family = values.family || "OS";
+export function exportExcel(sheet: SheetDef, values: OrderValues): void {
+  const wb = buildWorkbook(sheet, values);
+  const { compact } = typeFromValues(sheet.id, values);
   const ref = values.order_no || values.order_date || new Date().toISOString().slice(0, 10);
-  const safe = `${family}_${ref}`.replace(/[^A-Za-z0-9_-]+/g, "-");
+  const stem = (compact || sheet.id).slice(0, 48);
+  const safe = `${stem}_${ref}`.replace(/[^A-Za-z0-9._×x+-]+/g, "-");
   XLSX.writeFile(wb, `HM-OS_${safe}.xlsx`);
 }

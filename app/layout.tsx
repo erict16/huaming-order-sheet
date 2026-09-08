@@ -1,24 +1,19 @@
-import type { Metadata, Viewport } from "next";
+import type { Metadata } from "next";
 import "./globals.css";
+import Providers from "@/components/Providers";
 
 export const metadata: Metadata = {
-  title: "Huaming · Tap-Changer Order Sheet",
+  title: "华明订货技术规范书 | Huaming Order Sheet",
   description:
-    "Fill Huaming tap-changer order parameters in the browser and export a clean Excel. Order Specifications / Бланк заказа.",
+    "Shanghai Huaming tap-changer order specifications — OLTC, OCTC, dry-type, CMA7 and SHM-D. Fill in the browser, export Excel.",
 };
 
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  themeColor: "#00428C",
-};
-
-export default function RootLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className="min-h-screen">{children}</body>
+    <html lang="zh-CN">
+      <body className="font-sans">
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }
