@@ -1,19 +1,19 @@
-// Compose the Huaming tap-changer type designation from OLTC fields, in both
-// the spaced (brochure) and compact (order-sheet / price-list) spellings.
-//
-//   spaced:  CMD III 1000 Y 72.5 C 10193W
-//   compact: CMDIII-1000Y/72.5C-10193W
-
 import { getFamily } from "./catalog";
+import type { OrderValues } from "./types";
 
-export interface TypeStringFields {
+export interface TypeParts {
   family: string;
-  phases: string; // I | II | III
-  currentA?: number | "";
-  connection?: string; // Y | D
-  umKv?: number | "";
-  selectorGrade?: string; // B | C | D | DE ("" when family has none)
-  tapCode?: string; // e.g. 10193W
+  phases: string;
+  currentA: string;
+  connection: string;
+  umKv: string;
+  selectorGrade: string;
+  tapCode: string;
+  unitCount?: string;
+  octcSeries?: string;
+  octcContact?: string;
+  octcSize?: string;
+  dryPositions?: string;
 }
 
 function gradeToken(family: string, grade?: string): string {
@@ -22,34 +22,88 @@ function gradeToken(family: string, grade?: string): string {
   return grade ?? "";
 }
 
-export function composeSpaced(f: TypeStringFields): string {
-  const grade = gradeToken(f.family, f.selectorGrade);
-  return [
-    f.family,
-    f.phases,
-    f.currentA === "" || f.currentA == null ? "" : String(f.currentA),
-    f.connection ?? "",
-    f.umKv === "" || f.umKv == null ? "" : String(f.umKv),
-    grade,
-    f.tapCode ?? "",
-  ]
-    .filter((t) => t !== "")
+export function composeOltcSpaced(p: TypeParts): string {
+  const grade = gradeToken(p.family, p.selectorGrade);
+  return [p.family, p.phases, p.currentA, p.connection, p.umKv, grade, p.tapCode]
+    .filter(Boolean)
     .join(" ");
 }
 
-export function composeCompact(f: TypeStringFields): string {
-  const grade = gradeToken(f.family, f.selectorGrade);
-  const current =
-    f.currentA === "" || f.currentA == null ? "" : String(f.currentA);
-  const um = f.umKv === "" || f.umKv == null ? "" : String(f.umKv);
-  const head = `${f.family}${f.phases}`;
-  const mid = [current, f.connection ?? ""].filter((t) => t !== "").join("");
-  const umPart = `${um}${grade}`;
-  const parts: string[] = [];
-  parts.push(head);
-  const afterDash = [mid, umPart].filter((t) => t !== "").join("/");
-  let s = parts.join("");
-  if (afterDash) s += `-${afterDash}`;
-  if (f.tapCode) s += `-${f.tapCode}`;
+export function composeOltcCompact(p: TypeParts): string {
+  if (!p.family) return "";
+  const grade = gradeToken(p.family, p.selectorGrade);
+  const head = `${p.family}${p.phases || ""}`;
+  const mid = `${p.currentA || ""}${p.connection || ""}`;
+  const um = `${p.umKv || ""}${grade}`;
+  let s = head;
+  const after = [mid, um].filter(Boolean).join("/");
+  if (after) s += `-${after}`;
+  if (p.tapCode) s += `-${p.tapCode}`;
   return s;
+}
+
+/** WSLIV-800Y/170-6x5B */
+export function composeOctc(p: TypeParts): string {
+  if (!p.family) return "";
+  const series = p.octcSeries || "";
+  const head = `${p.family}${series}`;
+  const mid = `${p.currentA || ""}${p.connection || ""}`;
+  const um = p.umKv || "";
+  const contact = `${p.octcContact || ""}${p.octcSize || ""}`;
+  let s = head;
+  if (mid || um) s += `-${mid}${um ? `/${um}` : ""}`;
+  if (contact) s += `-${contact}`;
+  return s;
+}
+
+/** 3×CZI-500/40.5-17 */
+export function composeDry(p: TypeParts): string {
+  if (!p.family) return "";
+  const n = Number(p.unitCount || "1");
+  const prefix = n > 1 ? `${n}×` : "";
+  const head = `${prefix}${p.family}${p.phases || "I"}`;
+  const mid = p.currentA ? `-${p.currentA}` : "";
+  const um = p.umKv ? `/${p.umKv}` : "";
+  const pos = p.dryPositions ? `-${p.dryPositions}` : "";
+  return `${head}${mid}${um}${pos}`;
+}
+
+export function typeFromValues(sheetId: string, values: OrderValues): { spaced: string; compact: string } {
+  const p: TypeParts = {
+    family: values.family || "",
+    phases: values.phases || "",
+    currentA: values.oltc_current_a || values.current_a || "",
+    connection: values.oltc_connection || values.connection || "",
+    umKv: values.oltc_um_kv || values.um_kv || "",
+    selectorGrade: values.oltc_selector_grade || "",
+    tapCode: values.tap_code || "",
+    unitCount: values.unit_count,
+    octcSeries: values.octc_series,
+    octcContact: values.octc_contact,
+    octcSize: values.octc_size,
+    dryPositions: values.dry_positions,
+  };
+
+  if (sheetId === "octc") {
+    const compact = composeOctc(p);
+    return { spaced: compact, compact };
+  }
+  if (sheetId === "dry") {
+    const compact = composeDry(p);
+    return { spaced: compact, compact };
+  }
+  if (sheetId === "cma7") {
+    const mdu = "CMA7";
+    const match = values.matching_oltc || "";
+    const compact = match ? `${match}+${mdu}` : mdu;
+    return { spaced: compact, compact };
+  }
+  if (sheetId === "shm-d") {
+    const mdu = values.shm_model || "SHM-D";
+    const ctrl = values.controller && values.controller !== "none" ? `+${values.controller}` : "";
+    const match = values.matching_oltc || "";
+    const compact = `${match ? `${match}+` : ""}${mdu}${ctrl}`;
+    return { spaced: compact, compact };
+  }
+  return { spaced: composeOltcSpaced(p), compact: composeOltcCompact(p) };
 }

@@ -31,13 +31,10 @@ const config: Config = {
       },
       fontFamily: {
         sans: [
-          "Inter",
+          '"Noto Sans SC"',
+          '"Noto Sans"',
           "ui-sans-serif",
           "system-ui",
-          "-apple-system",
-          "Segoe UI",
-          "Roboto",
-          "Arial",
           "sans-serif",
         ],
       },
