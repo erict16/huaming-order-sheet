@@ -1,8 +1,6 @@
 import JSZip from "jszip";
 import { DOMParser, XMLSerializer, Element as XmlEl } from "@xmldom/xmldom";
 
-const W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
-
 function localName(el: XmlEl): string {
   return el.localName || el.nodeName.replace(/^.*:/, "");
 }

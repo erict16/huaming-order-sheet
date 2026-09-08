@@ -91,20 +91,22 @@ export function oltcSdtValues(values: OrderValues): Array<string | undefined> {
   set(6, FAMILY_HEAD[s(values.family)]);
   set(7, s(values.end_user));
   set(8, s(values.mdu_model) === "none" ? undefined : s(values.mdu_model));
+  set(9, s(values.application));
   set(10, s(values.vector_group));
   set(12, phasesWord(s(values.phases)));
   set(13, freqWord(s(values.frequency_hz)));
   const mva = n(values.rated_power_mva);
-  if (mva != null) set(15, String(mva * 1000));
-  set(18, s(values.hv_kv));
+  if (mva != null) set(16, String(mva * 1000));
+  set(19, s(values.hv_kv));
   const pm = n(values.plus_minus);
-  if (pm) set(20, String(pm));
-  set(21, s(values.tap_range_pct));
+  if (pm) set(21, String(pm));
+  set(22, s(values.tap_range_pct));
   const thru = n(values.through_current_a) ?? n(values.oltc_current_a);
-  if (thru != null) set(24, String(thru));
+  if (thru != null) set(25, String(thru));
   const ust = n(values.step_voltage_v);
-  if (ust != null) set(26, String(ust));
+  if (ust != null) set(27, String(ust));
   set(52, s(values.recovery_voltage_kv));
+  set(53, s(values.notes));
 
   set(54, s(values.phases) === "I" ? "1x" : "3x");
   set(55, FAMILY_ROW[s(values.family)]);
@@ -152,6 +154,7 @@ export function oltcSdtValues(values: OrderValues): Array<string | undefined> {
   set(89, langWord(s(values.nameplate_language)));
   set(91, langWord(s(values.nameplate_language)));
   set(92, s(values.quantity) || "1");
+  if (!out[53]) set(95, s(values.notes));
 
   return out;
 }
@@ -167,19 +170,20 @@ export function cma7SdtValues(values: OrderValues): Array<string | undefined> {
   set(3, s(values.buyer));
   set(4, [s(values.end_user), s(values.country)].filter(Boolean).join(", "));
   set(5, s(values.project));
-  set(6, s(values.matching_oltc));
   const d = designation(values);
-  const pos = n(values.mdu_positions) ?? n(values.oltc_tap_positions);
-  if (pos != null) set(7, String(pos));
   if (d) {
-    set(8, d.max);
-    set(9, d.mid);
-    set(10, d.min);
+    set(7, d.max);
+    set(8, d.mid);
+    set(9, d.min);
   }
   if (s(values.paint) && s(values.paint) !== "other") set(21, s(values.paint).replace("RAL", "RAL "));
   set(23, langWord(s(values.nameplate_language)));
   set(25, langWord(s(values.nameplate_language)));
   set(26, s(values.quantity) || "1");
+  const remarks = [s(values.matching_oltc) ? `OLTC: ${s(values.matching_oltc)}` : "", s(values.notes)]
+    .filter(Boolean)
+    .join("\n");
+  set(29, remarks);
   return out;
 }
 

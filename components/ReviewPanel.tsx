@@ -2,7 +2,7 @@
 
 import { t } from "@/lib/copy";
 import { chromeText } from "@/lib/i18n";
-import { allFields } from "@/lib/schema";
+import { allFields, resolveFieldOptions } from "@/lib/schema";
 import { useLang } from "@/lib/useLang";
 import type { OrderValues, SheetDef } from "@/lib/types";
 
@@ -16,7 +16,10 @@ export default function ReviewPanel({
   typeStr?: string;
 }) {
   const { lang } = useLang();
-  const rows = allFields(sheet, values);
+  const rows = allFields(sheet, values).map(({ section, field }) => ({
+    section,
+    field: resolveFieldOptions(field, values),
+  }));
   let last = "";
 
   return (
@@ -32,7 +35,9 @@ export default function ReviewPanel({
         {rows.map(({ section, field }) => {
           const showHead = section.id !== last;
           last = section.id;
-          const val = values[field.key] ?? "";
+          const raw = values[field.key] ?? "";
+          const opt = field.options?.find((o) => o.value === raw);
+          const val = opt ? t(opt.label, lang) : raw;
           return (
             <div key={field.key}>
               {showHead ? (
@@ -42,9 +47,9 @@ export default function ReviewPanel({
               ) : null}
               <div className="grid grid-cols-1 gap-1 px-4 py-2.5 sm:grid-cols-2">
                 <div className="text-sm text-ink-soft">{t(field.label, lang)}</div>
-                <div className={`text-sm ${val ? "font-medium text-ink" : "text-ink-muted"}`}>
+                <div className={`text-sm ${raw ? "font-medium text-ink" : "text-ink-muted"}`}>
                   {val || chromeText("standardNote", lang)}
-                  {val && field.unit ? <span className="ml-1 text-ink-muted">{field.unit}</span> : null}
+                  {raw && field.unit ? <span className="ml-1 text-ink-muted">{field.unit}</span> : null}
                 </div>
               </div>
             </div>
