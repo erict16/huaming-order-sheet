@@ -3,6 +3,7 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -12,19 +13,15 @@ permissions:
 
 # Allow one concurrent deployment; don't cancel in-progress production runs.
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
+  # Always-on build checks (also run on PRs). Produces the Pages artifact.
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      # Requires a one-time toggle: repo Settings -> Pages -> Source: GitHub
-      # Actions. The default GITHUB_TOKEN cannot create the Pages site itself.
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
 
       - uses: actions/setup-node@v4
         with:
@@ -52,8 +49,11 @@ jobs:
         with:
           path: out
 
+  # Deploy only from main. Requires a one-time toggle:
+  # repo Settings -> Pages -> Source: GitHub Actions.
   deploy:
     needs: build
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
