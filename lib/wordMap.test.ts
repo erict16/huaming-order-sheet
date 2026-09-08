@@ -1,0 +1,77 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { describe, expect, it } from "vitest";
+import JSZip from "jszip";
+import { fillDocx, readSdtTexts } from "./fillDocx";
+import { oltcSdtValues } from "./wordMap";
+
+const template = path.join(process.cwd(), "public/templates/oltc-order-sheet.docx");
+
+describe("oltcSdtValues", () => {
+  it("maps family, 出轴 pipes, QJ4G and 10193 positions", () => {
+    const v = oltcSdtValues({
+      family: "CM2",
+      phases: "III",
+      buyer: "EEMC",
+      country: "Vietnam",
+      oltc_current_a: "500",
+      oltc_um_kv: "72.5",
+      oltc_connection: "Y",
+      oltc_selector_grade: "B",
+      tap_code: "10193W",
+      oltc_tap_positions: "19",
+      oltc_tap_mid: "3",
+      regulation: "reversing",
+      pipe_q: "With bleeder, flange with groove",
+      pipe_q_height: "181",
+      pipe_s: "With bleeder, flange with groove*",
+      pipe_r: "Without bleeder,flange without groove*",
+      pipe_e2: "Blind flange on OLTC head*",
+      protective_relay: "QJ4G-25,flange without groove,one N/O contact (oil flow)",
+      mdu_model: "CMA7",
+      potential_connection: "without",
+    });
+    expect(v[6]).toBe("CM2(Vacuum)");
+    expect(v[55]).toBe("CM2");
+    expect(v[57]).toBe("500");
+    expect(v[59]).toBe("72.5");
+    expect(v[63]).toBe("1");
+    expect(v[64]).toBe("9a9b9c");
+    expect(v[65]).toBe("17");
+    expect(v[66]).toBe("With bleeder, flange with groove");
+    expect(v[67]).toBe("181");
+    expect(v[74]).toContain("QJ4G-25");
+    expect(v[8]).toBe("CMA7");
+  });
+});
+
+describe("fillDocx", () => {
+  it("writes SDT text into the official Word OS", async () => {
+    const buf = readFileSync(template);
+    const filled = await fillDocx(
+      buf,
+      oltcSdtValues({
+        family: "CV2",
+        phases: "III",
+        buyer: "Trafoindo",
+        oltc_current_a: "350",
+        oltc_um_kv: "72.5",
+        oltc_connection: "Y",
+        tap_code: "10193W",
+        oltc_tap_positions: "19",
+        oltc_tap_mid: "3",
+        regulation: "reversing",
+        pipe_q: "Without bleeder,flange with groove*",
+        pipe_q_height: "181",
+        protective_relay: "QJ4G-25,flange without groove,one N/O contact (oil flow)",
+      }),
+    );
+    const zip = await JSZip.loadAsync(filled);
+    const xml = await zip.file("word/document.xml")!.async("string");
+    const texts = readSdtTexts(xml);
+    expect(texts[6]).toBe("CV2(Vacuum)");
+    expect(texts[3]).toBe("Trafoindo");
+    expect(texts[66]).toContain("Without bleeder");
+    expect(texts[74]).toContain("QJ4G-25");
+  });
+});

@@ -2,7 +2,7 @@
 
 把华明 **Order Sheet / 订货技术规范书** 做成浏览器里填的表：中文默认，可切 English / Русский / Tiếng Việt。
 
-有载、CMA7、SHM-D 下载的是官方 **V1.2 xlsm**（`Attachments/Sales Order Sheet` 那三张），不是自造 Excel。无励磁 / 干式仍导出工作簿。数据只存在当前浏览器。
+有载、CMA7 下载的是官方 **Word 订货规范书**（老版本 OS）。空白项按常规。数据只存在当前浏览器，点「保存」即可。
 
 ## 五张订货单
 

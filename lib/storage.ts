@@ -1,7 +1,7 @@
 import type { OrderValues, SheetId } from "./types";
 
 export function storageKey(id: SheetId): string {
-  return `hm-os:${id}:v2`;
+  return `hm-os:${id}:v3`;
 }
 
 export function loadValues(id: SheetId): OrderValues {

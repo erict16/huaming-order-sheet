@@ -6,6 +6,7 @@ import { fillWorkbook, hasVbaProject } from "./fillXlsm";
 import { oltcCells } from "./osCells";
 
 const template = path.join(process.cwd(), "public/templates/in-tank-oltc-v1.2.xlsm");
+// xlsm export retired; skip if the binary is gone.
 
 describe.skipIf(!existsSync(template))("fillWorkbook official template", () => {
   it("writes mapped cells and keeps the VBA project", () => {

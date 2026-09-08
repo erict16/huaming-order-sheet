@@ -1,6 +1,6 @@
 {
   "name": "huaming-order-sheet",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -12,7 +12,10 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
+    "@types/jszip": "^3.4.0",
+    "@xmldom/xmldom": "^0.9.12",
     "framer-motion": "^11.15.0",
+    "jszip": "^3.10.1",
     "next": "15.1.6",
     "react": "19.0.0",
     "react-dom": "19.0.0",
