@@ -7,6 +7,7 @@ import {
   getFamily,
 } from "@/lib/catalog";
 import {
+  allApplicableFields,
   applicableFields,
   FieldDef,
   OrderValues,
@@ -180,6 +181,52 @@ export default function OrderForm() {
             </section>
           );
         })}
+
+        {/* Read-only review before export */}
+        {family ? (
+          <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="mb-1 text-lg font-semibold text-slate-900">
+              Review
+              <span className="ml-2 text-sm font-normal text-slate-400">Проверка</span>
+            </h2>
+            <p className="mb-4 text-xs text-slate-400">
+              Check every value below, then export. Blank fields default to standard supply.
+            </p>
+            <div className="space-y-4">
+              {SECTIONS.map((section) => {
+                const rows = allApplicableFields(family)
+                  .filter((x) => x.section.id === section.id)
+                  .map((x) => x.field);
+                if (rows.length === 0) return null;
+                return (
+                  <div key={`rev_${section.id}`}>
+                    <h3 className="mb-1 border-b border-slate-100 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      {section.titleEn}
+                    </h3>
+                    <dl className="grid grid-cols-1 gap-x-6 gap-y-1 sm:grid-cols-2">
+                      {rows.map((field) => (
+                        <div key={`rev_${field.key}`} className="flex justify-between gap-3 text-sm">
+                          <dt className="text-slate-500">{field.labelEn}</dt>
+                          <dd className="text-right font-medium text-slate-900">
+                            {values[field.key]
+                              ? `${values[field.key]}${field.unit ? ` ${field.unit}` : ""}`
+                              : "—"}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
+                );
+              })}
+              <div className="rounded-md bg-slate-50 p-3 text-sm">
+                <span className="text-slate-500">Type designation:</span>{" "}
+                <span className="font-mono font-medium text-slate-900">
+                  {typeStr.compact || "—"}
+                </span>
+              </div>
+            </div>
+          </section>
+        ) : null}
       </div>
 
       {/* Sticky summary / export panel */}

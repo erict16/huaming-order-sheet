@@ -214,6 +214,16 @@ Build gates (must pass before landing): **lint** (`next lint` / ESLint), **typec
 
 ## 8. Open questions for Eric (grill list)
 
+### Decisions already made by Eric (2026-09-08)
+
+- **Auth:** form is **public first**; login/auth comes later. **No auth in v0.**
+- **Repo/Pages visibility:** repo is currently private; Eric to confirm public vs private for Pages. Proceeding assuming **static public Pages** eventually. (Pages from a private repo needs GitHub Pro/Enterprise; a public repo is simplest — see [§5](#5-tech-stack--hosting).)
+- **Excel:** **client-side download after review**, no server. (Implemented.)
+- **Languages:** **EN primary** (OS is EN + RU, both label languages kept in the schema and Excel); **CN optional later** unless trivial. (Resolves Q7 below.)
+- **Submission storage:** client-side Excel download is enough for now; server/DB is deferred to v2. (Resolves Q9 below.)
+
+### Still open
+
 Answer these to lock the taxonomy and validation. Where blocked, the app stays permissive rather than inventing rules.
 
 1. **OCTC vs OLTC categorization.** Confirm the corrected taxonomy: **WG and WL/W□L are the de-energized (OCTC/DETC) families**; **CZ (dry vacuum OLTC) and SY (legacy oil OLTC) are OLTC**; **ZXJY is an online oil filter accessory, not a tap changer.** The seed brief grouped CZ/SY/ZXJY as "OCTC-ish" — is that just archive-folder shorthand, or is there a real ordering reason to treat them together?
@@ -222,9 +232,9 @@ Answer these to lock the taxonomy and validation. Where blocked, the app stays p
 4. **63 vs 72.5 kV.** Export OS PDFs sometimes show `63`; catalog standard is `72.5` (same 66 kV class). Should the app **normalize to 72.5** and store the transformer Un separately, or preserve whatever the user types?
 5. **Authoritative option lists.** Need Huaming's current tables for: allowed **Ium per family**, **selector grade per Um**, valid **tap codes** per family, and the **MDU/controller/filter compatibility** matrix (which drives pair with which OLTC). Is there a master price list / selection manual we can encode?
 6. **Excel target format.** Does ops already have a spreadsheet/ERP template with fixed column headers we must match exactly? If yes, share it and we'll map the `Flat` sheet to those exact headers.
-7. **Languages.** Which label languages are required — EN + RU minimum? Add CN, TR, PT (BR), ID? Any that must appear in the Excel itself?
+7. ~~**Languages.**~~ **Answered:** EN primary + RU (both in schema/Excel), CN optional later.
 8. **Aftersales & MDU-only orders.** Should aftersales (芯子/油室/散件) and **MDU-only / ZXJY-only** orders be first-class order types in the app, or out of scope for v1?
-9. **Submission storage.** Is client-side Excel download enough for now, or does Huaming want submissions saved to a database / emailed / pushed to ERP (which would require adding a backend in v2)?
+9. ~~**Submission storage.**~~ **Answered:** client-side Excel download is enough for now; server/DB deferred to v2.
 10. **Type-string authority.** Should the app allow a fully **manual** type-string override (engineering enters the final string), or must it always be composed/validated from fields?
 
 ---
