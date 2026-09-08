@@ -3,7 +3,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import JSZip from "jszip";
 import { fillDocx, readSdtTexts } from "./fillDocx";
-import { oltcSdtValues } from "./wordMap";
+import { cma7SdtValues, oltcSdtValues } from "./wordMap";
 
 const template = path.join(process.cwd(), "public/templates/oltc-order-sheet.docx");
 
@@ -43,6 +43,29 @@ describe("oltcSdtValues", () => {
     expect(v[74]).toContain("QJ4G-25");
     expect(v[8]).toBe("CMA7");
   });
+
+  it("puts kVA / HV / current / steps in the Word boxes next to those labels", () => {
+    const v = oltcSdtValues({
+      family: "CM2",
+      phases: "III",
+      rated_power_mva: "25",
+      hv_kv: "66",
+      plus_minus: "8",
+      oltc_current_a: "500",
+      step_voltage_v: "1250",
+      oltc_um_kv: "72.5",
+      oltc_connection: "Y",
+      oltc_tap_positions: "19",
+      oltc_tap_mid: "3",
+      regulation: "reversing",
+    });
+    expect(v[15]).toBeUndefined();
+    expect(v[16]).toBe("25000");
+    expect(v[19]).toBe("66");
+    expect(v[21]).toBe("8");
+    expect(v[25]).toBe("500");
+    expect(v[27]).toBe("1250");
+  });
 });
 
 describe("fillDocx", () => {
@@ -54,6 +77,7 @@ describe("fillDocx", () => {
         family: "CV2",
         phases: "III",
         buyer: "Trafoindo",
+        rated_power_mva: "25",
         oltc_current_a: "350",
         oltc_um_kv: "72.5",
         oltc_connection: "Y",
@@ -71,7 +95,26 @@ describe("fillDocx", () => {
     const texts = readSdtTexts(xml);
     expect(texts[6]).toBe("CV2(Vacuum)");
     expect(texts[3]).toBe("Trafoindo");
+    expect(texts[16]).toBe("25000");
+    expect(texts[25]).toBe("350");
     expect(texts[66]).toContain("Without bleeder");
     expect(texts[74]).toContain("QJ4G-25");
+    expect(xml).toContain("w:sdt");
+  });
+});
+
+describe("cma7SdtValues", () => {
+  it("writes 1 / 9a9b9c / 17 into max/mid/min, not the drawing-number box", () => {
+    const v = cma7SdtValues({
+      matching_oltc: "CM2III-500Y/72.5B-10193W",
+      oltc_tap_positions: "19",
+      oltc_tap_mid: "3",
+      regulation: "reversing",
+    });
+    expect(v[6]).toBeUndefined();
+    expect(v[7]).toBe("1");
+    expect(v[8]).toBe("9a9b9c");
+    expect(v[9]).toBe("17");
+    expect(v[29]).toContain("CM2III-500Y/72.5B-10193W");
   });
 });

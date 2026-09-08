@@ -121,7 +121,7 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
 
   function handleClear() {
     clearValues(id);
-    setValues(DEFAULTS[id] ?? {});
+    setValues(deriveValues({}, DEFAULTS[id] ?? {}));
     setStep(0);
   }
 
