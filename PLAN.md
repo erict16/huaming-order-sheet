@@ -247,12 +247,14 @@ Answer these to lock the taxonomy and validation. Where blocked, the app stays p
 
 Tracked live as v0 is built in this repo. See the PR for the current state. High-level checklist:
 
-- [ ] Next.js App Router + Tailwind scaffold with `output: 'export'` + `basePath` for Pages
-- [ ] `lib/` domain library (catalog, tapCode, typeString, schema, excel)
-- [ ] Form UI: RANGE → GENERAL → TRANSFORMER → OLTC → Review → Export
-- [ ] Client-side `.xlsx` export of all fields (SheetJS)
-- [ ] GitHub Actions workflow: build + static export + deploy to Pages
-- [ ] lint / typecheck / build / export green
+- [x] Next.js App Router + Tailwind scaffold with `output: 'export'` + `basePath` for Pages
+- [x] `lib/` domain library (`catalog`, `tapCode`, `typeString`, `schema`, `excel`)
+- [x] Form UI: Range (family + MDU/controller/filter) → General → Transformer → OLTC → family-specific sections → sticky type-string + export panel
+- [x] Client-side `.xlsx` export of all fields (SheetJS): `Order Sheet` / `Flat` / `Meta` sheets
+- [x] GitHub Actions workflow: lint + typecheck + build + static export + deploy to Pages
+- [x] lint / typecheck / build / export green locally
+
+Remaining to make Pages live: enable **Settings → Pages → Source: GitHub Actions** on the repo and merge to `main` (or run the workflow). CMD/CM/CV are fully modeled; all other families are selectable stubs (shared + OLTC fields still export).
 
 ---
 
