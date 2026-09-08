@@ -1,4 +1,6 @@
 import type { ChangeOver, Regulation } from "./types";
+
+/** Keep in sync with ~/Github/oltc-selector/lib/tapCode.ts */
 const PITCHES = [10, 12, 14, 16, 18] as const;
 
 /**

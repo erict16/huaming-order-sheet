@@ -379,7 +379,6 @@ export const FLUID_OPTS = [
 
 export const MDU_OPTS = [
   opt("CMA7", "CMA7"),
-  opt("SHM-III", "SHM-III"),
   opt("SHM-D", "SHM-D"),
   opt("SHM-DL", "SHM-DL"),
   opt("none", "不配 / 已有", "None / existing", "Нет / имеющийся", "Không / có sẵn"),
@@ -388,9 +387,7 @@ export const MDU_OPTS = [
 export const CTRL_OPTS = [
   opt("none", "不配", "None", "Нет", "Không"),
   opt("HMC-3C", "HMC-3C"),
-  opt("SHM-K", "SHM-K"),
-  opt("ET-SZ6", "ET-SZ6"),
-  opt("HMK-2A", "HMK-2A"),
+  opt("SHM-KX", "SHM-KX"),
   opt("HMIET", "HMIET"),
 ];
 
@@ -402,10 +399,55 @@ export const FILTER_OPTS = [
 ];
 
 export const RELAY_OPTS = [
-  opt("QJ4", "QJ4"),
-  opt("QJ6", "QJ6"),
+  opt("QJ4", "QJ4（一信号一跳闸）", "QJ4 (alarm + trip)", "QJ4", "QJ4"),
+  opt("QJ4G", "QJ4G（无信号一跳闸）", "QJ4G (trip only)", "QJ4G", "QJ4G"),
+  opt("QJ6", "QJ6（无信号二跳闸）", "QJ6 (two trip)", "QJ6", "QJ6"),
   opt("none", "不配", "None", "Нет", "Không"),
 ];
+
+export const GROOVE_OPTS = [
+  opt("with", "法兰带槽", "With groove", "С канавкой", "Có rãnh"),
+  opt("without", "法兰不带槽", "Without groove", "Без канавки", "Không rãnh"),
+];
+
+export const POTENTIAL_OPTS = [
+  opt("without", "不带", "Without", "Без", "Không"),
+  opt("with", "带（需绕组图）", "With (winding layout required)", "С (нужна схема обмотки)", "Có (cần sơ đồ quấn)"),
+  opt("check", "由华明核算（需绕组图）", "Huaming to check (send winding layout)", "Проверит Huaming", "Huaming kiểm"),
+];
+
+export const TIE_IN_OPTS = [
+  opt("lateral", "侧装", "Installed laterally", "Сбоку", "Lắp bên"),
+  opt("board", "外挂板式", "Separately on board", "На щитке", "Tấm ngoài"),
+  opt("cylinder", "底部筒式", "Below (cylinder)", "Снизу (цилиндр)", "Dưới (ống)"),
+  opt("below_board", "底部板式", "Below (board)", "Снизу (щиток)", "Dưới (tấm)"),
+];
+
+export const TOP_GEAR_OPTS = [
+  opt("right", "右出轴", "Right output", "Выход вправо", "Trục ra phải"),
+  opt("left", "左出轴", "Left output", "Выход влево", "Trục ra trái"),
+];
+
+export const PIPE_ON_OPTS = [
+  opt("with", "带", "With", "Есть", "Có"),
+  opt("without", "不带", "Without", "Нет", "Không"),
+];
+
+export const PIPE_E2_OPTS = [
+  opt("without", "不带（常规）", "Without (std.)", "Нет (станд.)", "Không (chuẩn)"),
+  opt("Q", "同 Q 管", "Same as Q", "Как Q", "Giống Q"),
+  opt("S", "同 S 管", "Same as S", "Как S", "Giống S"),
+  opt("R", "同 R 管", "Same as R", "Как R", "Giống R"),
+];
+
+export const PIPE_HEIGHT_OPTS = [
+  opt("0", "不增高（常规）", "No increase (std.)", "Без увеличения", "Không tăng"),
+  opt("100", "增高 100 mm", "+100 mm", "+100 мм", "+100 mm"),
+  opt("120", "增高 120 mm", "+120 mm", "+120 мм", "+120 mm"),
+  opt("150", "增高 150 mm", "+150 mm", "+150 мм", "+150 mm"),
+];
+
+export const SHAFT_LEN_OPTS = [800, 1000, 1200, 1500, 2000].map((n) => opt(String(n), `${n} mm`));
 
 export const YES_NO = [
   opt("yes", "是", "Yes", "Да", "Có"),
@@ -424,8 +466,12 @@ export const NAMEPLATE_OPTS = [
 
 export const MOTOR_VOLT_OPTS = [
   opt("380_3", "AC 380 V 三相", "AC 380 V 3-ph", "AC 380 В 3ф", "AC 380 V 3 pha"),
+  opt("400_3", "AC 400 V 三相", "AC 400 V 3-ph", "AC 400 В 3ф", "AC 400 V 3 pha"),
+  opt("415_3", "AC 415 V 三相", "AC 415 V 3-ph", "AC 415 В 3ф", "AC 415 V 3 pha"),
+  opt("440_3", "AC 440 V 三相", "AC 440 V 3-ph", "AC 440 В 3ф", "AC 440 V 3 pha"),
   opt("220_3", "AC 220 V 三相", "AC 220 V 3-ph", "AC 220 В 3ф", "AC 220 V 3 pha"),
   opt("220_1", "AC 220 V 单相", "AC 220 V 1-ph", "AC 220 В 1ф", "AC 220 V 1 pha"),
+  opt("240_1", "AC 240 V 单相", "AC 240 V 1-ph", "AC 240 В 1ф", "AC 240 V 1 pha"),
   opt("110_1", "AC 110 V 单相", "AC 110 V 1-ph", "AC 110 В 1ф", "AC 110 V 1 pha"),
 ];
 
@@ -456,16 +502,10 @@ export const FLANGE_OPTS = [
   opt("bell", "钟罩式", "Bell-type (钟罩)", "Колокольный бак", "Kiểu chuông"),
 ];
 
-export const PIPE_OPTS = [
-  opt("standard", "常规", "Standard", "Стандарт", "Tiêu chuẩn"),
-  opt("Q", "Q"),
-  opt("S", "S"),
-  opt("R", "R"),
-];
-
 export const PRV_OPTS = [
-  opt("burst", "爆破片", "Burst disc", "Разрывная мембрана", "Đĩa nổ"),
-  opt("prv", "压力释放阀 PRV", "Pressure relief valve", "Клапан сброса давления", "Van xả áp"),
+  opt("burst", "防爆盖（不要压力释放阀）", "Rupture disc only", "Только разрывной диск", "Nắp chống nổ, không van"),
+  opt("prv_50", "压力释放阀 50 mm，不要防爆盖", "PRD 50 mm, no rupture disc", "ПРД 50 мм", "Van 50 mm, không nắp"),
+  opt("prv_130", "压力释放阀 130 mm，不要防爆盖", "PRD 130 mm, no rupture disc", "ПРД 130 мм", "Van 130 mm, không nắp"),
   opt("none", "不配", "None", "Нет", "Không"),
 ];
 

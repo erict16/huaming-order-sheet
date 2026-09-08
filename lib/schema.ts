@@ -10,6 +10,7 @@ import {
   FLANGE_OPTS,
   FLUID_OPTS,
   FREQ_OPTS,
+  GROOVE_OPTS,
   IP_OPTS,
   MDU_OPTS,
   MOTOR_VOLT_OPTS,
@@ -22,16 +23,23 @@ import {
   OLTC_FAMILIES,
   PAINT_OPTS,
   PHASE_OPTS,
-  PIPE_OPTS,
+  PIPE_E2_OPTS,
+  PIPE_HEIGHT_OPTS,
+  PIPE_ON_OPTS,
   POS_TX_OPTS,
+  POTENTIAL_OPTS,
   PRV_OPTS,
   REG_OPTS,
   RELAY_OPTS,
+  SHAFT_LEN_OPTS,
   SHM_MODEL_OPTS,
   SIDE_OPTS,
   STD_OPTS,
+  TIE_IN_OPTS,
+  TOP_GEAR_OPTS,
   YES_NO,
   currentOptions,
+  defaultSelectorGrade,
   getFamily,
   umOptions,
 } from "./catalog";
@@ -190,8 +198,8 @@ function oltcRatingFields(): FieldDef[] {
 
 function positionFields(): FieldDef[] {
   return [
-    { key: "pos_max", label: L("最高档位号", "Max position no.", "Макс. положение", "Vị trí max"), type: "text", placeholder: L("例如 1 或 16", "e.g. 1 or 16", "напр. 1 или 16", "vd. 1 hoặc 16") },
-    { key: "pos_mid", label: L("额定档位号", "Rated / mid position", "Ном. / среднее положение", "Vị trí định mức"), type: "text" },
+    { key: "pos_max", label: L("最高档位号", "Max position no.", "Макс. положение", "Vị trí max"), type: "text", hint: L("由分接代码自动填，常见 1。", "Filled from tap code; usually 1.", "Из кода ответвлений; обычно 1.", "Tự điền từ mã nấc; thường 1.") },
+    { key: "pos_mid", label: L("中间档位号", "Mid position", "Среднее положение", "Vị trí giữa"), type: "text", hint: L("10193 为 9A9B9C。", "10193 → 9A9B9C.", "10193 → 9A9B9C.", "10193 → 9A9B9C.") },
     { key: "pos_min", label: L("最低档位号", "Min position no.", "Мин. положение", "Vị trí min"), type: "text" },
     { key: "raise_direction", label: L("升压方向", "Raise-voltage direction", "Направление повышения", "Hướng tăng áp"), type: "text", placeholder: L("例如 1→n 升压", "e.g. 1→n raises voltage", "напр. 1→n повышает", "vd. 1→n tăng áp") },
   ];
@@ -200,11 +208,9 @@ function positionFields(): FieldDef[] {
 function mechanicalFields(): FieldDef[] {
   return [
     { key: "flange_type", label: L("安装法兰", "Mounting flange", "Монтажный фланец", "Mặt bích lắp"), type: "radio", options: FLANGE_OPTS },
-    { key: "drive_shaft_horizontal_mm", label: L("水平传动轴长度", "Horizontal drive shaft", "Горизонтальный вал", "Trục ngang"), type: "number", unit: "mm" },
-    { key: "drive_shaft_vertical_mm", label: L("垂直传动轴长度", "Vertical drive shaft", "Вертикальный вал", "Trục đứng"), type: "number", unit: "mm" },
-    { key: "bevel_gear", label: L("伞齿轮", "Bevel gearbox", "Конический редуктор", "Hộp bánh côn"), type: "select", options: YES_NO },
-    { key: "head_variant", label: L("头部型式", "Head variant", "Вариант головки", "Kiểu đầu"), type: "text" },
-    { key: "mdu_side", label: L("机构布置", "MDU side", "Сторона привода", "Bên cơ cấu"), type: "radio", options: SIDE_OPTS },
+    { key: "top_gear", label: L("出轴方向", "Top gear output", "Выход верхнего редуктора", "Hướng trục ra"), type: "radio", options: TOP_GEAR_OPTS, hint: L("齿轮盒出轴，不是机构装在哪一侧。", "Shaft output of the top gear, not which side the MDU hangs.", "Выход вала, не сторона привода.", "Trục ra hộp bánh, không phải bên cơ cấu.") },
+    { key: "drive_shaft_horizontal_mm", label: L("水平传动轴长度", "Horizontal drive shaft", "Горизонтальный вал", "Trục ngang"), type: "select", unit: "mm", options: SHAFT_LEN_OPTS },
+    { key: "drive_shaft_vertical_mm", label: L("垂直传动轴长度", "Vertical drive shaft", "Вертикальный вал", "Trục đứng"), type: "select", unit: "mm", options: SHAFT_LEN_OPTS },
   ];
 }
 
@@ -238,10 +244,11 @@ function accessoryFields(opts?: { oil?: boolean }): FieldDef[] {
   if (opts?.oil !== false) {
     f.push(
       { key: "protective_relay", label: L("保护继电器", "Protective relay", "Защитное реле", "Rơle bảo vệ"), type: "select", options: RELAY_OPTS },
-      { key: "oil_filter", label: L("在线滤油机", "Online oil filter", "Фильтр масла", "Lọc dầu online"), type: "select", options: FILTER_OPTS },
-      { key: "pipe_fittings", label: L("管接头", "Pipe fittings", "Патрубки", "Ống nối"), type: "select", options: PIPE_OPTS },
+      { key: "relay_flange_groove", label: L("继电器法兰", "Relay flange", "Фланец реле", "Mặt bích rơle"), type: "radio", options: GROOVE_OPTS, applies: (v) => v.protective_relay !== "none" && !!v.protective_relay },
       { key: "pressure_relief", label: L("压力释放", "Pressure relief", "Сброс давления", "Xả áp"), type: "select", options: PRV_OPTS },
-      { key: "oil_sampling", label: L("取油样阀", "Oil sampling", "Отбор проб масла", "Van lấy mẫu dầu"), type: "select", options: YES_NO },
+      { key: "potential_connection", label: L("电位电阻", "Potential / tie-in resistor", "Потенциальный резистор", "Điện trở thế"), type: "select", options: POTENTIAL_OPTS, hint: L("复合式恢复电压 >15 kV、组合式 >35 kV 通常要带，并附绕组图。", "Usually required when recovery voltage >15 kV (compound) or >35 kV (combined). Attach winding layout.", "Нужен при высоком напряжении восстановления. Приложите схему.", "Thường cần khi điện áp phục hồi cao. Kèm sơ đồ quấn.") },
+      { key: "tie_in_mounting", label: L("电位电阻安装", "Tie-in mounting", "Крепление резистора", "Cách lắp điện trở"), type: "select", options: TIE_IN_OPTS, applies: (v) => v.potential_connection === "with" || v.potential_connection === "check" },
+      { key: "oil_filter", label: L("在线滤油机", "Online oil filter", "Фильтр масла", "Lọc dầu online"), type: "select", options: FILTER_OPTS },
     );
   }
   f.push(
@@ -250,6 +257,21 @@ function accessoryFields(opts?: { oil?: boolean }): FieldDef[] {
     { key: "nameplate_language", label: L("铭牌语言", "Nameplate language", "Язык таблички", "Ngôn ngữ nhãn"), type: "select", options: NAMEPLATE_OPTS },
   );
   return f;
+}
+
+function pipeFields(): FieldDef[] {
+  const one = (key: string, title: string, titleEn: string): FieldDef[] => [
+    { key, label: L(`${title} 管`, `Pipe ${titleEn}`, `Патрубок ${titleEn}`, `Ống ${titleEn}`), type: "radio", options: PIPE_ON_OPTS },
+    { key: `${key}_bleeder`, label: L(`${title} 放气阀`, `${titleEn} bleeder`, `Воздушник ${titleEn}`, `Van xả khí ${titleEn}`), type: "radio", options: PIPE_ON_OPTS, applies: (v) => v[key] !== "without" },
+    { key: `${key}_groove`, label: L(`${title} 法兰槽`, `${titleEn} flange groove`, `Канавка ${titleEn}`, `Rãnh ${titleEn}`), type: "radio", options: GROOVE_OPTS, applies: (v) => v[key] !== "without" },
+    { key: `${key}_height`, label: L(`${title} 管高`, `${titleEn} height`, `Высота ${titleEn}`, `Cao ${titleEn}`), type: "select", options: PIPE_HEIGHT_OPTS, applies: (v) => v[key] !== "without" },
+  ];
+  return [
+    ...one("pipe_q", "Q", "Q"),
+    ...one("pipe_s", "S", "S"),
+    ...one("pipe_r", "R", "R"),
+    { key: "pipe_e2", label: L("E2 头部", "Pipe E2 / head", "E2 / головка", "E2 / đầu"), type: "select", options: PIPE_E2_OPTS },
+  ];
 }
 
 const oltcSheet: SheetDef = {
@@ -297,18 +319,19 @@ const oltcSheet: SheetDef = {
     {
       id: "construction",
       title: L("结构与绝缘", "Construction & insulation", "Конструкция и изоляция", "Kết cấu và cách điện"),
-      blurb: L("法兰、传动轴、对地和级间绝缘。不清楚可留空，按常规。", "Flange, shafts, earth and across-tap insulation. Leave blank for standard.", "Фланец, валы, изоляция. Пусто = стандарт.", "Mặt bích, trục, cách điện. Trống = tiêu chuẩn."),
+      blurb: L("法兰、出轴、传动轴、管接头。不清楚可留空，按常规。", "Flange, top-gear output, shafts, pipes. Leave blank for standard.", "Фланец, выход, валы, патрубки. Пусто = стандарт.", "Mặt bích, trục ra, ống. Trống = tiêu chuẩn."),
       sections: [
         { id: "mechanical", title: L("机械 / 安装", "Mechanical / mounting", "Механика / монтаж", "Cơ khí / lắp đặt"), fields: mechanicalFields() },
+        { id: "pipes", title: L("Q / S / R / E2 管", "Pipes Q / S / R / E2", "Патрубки Q / S / R / E2", "Ống Q / S / R / E2"), hint: L("每根管写清带不带、放气阀、法兰槽。不增高就是目录管高。", "Per pipe: fitted, bleeder, groove. No increase = catalogue height.", "Для каждой трубы. Без увеличения = каталожная высота.", "Từng ống: có/không, van xả, rãnh. Không tăng = chiều cao catalogue."), fields: pipeFields() },
         { id: "insulation", title: L("绝缘数据", "Insulation data", "Изоляционные данные", "Dữ liệu cách điện"), fields: insulationFields() },
       ],
     },
     {
       id: "package",
-      title: L("机构与附件", "Drive & accessories", "Привод и аксессуары", "Truyền động và phụ kiện"),
-      blurb: L("CMA7 / SHM-D、控制器、滤油机、保护继电器。", "CMA7 / SHM-D, controller, oil filter, protective relay.", "CMA7 / SHM-D, контроллер, фильтр, реле.", "CMA7 / SHM-D, bộ điều khiển, lọc dầu, rơle."),
+      title: L("附件", "Accessories", "Аксессуары", "Phụ kiện"),
+      blurb: L("保护继电器、压力释放、电位电阻。电动机构电气在 CMA7 / SHM-D 单上填。", "Relay, pressure relief, tie-in resistor. Motor-drive electrics go on the CMA7 / SHM-D sheet.", "Реле, сброс давления, резистор. Электрика привода — в бланке CMA7 / SHM-D.", "Rơle, xả áp, điện trở. Điện cơ cấu điền ở phiếu CMA7 / SHM-D."),
       sections: [
-        { id: "drive", title: L("电动机构与控制", "Motor drive & control", "Привод и управление", "Truyền động và điều khiển"), fields: driveFields() },
+        { id: "drive", title: L("所配电动机构", "Matching motor drive", "Привод", "Bộ truyền động"), fields: [{ key: "mdu_model", label: L("电动机构", "Motor drive unit", "Привод", "Bộ truyền động"), type: "radio", options: MDU_OPTS, span: 2, hint: L("这里只选型号。电机电源、加热、位置传送请到 CMA7 或 SHM-D 订货单。", "Family only. Motor supply, heater and transmitters belong on the CMA7 or SHM-D sheet.", "Только тип. Питание и сигналы — в бланке CMA7 / SHM-D.", "Chỉ chọn kiểu. Nguồn và tín hiệu điền ở phiếu CMA7 / SHM-D.") }] },
         { id: "accessories", title: L("附件", "Accessories", "Аксессуары", "Phụ kiện"), fields: accessoryFields() },
         { id: "notes", title: L("备注", "Notes", "Примечания", "Ghi chú"), fields: [notesField] },
       ],
@@ -559,10 +582,10 @@ const shmSheet: SheetDef = {
     short: L("SHM-D", "SHM-D", "SHM-D", "SHM-D"),
     tag: L("数字机构", "Digital drive", "Цифровой привод", "Bộ số"),
     summary: L(
-      "SHM-D / SHM-DL 数字电动机构，可配 SHM-K、HMC-3C、通信（Modbus / IEC 61850）。",
-      "SHM-D / SHM-DL digital drive, optional SHM-K / HMC-3C and comms (Modbus / IEC 61850).",
-      "Цифровой SHM-D / SHM-DL, опции SHM-K / HMC-3C и связи.",
-      "Bộ số SHM-D / SHM-DL, tuỳ chọn SHM-K / HMC-3C và truyền thông.",
+      "SHM-D / SHM-DL 数字电动机构，可配 SHM-KX、HMC-3C、通信（Modbus / IEC 61850）。",
+      "SHM-D / SHM-DL digital drive, optional SHM-KX / HMC-3C and comms (Modbus / IEC 61850).",
+      "Цифровой SHM-D / SHM-DL, опции SHM-KX / HMC-3C и связи.",
+      "Bộ số SHM-D / SHM-DL, tuỳ chọn SHM-KX / HMC-3C và truyền thông.",
     ),
     accent: "#6d28d9",
   },
@@ -607,7 +630,7 @@ const shmSheet: SheetDef = {
     {
       id: "digital",
       title: L("控制器与通信", "Controller & comms", "Контроллер и связь", "Bộ điều khiển và truyền thông"),
-      blurb: L("SHM-K 就地/远方；HMC-3C 自动调压；IEC 61850 按工程要求。", "SHM-K local/remote; HMC-3C AVR; IEC 61850 if the project requires it.", "SHM-K местное/дистанционное; HMC-3C АРН; IEC 61850 по проекту.", "SHM-K tại chỗ/xa; HMC-3C AVR; IEC 61850 theo công trình."),
+      blurb: L("SHM-KX 就地/远方；HMC-3C 自动调压；IEC 61850 按工程要求。", "SHM-KX local/remote; HMC-3C AVR; IEC 61850 if the project requires it.", "SHM-KX местное/дистанционное; HMC-3C АРН; IEC 61850 по проекту.", "SHM-KX tại chỗ/xa; HMC-3C AVR; IEC 61850 theo công trình."),
       sections: [
         {
           id: "ctrl",
@@ -674,6 +697,16 @@ export function resolveFieldOptions(field: FieldDef, values: OrderValues): Field
   if (field.key === "oltc_um_kv" || field.key === "um_kv") {
     const fam = getFamily(values.family || "");
     return { ...field, options: umOptions(fam?.umKv) };
+  }
+  if (field.key === "oltc_selector_grade") {
+    const um = Number(values.oltc_um_kv || 0);
+    const floor = um ? defaultSelectorGrade(um) : "B";
+    const rank: Record<string, number> = { B: 1, C: 2, D: 3, DE: 4 };
+    const min = rank[floor] ?? 1;
+    return {
+      ...field,
+      options: (field.options ?? []).filter((o) => (rank[o.value] ?? 0) >= min),
+    };
   }
   return field;
 }

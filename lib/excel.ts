@@ -1,13 +1,27 @@
 import * as XLSX from "xlsx";
+import { cellsForSheet, TEMPLATE_FILE } from "./osCells";
+import { fillWorkbook } from "./fillXlsm";
 import { allFields } from "./schema";
 import { t } from "./copy";
 import { typeFromValues } from "./typeString";
 import type { Lang, OrderValues, SheetDef } from "./types";
 
-export const APP_VERSION = "1.0.0";
-export const SCHEMA_VERSION = "2";
+export const APP_VERSION = "1.1.0";
+export const SCHEMA_VERSION = "3";
 
 const LANGS: Lang[] = ["zh", "en", "ru", "vi"];
+
+function fileStem(sheet: SheetDef, values: OrderValues): string {
+  const { compact } = typeFromValues(sheet.id, values);
+  const ref = values.order_no || values.order_date || new Date().toISOString().slice(0, 10);
+  const stem = (compact || sheet.id).slice(0, 48);
+  return `${stem}_${ref}`.replace(/[^A-Za-z0-9._×x+-]+/g, "-");
+}
+
+export function templateUrl(file: string): string {
+  const base = (process.env.NEXT_PUBLIC_BASE_PATH || "").replace(/\/$/, "");
+  return `${base}/templates/${file}`;
+}
 
 export function buildWorkbook(sheet: SheetDef, values: OrderValues): XLSX.WorkBook {
   const { spaced, compact } = typeFromValues(sheet.id, values);
@@ -64,11 +78,37 @@ export function buildWorkbook(sheet: SheetDef, values: OrderValues): XLSX.WorkBo
   return wb;
 }
 
-export function exportExcel(sheet: SheetDef, values: OrderValues): void {
+function downloadBuf(buf: ArrayBuffer, filename: string, mime: string) {
+  const blob = new Blob([buf], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export async function exportOrderSheet(sheet: SheetDef, values: OrderValues): Promise<void> {
+  const safe = fileStem(sheet, values);
+  if (sheet.id === "oltc" || sheet.id === "cma7" || sheet.id === "shm-d") {
+    const file = TEMPLATE_FILE[sheet.id];
+    const res = await fetch(templateUrl(file));
+    if (!res.ok) throw new Error(`Template ${file} missing (${res.status})`);
+    const template = await res.arrayBuffer();
+    const cells = cellsForSheet(sheet.id, values) ?? {};
+    const filled = fillWorkbook(template, cells);
+    downloadBuf(
+      filled,
+      `HM-OS_${safe}.xlsm`,
+      "application/vnd.ms-excel.sheet.macroEnabled.12",
+    );
+    return;
+  }
   const wb = buildWorkbook(sheet, values);
-  const { compact } = typeFromValues(sheet.id, values);
-  const ref = values.order_no || values.order_date || new Date().toISOString().slice(0, 10);
-  const stem = (compact || sheet.id).slice(0, 48);
-  const safe = `${stem}_${ref}`.replace(/[^A-Za-z0-9._×x+-]+/g, "-");
   XLSX.writeFile(wb, `HM-OS_${safe}.xlsx`);
+}
+
+/** @deprecated use exportOrderSheet */
+export function exportExcel(sheet: SheetDef, values: OrderValues): void {
+  void exportOrderSheet(sheet, values);
 }
