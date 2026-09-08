@@ -264,7 +264,7 @@ Tracked live as v0 is built in this repo. See the PR for the current state. High
 - [x] GitHub Actions workflow: lint + typecheck + build + static export + deploy to Pages
 - [x] lint / typecheck / build / export green locally
 
-Remaining to make Pages live: enable **Settings → Pages → Source: GitHub Actions** on the repo and merge to `main` (or run the workflow). CMD/CM/CV are fully modeled; all other families are selectable stubs (shared + OLTC fields still export).
+**Deploying to Pages — one manual step:** the repo is now **public** and `main` carries the app + workflow. The default Actions `GITHUB_TOKEN` cannot *create* the Pages site, so a repo admin must do this once: **Settings → Pages → Source: “GitHub Actions.”** After that, re-run the latest **Deploy to GitHub Pages** workflow (or push any commit to `main`) and it publishes to `https://erict16.github.io/huaming-order-sheet/`. CMD/CM/CV are fully modeled; all other families are selectable stubs (shared + OLTC fields still export).
 
 ---
 
