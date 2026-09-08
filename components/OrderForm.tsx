@@ -1,73 +1,51 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import {
-  CATEGORY_LABELS,
-  FAMILIES,
-  getFamily,
-} from "@/lib/catalog";
+import { AnimatePresence, motion } from "framer-motion";
+import { CATEGORY_LABELS, getFamily } from "@/lib/catalog";
 import {
   allApplicableFields,
   applicableFields,
-  FieldDef,
   OrderValues,
   SECTIONS,
 } from "@/lib/schema";
 import { buildTapCode, exportExcel } from "@/lib/excel";
 import { composeCompact, composeSpaced } from "@/lib/typeString";
+import FamilyPicker from "./FamilyPicker";
+import Field from "./Field";
+import Stepper from "./Stepper";
 
 const STORAGE_KEY = "hm-order-sheet:v0";
 
-function Field({
-  field,
-  value,
-  onChange,
-}: {
-  field: FieldDef;
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  const id = `f_${field.key}`;
-  const label = (
-    <label htmlFor={id} className="mb-1 block text-sm font-medium text-slate-700">
-      {field.labelEn}
-      <span className="ml-2 text-xs font-normal text-slate-400">{field.labelRu}</span>
-      {field.unit ? <span className="ml-1 text-xs text-slate-400">({field.unit})</span> : null}
-    </label>
-  );
-  const cls =
-    "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand";
-  return (
-    <div>
-      {label}
-      {field.type === "select" ? (
-        <select id={id} className={cls} value={value} onChange={(e) => onChange(e.target.value)}>
-          <option value="">—</option>
-          {field.options?.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-      ) : field.type === "textarea" ? (
-        <textarea id={id} rows={3} className={cls} value={value} onChange={(e) => onChange(e.target.value)} placeholder={field.placeholder} />
-      ) : (
-        <input
-          id={id}
-          type={field.type === "number" ? "number" : "text"}
-          className={cls}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={field.placeholder}
-        />
-      )}
-    </div>
-  );
+interface WizardStep {
+  id: string;
+  title: string;
+  blurb: string;
+  sections: string[];
+  kind?: "product" | "review";
 }
+
+const STEPS: WizardStep[] = [
+  { id: "product", title: "Product", blurb: "Choose the tap-changer family and drive package.", sections: ["range"], kind: "product" },
+  { id: "order", title: "Order & general", blurb: "Order contacts and general operating data.", sections: ["order", "general"] },
+  { id: "transformer", title: "Transformer", blurb: "Electrical data of the transformer.", sections: ["transformer"] },
+  { id: "oltc", title: "Tap changer", blurb: "Tap-changer rating and position definition.", sections: ["oltc", "position"] },
+  { id: "construction", title: "Construction", blurb: "Mechanical, insulation and accessory options.", sections: ["mechanical", "insulation", "accessories", "notes"] },
+  { id: "review", title: "Review & export", blurb: "Check every value, then export the Excel.", sections: [], kind: "review" },
+];
+
+const variants = {
+  enter: (dir: number) => ({ x: dir > 0 ? 28 : -28, opacity: 0 }),
+  center: { x: 0, opacity: 1 },
+  exit: (dir: number) => ({ x: dir > 0 ? -28 : 28, opacity: 0 }),
+};
 
 export default function OrderForm() {
   const [values, setValues] = useState<OrderValues>({});
   const [loaded, setLoaded] = useState(false);
+  const [step, setStep] = useState(0);
+  const [dir, setDir] = useState(1);
+  const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -84,15 +62,13 @@ export default function OrderForm() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(values));
     } catch {
-      /* ignore quota errors */
+      /* ignore quota */
     }
   }, [values, loaded]);
 
   const family = values.family ?? "";
   const fam = getFamily(family);
-
-  const set = (key: string) => (v: string) =>
-    setValues((prev) => ({ ...prev, [key]: v }));
+  const set = (key: string) => (v: string) => setValues((prev) => ({ ...prev, [key]: v }));
 
   const typeStr = useMemo(() => {
     if (!family) return { spaced: "", compact: "" };
@@ -111,191 +87,387 @@ export default function OrderForm() {
   const validation = useMemo(() => {
     const errors: string[] = [];
     const warnings: string[] = [];
-    if (!family) errors.push("Select a tap-changer family (Range section).");
-    if (!values.phases) errors.push("Select the number of phases (General data).");
+    if (!family) errors.push("Select a tap-changer family (Product step).");
+    if (!values.phases) errors.push("Select the number of phases (Order & general step).");
     const pitch = Number(values.oltc_tap_pitch || 0);
     const positions = Number(values.oltc_tap_positions || 0);
     const mid = Number(values.oltc_tap_mid || 0);
-    if (pitch && positions && mid) {
-      if ((positions - mid) % 2 !== 0) {
-        warnings.push("Tap code: (positions − mid) should be even (positions = 2·±steps + mid).");
-      }
+    if (pitch && positions && mid && (positions - mid) % 2 !== 0) {
+      warnings.push("Tap code: (positions − mid) should be even.");
     }
     if (fam && !fam.modeled) {
-      warnings.push(
-        `${fam.code} is not fully modeled in v0 (stub). Shared + OLTC fields still export; family-specific tables are pending.`,
-      );
+      warnings.push(`${fam.code} is a v0 stub — shared + OLTC fields still export.`);
     }
     return { errors, warnings };
   }, [family, fam, values]);
 
   const canExport = validation.errors.length === 0;
 
+  const go = (i: number) => {
+    setDir(i > step ? 1 : -1);
+    setStep(Math.max(0, Math.min(STEPS.length - 1, i)));
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const onExport = () => {
     if (!canExport) return;
     exportExcel(values);
+    setToast("Excel downloaded ✓");
+    window.setTimeout(() => setToast(null), 2600);
   };
 
   const onReset = () => {
-    if (confirm("Clear all fields?")) setValues({});
+    if (confirm("Clear all fields?")) {
+      setValues({});
+      go(0);
+    }
   };
 
   if (!loaded) {
-    return <p className="text-sm text-slate-400">Loading…</p>;
+    return <div className="h-64 animate-pulse rounded-2xl bg-white/60" />;
   }
 
-  return (
-    <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_320px]">
-      <div className="space-y-8">
-        {SECTIONS.map((section) => {
-          const fields = applicableFields(section, family);
-          if (fields.length === 0) return null;
-          return (
-            <section key={section.id} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-              <h2 className="mb-1 text-lg font-semibold text-slate-900">
-                {section.titleEn}
-                <span className="ml-2 text-sm font-normal text-slate-400">{section.titleRu}</span>
-              </h2>
-              {section.familySpecific ? (
-                <p className="mb-4 text-xs text-slate-400">
-                  Family-specific · shown for the selected family.
-                </p>
-              ) : (
-                <div className="mb-4" />
-              )}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {fields.map((field) => (
-                  <Field key={field.key} field={field} value={values[field.key] ?? ""} onChange={set(field.key)} />
-                ))}
-              </div>
-              {section.id === "range" && family ? (
-                <div className="mt-4 rounded-md bg-slate-50 p-3 text-xs text-slate-600">
-                  <span className="font-semibold">{fam?.code}</span>
-                  {fam?.aliases?.length ? ` (${fam.aliases.join("/")})` : ""} —{" "}
-                  <span className="rounded bg-brand/10 px-1.5 py-0.5 font-medium text-brand">
-                    {fam ? CATEGORY_LABELS[fam.category] : ""}
-                  </span>
-                  <span className="ml-2">{fam?.descEn}</span>
-                </div>
-              ) : null}
-            </section>
-          );
-        })}
+  const current = STEPS[step];
+  const isLast = step === STEPS.length - 1;
 
-        {/* Read-only review before export */}
-        {family ? (
-          <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="mb-1 text-lg font-semibold text-slate-900">
-              Review
-              <span className="ml-2 text-sm font-normal text-slate-400">Проверка</span>
-            </h2>
-            <p className="mb-4 text-xs text-slate-400">
-              Check every value below, then export. Blank fields default to standard supply.
-            </p>
-            <div className="space-y-4">
-              {SECTIONS.map((section) => {
-                const rows = allApplicableFields(family)
-                  .filter((x) => x.section.id === section.id)
-                  .map((x) => x.field);
-                if (rows.length === 0) return null;
-                return (
-                  <div key={`rev_${section.id}`}>
-                    <h3 className="mb-1 border-b border-slate-100 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      {section.titleEn}
-                    </h3>
-                    <dl className="grid grid-cols-1 gap-x-6 gap-y-1 sm:grid-cols-2">
-                      {rows.map((field) => (
-                        <div key={`rev_${field.key}`} className="flex justify-between gap-3 text-sm">
-                          <dt className="text-slate-500">{field.labelEn}</dt>
-                          <dd className="text-right font-medium text-slate-900">
-                            {values[field.key]
-                              ? `${values[field.key]}${field.unit ? ` ${field.unit}` : ""}`
-                              : "—"}
-                          </dd>
-                        </div>
-                      ))}
-                    </dl>
-                  </div>
-                );
-              })}
-              <div className="rounded-md bg-slate-50 p-3 text-sm">
-                <span className="text-slate-500">Type designation:</span>{" "}
-                <span className="font-mono font-medium text-slate-900">
-                  {typeStr.compact || "—"}
-                </span>
-              </div>
+  return (
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <div>
+        <Stepper steps={STEPS} current={step} onGo={go} />
+
+        <div className="card overflow-hidden">
+          <div className="border-b border-slate-100 bg-slate-50/60 px-5 py-4 sm:px-6">
+            <h2 className="text-lg font-bold text-navy">{current.title}</h2>
+            <p className="mt-0.5 text-sm text-ink-muted">{current.blurb}</p>
+          </div>
+
+          <div className="px-5 py-6 sm:px-6">
+            <AnimatePresence mode="wait" custom={dir}>
+              <motion.div
+                key={current.id}
+                custom={dir}
+                variants={variants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+              >
+                {current.kind === "product" ? (
+                  <ProductStep family={family} values={values} set={set} setFamily={set("family")} fam={fam} />
+                ) : current.kind === "review" ? (
+                  <ReviewStep values={values} family={family} typeCompact={typeStr.compact} />
+                ) : (
+                  <StepSections sectionIds={current.sections} family={family} values={values} set={set} />
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Desktop nav */}
+          <div className="no-print hidden items-center justify-between border-t border-slate-100 px-5 py-4 sm:px-6 md:flex">
+            <button type="button" onClick={() => go(step - 1)} disabled={step === 0} className="btn-secondary disabled:opacity-40">
+              ← Back
+            </button>
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={onReset} className="btn-secondary">
+                Reset
+              </button>
+              {isLast ? (
+                <button type="button" onClick={onExport} disabled={!canExport} className="btn-primary">
+                  Download Excel (.xlsx)
+                </button>
+              ) : (
+                <button type="button" onClick={() => go(step + 1)} className="btn-primary">
+                  Next →
+                </button>
+              )}
             </div>
-          </section>
-        ) : null}
+          </div>
+        </div>
       </div>
 
-      {/* Sticky summary / export panel */}
-      <aside className="lg:sticky lg:top-6 lg:self-start">
-        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-            Type designation
-          </h3>
-          <div className="mt-3 space-y-2">
-            <div>
-              <p className="text-xs text-slate-400">Spaced (brochure)</p>
-              <p className="break-words font-mono text-sm text-slate-900">{typeStr.spaced || "—"}</p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-400">Compact (order sheet)</p>
-              <p className="break-words font-mono text-sm text-slate-900">{typeStr.compact || "—"}</p>
-            </div>
-          </div>
-
-          {validation.errors.length > 0 && (
-            <ul className="mt-4 space-y-1 rounded-md bg-red-50 p-3 text-xs text-red-700">
-              {validation.errors.map((e) => (
-                <li key={e}>• {e}</li>
-              ))}
-            </ul>
-          )}
-          {validation.warnings.length > 0 && (
-            <ul className="mt-3 space-y-1 rounded-md bg-amber-50 p-3 text-xs text-amber-800">
-              {validation.warnings.map((w) => (
-                <li key={w}>• {w}</li>
-              ))}
-            </ul>
-          )}
-
-          <button
-            type="button"
-            onClick={onExport}
-            disabled={!canExport}
-            className="no-print mt-5 w-full rounded-md bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Download Excel (.xlsx)
-          </button>
-          <div className="no-print mt-2 flex gap-2">
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50"
-            >
-              Print / PDF
-            </button>
-            <button
-              type="button"
-              onClick={onReset}
-              className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50"
-            >
-              Reset
-            </button>
-          </div>
-          <p className="mt-3 text-[11px] leading-4 text-slate-400">
-            Excel includes a human-readable sheet, a flat machine-readable sheet
-            (one column per field), and a meta sheet.
-          </p>
+      {/* Desktop summary aside */}
+      <aside className="no-print hidden lg:block">
+        <div className="lg:sticky lg:top-20">
+          <SummaryPanel
+            spaced={typeStr.spaced}
+            compact={typeStr.compact}
+            errors={validation.errors}
+            warnings={validation.warnings}
+            fam={fam}
+            canExport={canExport}
+            onExport={onExport}
+          />
         </div>
-
-        <p className="mt-3 px-1 text-[11px] leading-4 text-slate-400">
-          Autosaved locally in your browser. {FAMILIES.length} families in the
-          taxonomy; v0 fully models CMD / CM / CV.
-        </p>
       </aside>
+
+      {/* Mobile sticky action bar */}
+      <div className="no-print fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 px-3 py-2.5 shadow-[0_-4px_16px_-8px_rgba(0,0,0,0.2)] backdrop-blur md:hidden">
+        <div className="mx-auto flex max-w-6xl items-center gap-2">
+          <button type="button" onClick={() => go(step - 1)} disabled={step === 0} className="btn-secondary flex-1 disabled:opacity-40">
+            ← Back
+          </button>
+          {typeStr.compact ? (
+            <span className="hidden max-w-[38%] truncate font-mono text-[11px] text-ink-muted min-[430px]:block">
+              {typeStr.compact}
+            </span>
+          ) : null}
+          {isLast ? (
+            <button type="button" onClick={onExport} disabled={!canExport} className="btn-primary flex-1">
+              Download .xlsx
+            </button>
+          ) : (
+            <button type="button" onClick={() => go(step + 1)} className="btn-primary flex-1">
+              Next →
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Toast */}
+      <AnimatePresence>
+        {toast ? (
+          <motion.div
+            initial={{ opacity: 0, y: 16, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 16, scale: 0.96 }}
+            className="no-print fixed bottom-20 left-1/2 z-40 -translate-x-1/2 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-panel md:bottom-6"
+          >
+            {toast}
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function SectionGrid({
+  sectionId,
+  family,
+  values,
+  set,
+  excludeKeys = [],
+}: {
+  sectionId: string;
+  family: string;
+  values: OrderValues;
+  set: (key: string) => (v: string) => void;
+  excludeKeys?: string[];
+}) {
+  const section = SECTIONS.find((s) => s.id === sectionId);
+  if (!section) return null;
+  const fields = applicableFields(section, family).filter((f) => !excludeKeys.includes(f.key));
+  if (fields.length === 0) return null;
+  return (
+    <div className="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2">
+      {fields.map((field) => (
+        <Field key={field.key} field={field} value={values[field.key] ?? ""} onChange={set(field.key)} />
+      ))}
+    </div>
+  );
+}
+
+function StepSections({
+  sectionIds,
+  family,
+  values,
+  set,
+}: {
+  sectionIds: string[];
+  family: string;
+  values: OrderValues;
+  set: (key: string) => (v: string) => void;
+}) {
+  const visible = sectionIds
+    .map((id) => SECTIONS.find((s) => s.id === id))
+    .filter((s): s is NonNullable<typeof s> => !!s)
+    .filter((s) => applicableFields(s, family).length > 0);
+
+  return (
+    <div className="space-y-7">
+      {visible.map((section) => (
+        <div key={section.id}>
+          {sectionIds.length > 1 ? (
+            <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-ink-muted">
+              {section.titleEn}
+              {section.familySpecific ? (
+                <span className="badge bg-steel/10 text-steel">family</span>
+              ) : null}
+            </h3>
+          ) : null}
+          <SectionGrid sectionId={section.id} family={family} values={values} set={set} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ProductStep({
+  family,
+  values,
+  set,
+  setFamily,
+  fam,
+}: {
+  family: string;
+  values: OrderValues;
+  set: (key: string) => (v: string) => void;
+  setFamily: (v: string) => void;
+  fam: ReturnType<typeof getFamily>;
+}) {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-muted">
+          Tap-changer family
+        </h3>
+        <FamilyPicker value={family} onChange={setFamily} />
+      </div>
+
+      {family ? (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-xl border border-navy/15 bg-navy/[0.03] p-4"
+        >
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <span className="text-base font-bold text-navy">{fam?.code}</span>
+            {fam?.aliases?.length ? (
+              <span className="text-ink-muted">({fam.aliases.join("/")})</span>
+            ) : null}
+            <span className="badge bg-navy/10 text-navy">{fam ? CATEGORY_LABELS[fam.category] : ""}</span>
+          </div>
+          <p className="mt-1 text-sm text-ink-soft">{fam?.descEn}</p>
+        </motion.div>
+      ) : null}
+
+      <div>
+        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-muted">
+          Drive & accessories
+        </h3>
+        <SectionGrid sectionId="range" family={family} values={values} set={set} excludeKeys={["family"]} />
+      </div>
+    </div>
+  );
+}
+
+function ReviewStep({
+  values,
+  family,
+  typeCompact,
+}: {
+  values: OrderValues;
+  family: string;
+  typeCompact: string;
+}) {
+  if (!family) {
+    return (
+      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+        Select a tap-changer family in the Product step to review and export.
+      </div>
+    );
+  }
+  const rowsBySection = SECTIONS.map((section) => ({
+    section,
+    fields: allApplicableFields(family)
+      .filter((x) => x.section.id === section.id)
+      .map((x) => x.field),
+  })).filter((g) => g.fields.length > 0);
+
+  return (
+    <div className="space-y-5">
+      <div className="rounded-xl bg-navy px-4 py-3 text-white">
+        <p className="text-[11px] uppercase tracking-wide text-white/60">Type designation</p>
+        <p className="mt-0.5 break-words font-mono text-base font-semibold">{typeCompact || "—"}</p>
+      </div>
+      {rowsBySection.map(({ section, fields }) => (
+        <div key={section.id}>
+          <h3 className="mb-1.5 border-b border-slate-100 pb-1 text-xs font-semibold uppercase tracking-wide text-ink-muted">
+            {section.titleEn}
+          </h3>
+          <dl className="grid grid-cols-1 gap-x-8 gap-y-1 sm:grid-cols-2">
+            {fields.map((field) => (
+              <div key={field.key} className="flex items-baseline justify-between gap-3 py-0.5 text-sm">
+                <dt className="text-ink-muted">{field.labelEn}</dt>
+                <dd className="text-right font-medium text-ink">
+                  {values[field.key] ? `${values[field.key]}${field.unit ? ` ${field.unit}` : ""}` : "—"}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SummaryPanel({
+  spaced,
+  compact,
+  errors,
+  warnings,
+  fam,
+  canExport,
+  onExport,
+}: {
+  spaced: string;
+  compact: string;
+  errors: string[];
+  warnings: string[];
+  fam: ReturnType<typeof getFamily>;
+  canExport: boolean;
+  onExport: () => void;
+}) {
+  return (
+    <div className="card p-5">
+      <h3 className="text-xs font-semibold uppercase tracking-[0.15em] text-ink-muted">
+        Type designation
+      </h3>
+      <div className="mt-3 space-y-3">
+        <div>
+          <p className="text-[11px] text-slate-400">Spaced (brochure)</p>
+          <p className="break-words font-mono text-sm text-ink">{spaced || "—"}</p>
+        </div>
+        <div className="rounded-lg bg-slate-50 p-2.5">
+          <p className="text-[11px] text-slate-400">Compact (order sheet)</p>
+          <p className="break-words font-mono text-sm font-semibold text-navy">{compact || "—"}</p>
+        </div>
+      </div>
+
+      {fam ? (
+        <p className="mt-3 text-xs text-ink-muted">
+          <span className="badge bg-navy/10 text-navy">{fam.code}</span>
+        </p>
+      ) : null}
+
+      {errors.length > 0 && (
+        <ul className="mt-4 space-y-1 rounded-lg bg-red-50 p-3 text-xs text-red-700">
+          {errors.map((e) => (
+            <li key={e}>• {e}</li>
+          ))}
+        </ul>
+      )}
+      {warnings.length > 0 && (
+        <ul className="mt-3 space-y-1 rounded-lg bg-amber-50 p-3 text-xs text-amber-800">
+          {warnings.map((w) => (
+            <li key={w}>• {w}</li>
+          ))}
+        </ul>
+      )}
+
+      <motion.button
+        type="button"
+        onClick={onExport}
+        disabled={!canExport}
+        whileTap={canExport ? { scale: 0.98 } : undefined}
+        className="btn-primary mt-5 w-full"
+      >
+        Download Excel (.xlsx)
+      </motion.button>
+      <p className="mt-2.5 text-[11px] leading-4 text-slate-400">
+        Excel includes a human-readable sheet, a flat machine-readable sheet, and a
+        meta sheet.
+      </p>
     </div>
   );
 }

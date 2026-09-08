@@ -1,10 +1,16 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Huaming Order Sheet",
+  title: "Huaming · Tap-Changer Order Sheet",
   description:
-    "Fill Huaming tap-changer order parameters in the browser and export a clean Excel.",
+    "Fill Huaming tap-changer order parameters in the browser and export a clean Excel. Order Specifications / Бланк заказа.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#00428C",
 };
 
 export default function RootLayout({
@@ -12,7 +18,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="min-h-screen">{children}</body>
     </html>
   );
 }
