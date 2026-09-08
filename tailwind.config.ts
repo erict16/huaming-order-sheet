@@ -32,6 +32,9 @@ const config: Config = {
       fontFamily: {
         sans: [
           "Inter",
+          "PingFang SC",
+          "Microsoft YaHei",
+          "Noto Sans SC",
           "ui-sans-serif",
           "system-ui",
           "-apple-system",

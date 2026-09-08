@@ -37,6 +37,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Smoke
+        run: npm run smoke
+
       - name: Build static export
         run: npm run build
         env:

@@ -7,8 +7,8 @@ import { getFamily } from "./catalog";
 import { allApplicableFields, OrderValues, SECTIONS } from "./schema";
 import { composeCompact, composeSpaced, TypeStringFields } from "./typeString";
 
-export const APP_VERSION = "0.1.0";
-export const SCHEMA_VERSION = "1";
+export const APP_VERSION = "0.2.0";
+export const SCHEMA_VERSION = "2";
 
 function typeFields(values: OrderValues): TypeStringFields {
   return {
@@ -46,27 +46,26 @@ export function buildWorkbook(values: OrderValues): XLSX.WorkBook {
 
   // Sheet 1 — human-readable, grouped by section.
   const readableRows: (string | number)[][] = [];
-  readableRows.push(["Section", "Field (EN)", "Field (RU)", "Value", "Unit"]);
+  readableRows.push(["Section", "Field (ZH)", "Field (EN)", "Value", "Unit"]);
   for (const section of SECTIONS) {
     const fields = allApplicableFields(family)
       .filter((x) => x.section.id === section.id)
       .map((x) => x.field);
     if (fields.length === 0) continue;
-    readableRows.push([`— ${section.titleEn} / ${section.titleRu} —`, "", "", "", ""]);
+    readableRows.push([`— ${section.titleZh} / ${section.titleEn} —`, "", "", "", ""]);
     for (const field of fields) {
       readableRows.push([
-        section.titleEn,
+        section.titleZh,
+        field.labelZh,
         field.labelEn,
-        field.labelRu,
         values[field.key] ?? "",
         field.unit ?? "",
       ]);
     }
   }
-  // Append the composed type string block.
-  readableRows.push(["— Type designation —", "", "", "", ""]);
-  readableRows.push(["Type designation", "Spaced", "", spaced, ""]);
-  readableRows.push(["Type designation", "Compact", "", compact, ""]);
+  // One type-designation row (compact order-sheet spelling).
+  readableRows.push(["— 型号 / Type designation —", "", "", "", ""]);
+  readableRows.push(["型号", "型号", "Type designation", compact || spaced, ""]);
   const ws1 = XLSX.utils.aoa_to_sheet(readableRows);
   ws1["!cols"] = [{ wch: 28 }, { wch: 34 }, { wch: 30 }, { wch: 26 }, { wch: 8 }];
   ws1["!freeze"] = { xSplit: 0, ySplit: 1 };

@@ -8,13 +8,13 @@
 
 ## 0. Problem statement
 
-Today, Huaming's **ORDER SHEET** (Order Specifications / Спецификация заказа / Бланк заказа) is a multi-page PDF that a transformer maker or Eric fills in by hand to specify a tap changer order: the tap-changer family, the full type designation string, transformer data, mechanical/electrical options, motor drive unit, controller, and accessories.
+Today, Huaming's **ORDER SHEET** (Order Specifications / 订货技术规范书) is a multi-page PDF that a transformer maker or Eric fills in by hand to specify a tap changer order: the tap-changer family, the full type designation string, transformer data, mechanical/electrical options, motor drive unit, controller, and accessories.
 
 Pain points with the PDF:
 
 - Free-form and easy to fill inconsistently; fields that depend on the chosen family (e.g. selector insulation grade only applies to combined types) are not enforced.
 - No validation of the type-designation string against Huaming's real option lists.
-- Ops (order processing / engineering in China) then has to **re-key** the PDF into internal spreadsheets/ERP. That re-keying is slow and error-prone across languages (EN/RU/CN).
+- Ops (order processing / engineering in China) then has to **re-key** the PDF into internal spreadsheets/ERP. That re-keying is slow and error-prone across languages (ZH/EN).
 
 **Goal:** a web app where the customer/Eric fills in the order parameters in the browser, and **ops can export a clean, complete Excel** with **every** parameter in stable columns — ready to drop into internal tooling. The web form replaces the PDF as the point of capture; the Excel is the machine-friendly hand-off.
 
@@ -136,7 +136,7 @@ Single-page, progressive, no login (static site). Steps as an accordion/stepper,
 
 1. **Start** → pick tap-changer **family** (RANGE, section C) first, because it drives which later sections/fields appear. Show a one-line description + category badge (OLTC oil / OLTC vacuum / OCTC / MDU / accessory) so the user picks correctly.
 2. **General data** (B) → application, phases, frequency, standard.
-3. **Transformer data** (D) → the electrical inputs. As these are entered, the app **live-composes the suggested type string** and tap code using the `oltc-selector` logic, shown in a sticky summary panel.
+3. **Transformer data** (D) → the electrical inputs. As these are entered, the app **live-composes the suggested type string** and tap code using the `oltc-selector` logic, shown as a single compact line in the main flow (no floating panel).
 4. **OLTC data** (E) → pre-filled from steps 1–3; user can override family-specific fields (Ium, Um, grade, tap code). Validation flags inconsistencies (e.g. current below catalog Ium, grade not offered for that Um).
 5. **Mechanical / insulation / accessories** (F–I) → optional detailed sections; sensible defaults, "standard supply" if left blank.
 6. **Review** → read-only rendering of the whole sheet grouped by section, with the composed type string highlighted, plus a validation summary (errors block export; warnings don't).
@@ -145,7 +145,7 @@ Single-page, progressive, no login (static site). Steps as an accordion/stepper,
 UX principles:
 
 - **Family-aware conditional rendering:** only show fields that apply (e.g. selector grade hidden for CV/CV2; OCTC gets its own designation block).
-- **Bilingual labels:** every field label carries EN + RU (and CN where useful), since orders span RU/TR/ID/BR/etc. markets. Label text lives in the schema.
+- **Bilingual labels:** Chinese default, toggle to English. No Russian UI copy. Label text lives in the schema.
 - **Inline validation** against option lists; non-blocking warnings for unusual-but-legal combos.
 - **Autosave** to `localStorage`; **shareable URL** for reload/hand-off.
 - **Mobile-friendly** (Tailwind responsive), because reps fill these on the road.
@@ -163,7 +163,7 @@ UX principles:
 
 The Excel is designed for ops to read and to machine-ingest:
 
-- **Sheet 1 — `Order Sheet` (human-readable):** grouped by section (A–J). Columns: `Section | Field (EN) | Field (RU) | Value | Unit`. Section header rows, frozen header, sensible column widths. This is the "clear Excel" a person reads.
+- **Sheet 1 — `Order Sheet` (human-readable):** grouped by section (A–J). Columns: `Section | Field (ZH) | Field (EN) | Value | Unit`. Section header rows, frozen header, sensible column widths. This is the "clear Excel" a person reads.
 - **Sheet 2 — `Flat` (machine-readable):** one row per order with **one column per field**, using stable `snake_case` keys as headers (e.g. `family`, `type_string`, `phases`, `ium_a`, `um_kv`, `connection`, `selector_grade`, `tap_code`, `rated_power_kva`, `hv_kv`, `lv_kv`, `tap_range_pct`, `steps`, `mdu_model`, `controller`, `oil_filter`, …). This is what a future ERP import or `pandas` reads; column order is fixed by the schema so appended orders align.
 - **Sheet 3 — `Meta`:** app version, schema version, export timestamp, and the raw composed type string, so ops can trace which app build produced a sheet.
 
@@ -190,7 +190,7 @@ A server (Next.js route handler / Python `openpyxl`) would give nicer styling an
 | Images | `images.unoptimized = true` | Required for static export |
 | Motion | **framer-motion** | Step transitions, family-card feedback, export toast (respects `prefers-reduced-motion`) |
 | Design system | Industrial OEM palette — **navy `#00428C`, steel `#0071A9`, ink `#262626`, white** — in `tailwind.config.ts`; component classes in `globals.css` | Huaming brand seriousness, not a bare form |
-| UX pattern | **Mobile-first multi-step wizard** (Product → Order & general → Transformer → Tap changer → Construction → Review & export) with sticky header, desktop summary aside, and a sticky mobile action bar | Usable on phone; no overflow; touch-friendly |
+| UX pattern | **Mobile-first multi-step wizard** (Product → Order → Transformer → Tap changer → Construction → Review) with sticky header, one type-string line, and a sticky mobile action bar. Download Excel lives on Review — no floating type-designation card. | Usable on phone; no overflow; touch-friendly |
 
 Build gates (must pass before landing): **lint** (`next lint` / ESLint), **typecheck** (`tsc --noEmit`), **build**, **static export** produces `out/`.
 
@@ -201,7 +201,8 @@ Build gates (must pass before landing): **lint** (`next lint` / ESLint), **typec
 - `lib/catalog.ts` — families, categories, Um list, current list, selector grades per Um, MDU/controller/filter option lists, market/country list. (Ported/trimmed from `oltc-selector`.)
 - `lib/tapCode.ts` — encode/decode tap code `pitch·positions·mid·changeover` ↔ fields; `P = 2·(±N)+mid` helper.
 - `lib/typeString.ts` — compose spaced + compact type strings from OLTC fields; validate against catalog.
-- `lib/schema.ts` — the **section/field schema** (sections A–J, per-field: key, EN/RU label, input type, options, unit, applicability predicate by family). Drives form **and** Excel.
+- `lib/schema.ts` — the **section/field schema** (sections A–J, per-field: key, ZH/EN label, input type, options, unit, applicability predicate by family). Drives form **and** Excel.
+- `lib/i18n.ts` — UI copy; default locale `zh`, toggle `en`.
 - `lib/excel.ts` — build the workbook (Sheets 1–3) from the schema + current values via SheetJS.
 
 ---
@@ -222,7 +223,7 @@ Build gates (must pass before landing): **lint** (`next lint` / ESLint), **typec
 - **Auth:** form is **public first**; login/auth comes later. **No auth in v0.**
 - **Repo/Pages visibility:** repo is currently private; Eric to confirm public vs private for Pages. Proceeding assuming **static public Pages** eventually. (Pages from a private repo needs GitHub Pro/Enterprise; a public repo is simplest — see [§5](#5-tech-stack--hosting).)
 - **Excel:** **client-side download after review**, no server. (Implemented.)
-- **Languages:** **EN primary** (OS is EN + RU, both label languages kept in the schema and Excel); **CN optional later** unless trivial. (Resolves Q7 below.)
+- **Languages:** **Chinese default**, toggle to English. Russian UI/labels removed. (Updated 2026-09-08 after Eric rejected the float + RU chrome.)
 - **Submission storage:** client-side Excel download is enough for now; server/DB is deferred to v2. (Resolves Q9 below.)
 
 ### Still open
@@ -235,7 +236,7 @@ Answer these to lock the taxonomy and validation. Where blocked, the app stays p
 4. **63 vs 72.5 kV.** Export OS PDFs sometimes show `63`; catalog standard is `72.5` (same 66 kV class). Should the app **normalize to 72.5** and store the transformer Un separately, or preserve whatever the user types?
 5. **Authoritative option lists.** Need Huaming's current tables for: allowed **Ium per family**, **selector grade per Um**, valid **tap codes** per family, and the **MDU/controller/filter compatibility** matrix (which drives pair with which OLTC). Is there a master price list / selection manual we can encode?
 6. **Excel target format.** Does ops already have a spreadsheet/ERP template with fixed column headers we must match exactly? If yes, share it and we'll map the `Flat` sheet to those exact headers.
-7. ~~**Languages.**~~ **Answered:** EN primary + RU (both in schema/Excel), CN optional later.
+7. ~~**Languages.**~~ **Answered:** zh default + EN toggle; no RU UI. Nameplate language still includes RU as a product option.
 8. **Aftersales & MDU-only orders.** Should aftersales (芯子/油室/散件) and **MDU-only / ZXJY-only** orders be first-class order types in the app, or out of scope for v1?
 9. ~~**Submission storage.**~~ **Answered:** client-side Excel download is enough for now; server/DB deferred to v2.
 10. **Type-string authority.** Should the app allow a fully **manual** type-string override (engineering enters the final string), or must it always be composed/validated from fields?
@@ -250,7 +251,7 @@ Answer these to lock the taxonomy and validation. Where blocked, the app stays p
   - One primary combined/compound family modeled end-to-end (CMD/CM/CV shape) with live type-string composition; other families selectable as **stubs**.
   - **Client-side Excel export of all fields** (Sheets: Order Sheet / Flat / Meta).
   - Lint + typecheck + build + export all green.
-- **v1 — full OLTC coverage.** All OLTC families fully modeled (CM/CMD/CV/SV/CVT/VCM/VCV/SHZV/SHZVG/HWV/HWDK/CZ), full mechanical/insulation sections, complete validation from Eric's option tables, EN/RU (+ more) labels, print stylesheet.
+- **v1 — full OLTC coverage.** All OLTC families fully modeled (CM/CMD/CV/SV/CVT/VCM/VCV/SHZV/SHZVG/HWV/HWDK/CZ), full mechanical/insulation sections, complete validation from Eric's option tables, ZH/EN labels, print stylesheet.
 - **v1.1 — OCTC + accessories.** WG, WL/W□L designation blocks; ZXJY oil-filter and MDU-only order types; aftersales spares order type.
 - **v2 — backend (optional).** Submission storage + order DB + ERP/email hand-off + auth; swap static host for serverless; reuse same schema + Excel engine.
 
@@ -262,7 +263,7 @@ Tracked live as v0 is built in this repo. See the PR for the current state. High
 
 - [x] Next.js App Router + Tailwind scaffold with `output: 'export'` + `basePath` for Pages
 - [x] `lib/` domain library (`catalog`, `tapCode`, `typeString`, `schema`, `excel`)
-- [x] Form UI: Range (family + MDU/controller/filter) → General → Transformer → OLTC → family-specific sections → sticky type-string + export panel
+- [x] Form UI: Range (family + MDU/controller/filter) → General → Transformer → OLTC → family-specific sections → Review + Excel download (no floating type panel)
 - [x] Client-side `.xlsx` export of all fields (SheetJS): `Order Sheet` / `Flat` / `Meta` sheets
 - [x] GitHub Actions workflow: lint + typecheck + build + static export + deploy to Pages
 - [x] lint / typecheck / build / export green locally

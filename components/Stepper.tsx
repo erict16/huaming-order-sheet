@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useLocale } from "./LocaleProvider";
 
 export interface StepMeta {
   id: string;
@@ -16,6 +17,7 @@ export default function Stepper({
   current: number;
   onGo: (i: number) => void;
 }) {
+  const { t } = useLocale();
   const pct = ((current + 1) / steps.length) * 100;
   return (
     <div className="mb-6">
@@ -68,7 +70,7 @@ export default function Stepper({
         <div className="mb-1.5 flex items-baseline justify-between">
           <p className="text-sm font-semibold text-navy">{steps[current].title}</p>
           <p className="text-xs text-ink-muted">
-            Step {current + 1} of {steps.length}
+            {t("stepOf", { n: current + 1, total: steps.length })}
           </p>
         </div>
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
