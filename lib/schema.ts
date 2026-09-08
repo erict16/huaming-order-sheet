@@ -36,6 +36,7 @@ import {
   umOptions,
 } from "./catalog";
 import { L } from "./copy";
+import { PM_STEP_OPTIONS_G, PM_STEP_OPTIONS_W } from "./tapCode";
 import type {
   FieldDef,
   OrderValues,
@@ -142,10 +143,15 @@ function oltcRatingFields(): FieldDef[] {
     },
     {
       key: "plus_minus",
-      label: L("± 级数", "± steps", "± ступени", "± nấc"),
-      type: "number",
+      label: L("± 级数 N", "± steps N", "± ступени N", "± nấc N"),
+      type: "select",
+      required: true,
       applies: (v) => v.regulation === "reversing" || v.regulation === "coarse_fine",
-      hint: L("正反/粗细时填写。位置数会按 P = 2N + 中间档 自动算。", "For W/G. Positions follow P = 2N + mid.", "Для W/G. Положения: P = 2N + середина.", "Với W/G. Số vị trí: P = 2N + giữa."),
+      hint: L("最常见 ±8。工作位置 P = 2N + 中间档。±8 且中间 3 → 19 档 → 10193W。", "Most common ±8. Positions P = 2N + mid. ±8 and mid 3 → 19 pos → 10193W.", "Чаще ±8. P = 2N + середина. ±8 и середина 3 → 10193W.", "Phổ biến ±8. P = 2N + giữa. ±8 và giữa 3 → 10193W."),
+      options: PM_STEP_OPTIONS_W.map((n) => ({
+        value: String(n),
+        label: L(`±${n}`, `±${n}`, `±${n}`, `±${n}`),
+      })),
     },
     {
       key: "oltc_tap_mid",
@@ -650,6 +656,16 @@ export function missingRequired(sheet: SheetDef, values: OrderValues): FieldDef[
 }
 
 export function resolveFieldOptions(field: FieldDef, values: OrderValues): FieldDef {
+  if (field.key === "plus_minus") {
+    const steps = values.regulation === "coarse_fine" ? PM_STEP_OPTIONS_G : PM_STEP_OPTIONS_W;
+    return {
+      ...field,
+      options: steps.map((n) => ({
+        value: String(n),
+        label: { zh: `±${n}`, en: `±${n}`, ru: `±${n}`, vi: `±${n}` },
+      })),
+    };
+  }
   if (field.key === "oltc_current_a" || field.key === "current_a") {
     const fam = getFamily(values.family || "");
     const amps = fam ? (fam.currents[(values.phases as "I" | "II" | "III") || "III"] ?? fam.currents.III ?? fam.currents.I ?? []) : [];

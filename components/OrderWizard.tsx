@@ -32,6 +32,7 @@ const DEFAULTS: Record<string, OrderValues> = {
     frequency_hz: "50",
     phases: "III",
     regulation: "reversing",
+    plus_minus: "8",
     oltc_tap_mid: "3",
     quantity: "1",
     mdu_model: "CMA7",
@@ -88,7 +89,8 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
 
   useEffect(() => {
     const stored = loadValues(id);
-    setValues({ ...(DEFAULTS[id] ?? {}), ...stored });
+    const merged = { ...(DEFAULTS[id] ?? {}), ...stored };
+    setValues(deriveValues({}, merged));
     setLoaded(true);
   }, [id]);
 
