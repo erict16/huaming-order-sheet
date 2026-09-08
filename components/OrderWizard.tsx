@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
-  PrinterIcon,
+  CheckIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import { t } from "@/lib/copy";
@@ -24,6 +24,7 @@ import type { OrderValues, SheetId } from "@/lib/types";
 import { useLang } from "@/lib/useLang";
 import FamilyPicker from "./FamilyPicker";
 import Field from "./Field";
+import PipeTable from "./PipeTable";
 import ReviewPanel from "./ReviewPanel";
 
 const DEFAULTS: Record<string, OrderValues> = {
@@ -82,9 +83,9 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
   const [values, setValues] = useState<OrderValues>(DEFAULTS[id] ?? {});
   const [loaded, setLoaded] = useState(false);
   const [step, setStep] = useState(0);
-  const [dir, setDir] = useState(1);
   const [exporting, setExporting] = useState(false);
   const [exportErr, setExportErr] = useState("");
+  const [savedFlash, setSavedFlash] = useState(false);
 
   useEffect(() => {
     const stored = loadValues(id);
@@ -114,7 +115,6 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
   }
 
   function go(next: number) {
-    setDir(next > step ? 1 : -1);
     setStep(Math.max(0, Math.min(stepCount - 1, next)));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -138,6 +138,13 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
     }
   }
 
+  function handleSave() {
+    if (!sheet) return;
+    saveValues(id, values);
+    setSavedFlash(true);
+    window.setTimeout(() => setSavedFlash(false), 1600);
+  }
+
   const familyBlocked = current.kind === "family" ? !values.family : false;
 
   return (
@@ -146,7 +153,9 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
         {t(sheet.meta.tag, lang)}
       </p>
       <h1 className="mt-1 text-2xl font-bold text-navy sm:text-3xl">{t(sheet.meta.title, lang)}</h1>
-      <p className="mt-2 text-sm text-ink-soft">{t(current.blurb, lang)}</p>
+      {t(current.blurb, lang).trim() ? (
+        <p className="mt-2 text-sm text-ink-soft">{t(current.blurb, lang)}</p>
+      ) : null}
 
       <ol className="mt-5 flex flex-wrap gap-2">
         {sheet.steps.map((s, i) => (
@@ -173,14 +182,13 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
       </p>
 
       <div className="mt-6 overflow-hidden">
-        <AnimatePresence mode="wait" custom={dir}>
+        <AnimatePresence mode="wait">
           <motion.div
             key={current.id}
-            custom={dir}
-            initial={{ x: dir > 0 ? 24 : -24, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: dir > 0 ? -24 : 24, opacity: 0 }}
-            transition={{ duration: 0.18 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.12 }}
           >
             {current.kind === "family" && sheet.families ? (
               <FamilyPicker
@@ -223,16 +231,22 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
                       {section.hint ? (
                         <p className="mt-1 text-sm text-ink-soft">{t(section.hint, lang)}</p>
                       ) : null}
-                      <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                        {fields.map((field) => (
-                          <Field
-                            key={field.key}
-                            field={field}
-                            value={values[field.key] ?? ""}
-                            onChange={(v) => setField(field.key, v)}
-                          />
-                        ))}
-                      </div>
+                      {section.id === "pipes" ? (
+                        <div className="mt-4">
+                          <PipeTable values={values} onChange={setField} />
+                        </div>
+                      ) : (
+                        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                          {fields.map((field) => (
+                            <Field
+                              key={field.key}
+                              field={field}
+                              value={values[field.key] ?? ""}
+                              onChange={(v) => setField(field.key, v)}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </section>
                   );
                 })
@@ -261,9 +275,9 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
             {exporting ? "…" : chromeText("export", lang)}
           </button>
         )}
-        <button type="button" className="btn-secondary ml-auto" onClick={() => window.print()}>
-          <PrinterIcon className="h-4 w-4" />
-          {chromeText("print", lang)}
+        <button type="button" className="btn-secondary ml-auto" onClick={handleSave}>
+          {savedFlash ? <CheckIcon className="h-4 w-4" /> : null}
+          {savedFlash ? chromeText("savedFlash", lang) : chromeText("save", lang)}
         </button>
         <button type="button" className="btn-secondary text-rose-700" onClick={handleClear}>
           <TrashIcon className="h-4 w-4" />

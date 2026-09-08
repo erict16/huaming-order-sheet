@@ -10,7 +10,6 @@ import {
   FLANGE_OPTS,
   FLUID_OPTS,
   FREQ_OPTS,
-  GROOVE_OPTS,
   IP_OPTS,
   MDU_OPTS,
   MOTOR_VOLT_OPTS,
@@ -25,7 +24,9 @@ import {
   PHASE_OPTS,
   PIPE_E2_OPTS,
   PIPE_HEIGHT_OPTS,
-  PIPE_ON_OPTS,
+  PIPE_Q_OPTS,
+  PIPE_R_OPTS,
+  PIPE_S_OPTS,
   POS_TX_OPTS,
   POTENTIAL_OPTS,
   PRV_OPTS,
@@ -56,7 +57,6 @@ import type {
 
 function orderFields(): FieldDef[] {
   return [
-    { key: "order_no", label: L("订单号 / 询价号", "Order / enquiry no.", "Номер заказа / запроса", "Số đơn / báo giá"), type: "text", placeholder: L("例如 E-CM260001", "e.g. E-CM260001", "напр. E-CM260001", "vd. E-CM260001") },
     { key: "order_date", label: L("日期", "Date", "Дата", "Ngày"), type: "date" },
     { key: "buyer", label: L("买方 / 变压器厂", "Buyer / transformer maker", "Покупатель / завод ТР", "Bên mua / nhà máy MBA"), type: "text", required: true, span: 2 },
     { key: "end_user", label: L("最终用户", "End user", "Конечный пользователь", "Người dùng cuối"), type: "text" },
@@ -67,7 +67,6 @@ function orderFields(): FieldDef[] {
     { key: "designer_email", label: L("邮箱", "Email", "Эл. почта", "Email"), type: "text" },
     { key: "designer_phone", label: L("电话", "Phone", "Телефон", "Điện thoại"), type: "text" },
     { key: "delivery_date", label: L("要货期", "Delivery date", "Срок поставки", "Ngày giao"), type: "date" },
-    { key: "hm_product_no", label: L("华明产品编号", "Huaming product no.", "Номер изделия Huaming", "Mã sản phẩm Huaming"), type: "text" },
   ];
 }
 
@@ -112,7 +111,6 @@ function oltcRatingFields(): FieldDef[] {
       type: "select",
       unit: "A",
       required: true,
-      hint: L("按目录取不小于变压器分接电流的档。没有 CV2-500。", "Next catalogue rating ≥ tap winding current. No CV2-500.", "Ближайший каталожный ток ≥ тока обмотки. Нет CV2-500.", "Lấy cấp catalogue ≥ dòng quấn điều áp. Không có CV2-500."),
     },
     {
       key: "oltc_um_kv",
@@ -120,7 +118,6 @@ function oltcRatingFields(): FieldDef[] {
       type: "select",
       unit: "kV",
       required: true,
-      hint: L("开关绝缘等级，不是变压器 Un。66 kV 变用 72.5。", "OLTC insulation class, not transformer Un. 66 kV transformer → 72.5.", "Класс изоляции РПН, не Un трансформатора. 66 кВ → 72.5.", "Cấp cách điện OLTC, không phải Un MBA. 66 kV → 72.5."),
     },
     {
       key: "oltc_connection",
@@ -243,8 +240,7 @@ function accessoryFields(opts?: { oil?: boolean }): FieldDef[] {
   const f: FieldDef[] = [];
   if (opts?.oil !== false) {
     f.push(
-      { key: "protective_relay", label: L("保护继电器", "Protective relay", "Защитное реле", "Rơle bảo vệ"), type: "select", options: RELAY_OPTS },
-      { key: "relay_flange_groove", label: L("继电器法兰", "Relay flange", "Фланец реле", "Mặt bích rơle"), type: "radio", options: GROOVE_OPTS, applies: (v) => v.protective_relay !== "none" && !!v.protective_relay },
+      { key: "protective_relay", label: L("保护继电器", "Protective relay", "Защитное реле", "Rơle bảo vệ"), type: "select", options: RELAY_OPTS, span: 2 },
       { key: "pressure_relief", label: L("压力释放", "Pressure relief", "Сброс давления", "Xả áp"), type: "select", options: PRV_OPTS },
       { key: "potential_connection", label: L("电位电阻", "Potential / tie-in resistor", "Потенциальный резистор", "Điện trở thế"), type: "select", options: POTENTIAL_OPTS, hint: L("复合式恢复电压 >15 kV、组合式 >35 kV 通常要带，并附绕组图。", "Usually required when recovery voltage >15 kV (compound) or >35 kV (combined). Attach winding layout.", "Нужен при высоком напряжении восстановления. Приложите схему.", "Thường cần khi điện áp phục hồi cao. Kèm sơ đồ quấn.") },
       { key: "tie_in_mounting", label: L("电位电阻安装", "Tie-in mounting", "Крепление резистора", "Cách lắp điện trở"), type: "select", options: TIE_IN_OPTS, applies: (v) => v.potential_connection === "with" || v.potential_connection === "check" },
@@ -260,17 +256,15 @@ function accessoryFields(opts?: { oil?: boolean }): FieldDef[] {
 }
 
 function pipeFields(): FieldDef[] {
-  const one = (key: string, title: string, titleEn: string): FieldDef[] => [
-    { key, label: L(`${title} 管`, `Pipe ${titleEn}`, `Патрубок ${titleEn}`, `Ống ${titleEn}`), type: "radio", options: PIPE_ON_OPTS },
-    { key: `${key}_bleeder`, label: L(`${title} 放气阀`, `${titleEn} bleeder`, `Воздушник ${titleEn}`, `Van xả khí ${titleEn}`), type: "radio", options: PIPE_ON_OPTS, applies: (v) => v[key] !== "without" },
-    { key: `${key}_groove`, label: L(`${title} 法兰槽`, `${titleEn} flange groove`, `Канавка ${titleEn}`, `Rãnh ${titleEn}`), type: "radio", options: GROOVE_OPTS, applies: (v) => v[key] !== "without" },
-    { key: `${key}_height`, label: L(`${title} 管高`, `${titleEn} height`, `Высота ${titleEn}`, `Cao ${titleEn}`), type: "select", options: PIPE_HEIGHT_OPTS, applies: (v) => v[key] !== "without" },
-  ];
   return [
-    ...one("pipe_q", "Q", "Q"),
-    ...one("pipe_s", "S", "S"),
-    ...one("pipe_r", "R", "R"),
-    { key: "pipe_e2", label: L("E2 头部", "Pipe E2 / head", "E2 / головка", "E2 / đầu"), type: "select", options: PIPE_E2_OPTS },
+    { key: "pipe_q", label: L("Q", "Q", "Q", "Q"), type: "select", options: PIPE_Q_OPTS },
+    { key: "pipe_q_height", label: L("Q 管高", "Q height", "Высота Q", "Cao Q"), type: "select", options: PIPE_HEIGHT_OPTS, unit: "mm" },
+    { key: "pipe_s", label: L("S", "S", "S", "S"), type: "select", options: PIPE_S_OPTS },
+    { key: "pipe_s_height", label: L("S 管高", "S height", "Высота S", "Cao S"), type: "select", options: PIPE_HEIGHT_OPTS, unit: "mm" },
+    { key: "pipe_r", label: L("R", "R", "R", "R"), type: "select", options: PIPE_R_OPTS },
+    { key: "pipe_r_height", label: L("R 管高", "R height", "Высота R", "Cao R"), type: "select", options: PIPE_HEIGHT_OPTS, unit: "mm" },
+    { key: "pipe_e2", label: L("E2", "E2", "E2", "E2"), type: "select", options: PIPE_E2_OPTS },
+    { key: "pipe_e2_height", label: L("E2 管高", "E2 height", "Высота E2", "Cao E2"), type: "select", options: PIPE_HEIGHT_OPTS, unit: "mm" },
   ];
 }
 
@@ -281,12 +275,7 @@ const oltcSheet: SheetDef = {
     title: L("有载分接开关订货单", "OLTC order sheet", "Бланк заказа РПН", "Phiếu đặt hàng OLTC"),
     short: L("有载 OLTC", "OLTC", "РПН", "OLTC"),
     tag: L("油浸 / 真空", "Oil / vacuum", "Масло / вакуум", "Dầu / chân không"),
-    summary: L(
-      "CM / CMD / CV / CV2 / CM2 / SHZV 等油浸与真空有载。填写变压器、开关额定、分接代码、安装和机构。",
-      "Oil and vacuum on-load families: CM, CMD, CV, CV2, CM2, SHZV… Transformer, ratings, tap code, mounting, drive.",
-      "Масляные и вакуумные РПН: CM, CMD, CV, CV2, CM2, SHZV…",
-      "OLTC dầu và chân không: CM, CMD, CV, CV2, CM2, SHZV…",
-    ),
+    summary: L("油浸 / 真空有载", "Oil / vacuum OLTC", "Масло / вакуум", "Dầu / chân không"),
     accent: "#00428C",
   },
   families: OLTC_FAMILIES,
@@ -295,13 +284,13 @@ const oltcSheet: SheetDef = {
       id: "family",
       kind: "family",
       title: L("开关系列", "Tap-changer family", "Серия РПН", "Họ máy"),
-      blurb: L("系列决定后面能选的电流、Um 和是否出现绝缘等级字母。", "Family drives current, Um and whether a grade letter appears.", "Серия задаёт ток, Um и букву класса.", "Họ máy quyết định dòng, Um và chữ cấp cách điện."),
+      blurb: L(" ", " ", " ", " "),
       sections: [],
     },
     {
       id: "order",
       title: L("订单与变压器", "Order & transformer", "Заказ и трансформатор", "Đơn và MBA"),
-      blurb: L("谁订、给哪台变、容量和电压。", "Who orders, which transformer, power and voltage.", "Кто заказывает, какой ТР, мощность и напряжение.", "Ai đặt, MBA nào, công suất và điện áp."),
+      blurb: L(" ", " ", " ", " "),
       sections: [
         { id: "order", title: L("订单 / 联系人", "Order / contact", "Заказ / контакт", "Đơn / liên hệ"), fields: orderFields() },
         { id: "transformer", title: L("变压器数据", "Transformer data", "Данные трансформатора", "Dữ liệu MBA"), fields: transformerFields() },
@@ -310,19 +299,19 @@ const oltcSheet: SheetDef = {
     {
       id: "ratings",
       title: L("开关参数", "OLTC ratings", "Параметры РПН", "Thông số OLTC"),
-      blurb: L("电流、Um、Y/D、调压方式和分接代码会拼成型号。", "Current, Um, Y/D, regulation and tap code become the type string.", "Ток, Um, Y/D и код ответвлений складываются в тип.", "Dòng, Um, Y/D và mã nấc thành chuỗi kiểu."),
+      blurb: L(" ", " ", " ", " "),
       sections: [
-        { id: "oltc", title: L("有载开关数据", "On-load tap-changer data", "Данные РПН", "Dữ liệu OLTC"), hint: L("组合式型号带 B/C/D/DE；复合式 CV/CV2/SV 不带。", "Combined types carry B/C/D/DE; compound CV/CV2/SV do not.", "Комбинированные — с буквой; составные CV/CV2/SV — без.", "Tổ hợp có B/C/D/DE; compound CV/CV2/SV không."), fields: oltcRatingFields() },
+        { id: "oltc", title: L("有载开关数据", "On-load tap-changer data", "Данные РПН", "Dữ liệu OLTC"), fields: oltcRatingFields() },
         { id: "position", title: L("档位定义", "Position definition", "Определение положений", "Định nghĩa vị trí"), fields: positionFields() },
       ],
     },
     {
       id: "construction",
       title: L("结构与绝缘", "Construction & insulation", "Конструкция и изоляция", "Kết cấu và cách điện"),
-      blurb: L("法兰、出轴、传动轴、管接头。不清楚可留空，按常规。", "Flange, top-gear output, shafts, pipes. Leave blank for standard.", "Фланец, выход, валы, патрубки. Пусто = стандарт.", "Mặt bích, trục ra, ống. Trống = tiêu chuẩn."),
+      blurb: L(" ", " ", " ", " "),
       sections: [
         { id: "mechanical", title: L("机械 / 安装", "Mechanical / mounting", "Механика / монтаж", "Cơ khí / lắp đặt"), fields: mechanicalFields() },
-        { id: "pipes", title: L("Q / S / R / E2 管", "Pipes Q / S / R / E2", "Патрубки Q / S / R / E2", "Ống Q / S / R / E2"), hint: L("每根管写清带不带、放气阀、法兰槽。不增高就是目录管高。", "Per pipe: fitted, bleeder, groove. No increase = catalogue height.", "Для каждой трубы. Без увеличения = каталожная высота.", "Từng ống: có/không, van xả, rãnh. Không tăng = chiều cao catalogue."), fields: pipeFields() },
+        { id: "pipes", title: L("Q / S / R / E2", "Q / S / R / E2", "Q / S / R / E2", "Q / S / R / E2"), fields: pipeFields() },
         { id: "insulation", title: L("绝缘数据", "Insulation data", "Изоляционные данные", "Dữ liệu cách điện"), fields: insulationFields() },
       ],
     },

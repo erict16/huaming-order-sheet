@@ -399,10 +399,48 @@ export const FILTER_OPTS = [
 ];
 
 export const RELAY_OPTS = [
-  opt("QJ4", "QJ4（一信号一跳闸）", "QJ4 (alarm + trip)", "QJ4", "QJ4"),
-  opt("QJ4G", "QJ4G（无信号一跳闸）", "QJ4G (trip only)", "QJ4G", "QJ4G"),
-  opt("QJ6", "QJ6（无信号二跳闸）", "QJ6 (two trip)", "QJ6", "QJ6"),
-  opt("none", "不配", "None", "Нет", "Không"),
+  opt(
+    "QJ4G-25,flange without groove,one N/O contact (oil flow)",
+    "QJ4G-25 · 法兰不带槽",
+    "QJ4G-25 without groove",
+    "QJ4G-25 без канавки",
+    "QJ4G-25 không rãnh",
+  ),
+  opt(
+    "QJ4G-25,flange with groove,one N/O contact (oil flow)",
+    "QJ4G-25 · 法兰带槽",
+    "QJ4G-25 with groove",
+    "QJ4G-25 с канавкой",
+    "QJ4G-25 có rãnh",
+  ),
+  opt(
+    "QJ4-25,flange without groove,one N/O contact (oil flow),one N/O contact(gas alarm), only for vacuum OLTC",
+    "QJ4-25 · 法兰不带槽",
+    "QJ4-25 without groove",
+    "QJ4-25 без канавки",
+    "QJ4-25 không rãnh",
+  ),
+  opt(
+    "QJ4-25,flange with groove,one N/O contact (oil flow),one N/O contact(gas alarm), only for vacuum OLTC",
+    "QJ4-25 · 法兰带槽",
+    "QJ4-25 with groove",
+    "QJ4-25 с канавкой",
+    "QJ4-25 có rãnh",
+  ),
+  opt(
+    "QJ6-25,flange without groove,two N/O contacts (oil flow)",
+    "QJ6-25 · 法兰不带槽",
+    "QJ6-25 without groove",
+    "QJ6-25 без канавки",
+    "QJ6-25 không rãnh",
+  ),
+  opt(
+    "QJ6-25,flange with groove,two N/O contacts (oil flow)",
+    "QJ6-25 · 法兰带槽",
+    "QJ6-25 with groove",
+    "QJ6-25 с канавкой",
+    "QJ6-25 có rãnh",
+  ),
 ];
 
 export const GROOVE_OPTS = [
@@ -428,26 +466,43 @@ export const TOP_GEAR_OPTS = [
   opt("left", "左出轴", "Left output", "Выход влево", "Trục ra trái"),
 ];
 
-export const PIPE_ON_OPTS = [
-  opt("with", "带", "With", "Есть", "Có"),
-  opt("without", "不带", "Without", "Нет", "Không"),
+export const PIPE_Q_OPTS = [
+  opt("Without bleeder,flange with groove*", "无放气阀 · 带槽（常规）", "No bleeder, grooved (std.)", "Без воздушного, с канавкой", "Không van, có rãnh"),
+  opt("Without bleeder,flange without groove", "无放气阀 · 不带槽", "No bleeder, no groove", "Без воздушного, без канавки", "Không van, không rãnh"),
+  opt("With bleeder, flange with groove", "带放气阀 · 带槽", "Bleeder, grooved", "С воздушником, с канавкой", "Có van, có rãnh"),
+  opt("With bleeder, flange without groove", "带放气阀 · 不带槽", "Bleeder, no groove", "С воздушником, без канавки", "Có van, không rãnh"),
+  opt("Blind flange on OLTC head", "头部盲板", "Blind flange", "Глухой фланец", "Mặt bích bịt"),
+];
+
+export const PIPE_S_OPTS = [
+  opt("With bleeder, flange with groove*", "带放气阀 · 带槽（常规）", "Bleeder, grooved (std.)", "С воздушником, с канавкой", "Có van, có rãnh"),
+  opt("With bleeder, flange without groove", "带放气阀 · 不带槽", "Bleeder, no groove", "С воздушником, без канавки", "Có van, không rãnh"),
+  opt("Blind flange on OLTC head", "头部盲板", "Blind flange", "Глухой фланец", "Mặt bích bịt"),
+];
+
+export const PIPE_R_OPTS = [
+  opt("Without bleeder,flange without groove*", "无放气阀 · 不带槽（常规）", "No bleeder, no groove (std.)", "Без воздушного, без канавки", "Không van, không rãnh"),
+  opt("Without bleeder,flange with groove", "无放气阀 · 带槽", "No bleeder, grooved", "Без воздушного, с канавкой", "Không van, có rãnh"),
+  opt("With bleeder, flange with groove", "带放气阀 · 带槽", "Bleeder, grooved", "С воздушником, с канавкой", "Có van, có rãnh"),
+  opt("With bleeder, flange without groove", "带放气阀 · 不带槽", "Bleeder, no groove", "С воздушником, без канавки", "Có van, không rãnh"),
+  opt("Blind flange on OLTC head", "头部盲板", "Blind flange", "Глухой фланец", "Mặt bích bịt"),
 ];
 
 export const PIPE_E2_OPTS = [
-  opt("without", "不带（常规）", "Without (std.)", "Нет (станд.)", "Không (chuẩn)"),
-  opt("Q", "同 Q 管", "Same as Q", "Как Q", "Giống Q"),
-  opt("S", "同 S 管", "Same as S", "Как S", "Giống S"),
-  opt("R", "同 R 管", "Same as R", "Как R", "Giống R"),
+  opt("Blind flange on OLTC head*", "头部盲板（常规）", "Blind flange (std.)", "Глухой фланец", "Mặt bích bịt"),
+  opt("Without bleeder,flange with groove", "无放气阀 · 带槽", "No bleeder, grooved", "Без воздушного, с канавкой", "Không van, có rãnh"),
+  opt("Without bleeder,flange without groove", "无放气阀 · 不带槽", "No bleeder, no groove", "Без воздушного, без канавки", "Không van, không rãnh"),
+  opt("With bleeder, flange with groove", "带放气阀 · 带槽", "Bleeder, grooved", "С воздушником, с канавкой", "Có van, có rãnh"),
+  opt("With bleeder, flange without groove", "带放气阀 · 不带槽", "Bleeder, no groove", "С воздушником, без канавки", "Có van, không rãnh"),
 ];
 
 export const PIPE_HEIGHT_OPTS = [
-  opt("0", "不增高（常规）", "No increase (std.)", "Без увеличения", "Không tăng"),
-  opt("100", "增高 100 mm", "+100 mm", "+100 мм", "+100 mm"),
-  opt("120", "增高 120 mm", "+120 mm", "+120 мм", "+120 mm"),
-  opt("150", "增高 150 mm", "+150 mm", "+150 мм", "+150 mm"),
+  opt("181", "181 mm"),
+  opt("201", "201 mm"),
+  opt("231", "231 mm"),
 ];
 
-export const SHAFT_LEN_OPTS = [800, 1000, 1200, 1500, 2000].map((n) => opt(String(n), `${n} mm`));
+export const SHAFT_LEN_OPTS = [1000, 1200, 1500, 2000].map((n) => opt(String(n), `${n} mm`));
 
 export const YES_NO = [
   opt("yes", "是", "Yes", "Да", "Có"),

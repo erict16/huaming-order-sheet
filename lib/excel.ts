@@ -1,19 +1,19 @@
 import * as XLSX from "xlsx";
-import { cellsForSheet, TEMPLATE_FILE } from "./osCells";
-import { fillWorkbook } from "./fillXlsm";
+import { fillDocx } from "./fillDocx";
 import { allFields } from "./schema";
 import { t } from "./copy";
 import { typeFromValues } from "./typeString";
 import type { Lang, OrderValues, SheetDef } from "./types";
+import { cma7SdtValues, oltcSdtValues, WORD_TEMPLATE } from "./wordMap";
 
-export const APP_VERSION = "1.1.0";
+export const APP_VERSION = "1.2.0";
 export const SCHEMA_VERSION = "3";
 
 const LANGS: Lang[] = ["zh", "en", "ru", "vi"];
 
 function fileStem(sheet: SheetDef, values: OrderValues): string {
   const { compact } = typeFromValues(sheet.id, values);
-  const ref = values.order_no || values.order_date || new Date().toISOString().slice(0, 10);
+  const ref = values.project || values.order_date || new Date().toISOString().slice(0, 10);
   const stem = (compact || sheet.id).slice(0, 48);
   return `${stem}_${ref}`.replace(/[^A-Za-z0-9._×x+-]+/g, "-");
 }
@@ -90,18 +90,22 @@ function downloadBuf(buf: ArrayBuffer, filename: string, mime: string) {
 
 export async function exportOrderSheet(sheet: SheetDef, values: OrderValues): Promise<void> {
   const safe = fileStem(sheet, values);
-  if (sheet.id === "oltc" || sheet.id === "cma7" || sheet.id === "shm-d") {
-    const file = TEMPLATE_FILE[sheet.id];
-    const res = await fetch(templateUrl(file));
-    if (!res.ok) throw new Error(`Template ${file} missing (${res.status})`);
+  const word = WORD_TEMPLATE[sheet.id];
+  if (word) {
+    const res = await fetch(templateUrl(word.file));
+    if (!res.ok) throw new Error(`Template ${word.file} missing (${res.status})`);
     const template = await res.arrayBuffer();
-    const cells = cellsForSheet(sheet.id, values) ?? {};
-    const filled = fillWorkbook(template, cells);
-    downloadBuf(
-      filled,
-      `HM-OS_${safe}.xlsm`,
-      "application/vnd.ms-excel.sheet.macroEnabled.12",
-    );
+    if (sheet.id === "oltc") {
+      const filled = await fillDocx(template, oltcSdtValues(values));
+      downloadBuf(filled, `HM-OS_${safe}.docx`, word.mime);
+      return;
+    }
+    if (sheet.id === "cma7") {
+      const filled = await fillDocx(template, cma7SdtValues(values));
+      downloadBuf(filled, `HM-OS_${safe}.docx`, word.mime);
+      return;
+    }
+    downloadBuf(template, `HM-OS_${safe}.${word.file.split(".").pop()}`, word.mime);
     return;
   }
   const wb = buildWorkbook(sheet, values);
