@@ -6,7 +6,15 @@ import { allFields } from "@/lib/schema";
 import { useLang } from "@/lib/useLang";
 import type { OrderValues, SheetDef } from "@/lib/types";
 
-export default function ReviewPanel({ sheet, values }: { sheet: SheetDef; values: OrderValues }) {
+export default function ReviewPanel({
+  sheet,
+  values,
+  typeStr,
+}: {
+  sheet: SheetDef;
+  values: OrderValues;
+  typeStr?: string;
+}) {
   const { lang } = useLang();
   const rows = allFields(sheet, values);
   let last = "";
@@ -15,6 +23,9 @@ export default function ReviewPanel({ sheet, values }: { sheet: SheetDef; values
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
       <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
         <h3 className="font-semibold text-navy">{chromeText("reviewTitle", lang)}</h3>
+        {typeStr ? (
+          <p className="mt-1 font-mono text-sm font-medium text-navy">{typeStr}</p>
+        ) : null}
         <p className="mt-1 text-sm text-ink-soft">{chromeText("reviewLead", lang)}</p>
       </div>
       <div className="divide-y divide-slate-100">

@@ -5,7 +5,7 @@ import Providers from "@/components/Providers";
 export const metadata: Metadata = {
   title: "华明订货技术规范书 | Huaming Order Sheet",
   description:
-    "Shanghai Huaming tap-changer order specifications — OLTC, OCTC, dry-type, CMA7 and SHM-D. Fill in the browser, export Excel.",
+    "Shanghai Huaming tap-changer order specifications — OLTC, OCTC, dry-type, CMA7 and SHM-D. Fill in the browser, download the official order sheet.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

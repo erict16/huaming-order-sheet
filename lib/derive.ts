@@ -1,12 +1,16 @@
 import {
   contactFromPositions,
+  currentsFor,
   defaultOctcSeries,
   defaultSelectorGrade,
   EARTH_INSULATION,
   getFamily,
 } from "./catalog";
+import { operatingDesignation } from "./positions";
 import { resolveTapFields } from "./tapCode";
 import type { OrderValues, Regulation } from "./types";
+
+const GRADE_RANK: Record<string, number> = { B: 1, C: 2, D: 3, DE: 4 };
 
 function num(v: string | undefined): number | undefined {
   if (v == null || v === "") return undefined;
@@ -14,18 +18,62 @@ function num(v: string | undefined): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
+function ensureGrade(next: OrderValues, um: number | undefined) {
+  const fam = getFamily(next.family || "");
+  if (!fam?.hasSelectorGrade) {
+    next.oltc_selector_grade = "";
+    return;
+  }
+  if (!um) return;
+  const floor = defaultSelectorGrade(um);
+  const cur = next.oltc_selector_grade;
+  const curRank = GRADE_RANK[cur] ?? 0;
+  const floorRank = GRADE_RANK[floor] ?? 0;
+  if (!cur || curRank < floorRank) {
+    next.oltc_selector_grade = floor;
+  }
+}
+
+function fillPositions(next: OrderValues) {
+  const positions = num(next.oltc_tap_positions);
+  if (!positions) return;
+  const midRaw = num(next.oltc_tap_mid);
+  const mid: 0 | 1 | 3 =
+    next.regulation === "linear" ? 0 : midRaw === 1 || midRaw === 3 ? midRaw : 3;
+  const d = operatingDesignation(positions, mid);
+  if (!d.max) return;
+  next.pos_max = d.max;
+  next.pos_mid = d.mid;
+  next.pos_min = d.min;
+  if (!next.raise_direction) next.raise_direction = "1→n 升压";
+}
+
 export function deriveValues(prev: OrderValues, patch: OrderValues): OrderValues {
   const next: OrderValues = { ...prev, ...patch };
   const fam = getFamily(next.family || "");
+
+  if ("family" in patch || "phases" in patch) {
+    const amps = currentsFor(fam, next.phases || "III");
+    const cur = num(next.oltc_current_a);
+    if (cur != null && amps.length && !amps.includes(cur)) next.oltc_current_a = "";
+    const octcCur = num(next.current_a);
+    if (octcCur != null && amps.length && !amps.includes(octcCur)) next.current_a = "";
+    if (fam?.umKv?.length) {
+      const umNow = num(next.oltc_um_kv || next.um_kv);
+      if (umNow != null && !fam.umKv.includes(umNow)) {
+        next.oltc_um_kv = "";
+        next.um_kv = "";
+      }
+    }
+  }
 
   if (fam && !fam.hasSelectorGrade) {
     next.oltc_selector_grade = "";
   }
 
   const um = num(next.oltc_um_kv || next.um_kv);
-  if (um && fam?.hasSelectorGrade && !next.oltc_selector_grade) {
-    next.oltc_selector_grade = defaultSelectorGrade(um);
-  }
+  ensureGrade(next, um);
+
   if (um && EARTH_INSULATION[um] && (patch.oltc_um_kv || patch.um_kv)) {
     next.ins_earth_pf_kv = String(EARTH_INSULATION[um].pf);
     next.ins_earth_li_kv = String(EARTH_INSULATION[um].bil);
@@ -60,6 +108,10 @@ export function deriveValues(prev: OrderValues, patch: OrderValues): OrderValues
     next.oltc_tap_pitch = String(resolved.pitch);
     next.oltc_tap_mid = String(resolved.mid);
     next.tap_code = resolved.tapCode;
+  }
+
+  if (tapTouched || "family" in patch || !next.pos_max) {
+    fillPositions(next);
   }
 
   if ("connection" in patch && next.connection) {

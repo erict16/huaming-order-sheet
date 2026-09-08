@@ -1,24 +1,27 @@
 # 华明订货技术规范书（网页版）
 
-把华明五类 **Order Sheet / 订货技术规范书** 做成浏览器里填的表：中文默认，可切 English / Русский / Tiếng Việt。填完在本机下载 Excel。静态站点，可部署 GitHub Pages。
+把华明 **Order Sheet / 订货技术规范书** 做成浏览器里填的表：中文默认，可切 English / Русский / Tiếng Việt。
+
+有载、CMA7、SHM-D 下载的是官方 **V1.2 xlsm**（`Attachments/Sales Order Sheet` 那三张），不是自造 Excel。无励磁 / 干式仍导出工作簿。数据只存在当前浏览器。
 
 ## 五张订货单
 
 | 网页 | 对应规格表 | 填写要点 |
 |---|---|---|
-| **有载 OLTC** | OLTC order sheet | 先选系列（CM/CMD/CV/CV2/CM2/SHZV…），再填变压器与开关额定。型号按 `CM2III-500Y/72.5B-10193W` 自动拼。组合式才有 B/C/D/DE；复合式 CV/CV2/SV 没有这级字母。分接代码遵循 P = 2×(±N)+中间档，常用 ±8 中间 3 → **10193W**。 |
-| **无励磁 OCTC** | OCTC Order Specifications | 笼式 WSL/WDL、鼓式 WSG/WDG/WLG。型号如 `WSLIV-800Y/170-6x5B`。Y 常用 IV，D 常用 II。可选手轮或 CMA7。 |
-| **干式 CZ** | Dry Type order sheet | 室内干变真空有载。单相结构；三相通常 **3×CZI** 一台机构联动。无油、无滤油机。电流 500/600 A，Um 40.5/72.5。 |
-| **CMA7** | CMA7 order sheet | 传统电动机构。必须写所配开关型号和档位数，否则行程对不上。电机/控制电源、频率、加热、位置传送。 |
-| **SHM-D** | SHM-D MDU & Controller | 数字机构 SHM-D / SHM-DL，可配控制器与 Modbus / IEC 61850。 |
+| **有载 OLTC** | In-tank OLTC Order Specification-V1.2.xlsm | 先选系列。型号按 `CM2III-500Y/72.5B-10193W` 自动拼。出轴、电位电阻、Q/S/R/E2、QJ4/QJ4G/QJ6、防爆盖按出图清单勾。机构电气到 CMA7 / SHM-D 单。 |
+| **无励磁 OCTC** | OCTC Order Specifications | 笼式 WSL/WDL、鼓式 WSG/WDG/WLG。 |
+| **干式 CZ** | Dry Type order sheet | 室内干变真空有载。三相通常 **3×CZI**。 |
+| **CMA7** | CMA7 Order Specification-V1.2.xlsm | 必须写所配开关型号和档位数。电机可到 415 V。 |
+| **SHM-D** | SHM-D Order Specification-V1.2.xlsm | 标配电源按官方表 220–240 V，不要默认成 380 V。 |
 
-未填项按 **常规配置** 供货。
+未填项按 **常规配置** 供货（官方表上的 std.）。
 
 ## 使用
 
 ```bash
 npm install
 npm run dev        # http://127.0.0.1:3000
+npm test
 npm run build      # 静态导出到 ./out
 npm run lint
 npm run typecheck
@@ -26,12 +29,4 @@ npm run typecheck
 
 GitHub Pages：CI 设置 `NEXT_PUBLIC_BASE_PATH=/huaming-order-sheet`。
 
-## 导出
-
-Excel 三张表：
-
-1. **Order Sheet** — 中/英/俄/越标签 + 值（给人看）
-2. **Flat** — 稳定字段键，一行一张订单（给工程/导入）
-3. **Meta** — 版本与导出时间
-
-数据只存在当前浏览器 `localStorage`，不会上传。
+官方模板在 `public/templates/*.xlsm`。分接代码与 `oltc-selector/lib/tapCode.ts` 保持同一套图。
