@@ -188,6 +188,9 @@ A server (Next.js route handler / Python `openpyxl`) would give nicer styling an
 | Hosting | **GitHub Pages** via **GitHub Actions** (static deploy to `gh-pages`/Pages artifact) | Free, in-repo, matches constraint |
 | Base path | `basePath`/`assetPrefix = /huaming-order-sheet` in production | Pages serves under `/<repo>/` |
 | Images | `images.unoptimized = true` | Required for static export |
+| Motion | **framer-motion** | Step transitions, family-card feedback, export toast (respects `prefers-reduced-motion`) |
+| Design system | Industrial OEM palette — **navy `#00428C`, steel `#0071A9`, ink `#262626`, white** — in `tailwind.config.ts`; component classes in `globals.css` | Huaming brand seriousness, not a bare form |
+| UX pattern | **Mobile-first multi-step wizard** (Product → Order & general → Transformer → Tap changer → Construction → Review & export) with sticky header, desktop summary aside, and a sticky mobile action bar | Usable on phone; no overflow; touch-friendly |
 
 Build gates (must pass before landing): **lint** (`next lint` / ESLint), **typecheck** (`tsc --noEmit`), **build**, **static export** produces `out/`.
 
