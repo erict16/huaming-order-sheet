@@ -3,9 +3,9 @@ name: huaming-workflow
 description: >
   Use for Eric Tan's full Huaming overseas sales workflow: OLTC selection, quotation
   (QS Qu-ET), sales confirmation, CI/PL/Form E shipping docs, Vietnam commission /
-  赵珊 finance pack, customer email, and Huaming Hub docs site. Triggers: 华明, Huaming,
+  赵珺 finance pack, customer email, and Huaming Hub docs site. Triggers: 华明, Huaming,
   报价, QS, Qu-ET, 选型, OLTC, OCTC, Form E, CI/PL, CIPL, Sanaky, United Energy, export,
-  海外销售, 客户邮件, 发货资料, 佣金, 赵珊, 越南价格表, HLG, 延保.
+  海外销售, 客户邮件, 发货资料, 佣金, 赵珺, 越南价格表, HLG, 延保.
   Load this first for multi-step Huaming jobs; it routes to specialist child skills.
 metadata:
   short-description: "Huaming overseas sales end-to-end workflow (route + enforce)"
@@ -64,7 +64,7 @@ Inquiry / transformer data
 [5] SHIP    ── huaming-export-docs-email ──► CI+PL+Form E set (customer clearance pack)
         │
         ▼
-[6] FINANCE ── 赵珊财务包 + 新加坡 ERP + 李倩核佣金
+[6] FINANCE ── 赵珺财务包 + 新加坡 ERP + 李倩核佣金
         │      （越南价/佣金：references/vietnam-price-and-commission.md）
         ▼
 [7] CLOSE   ── archive under OS/… ; optional hub PDF links for buyer
@@ -169,14 +169,14 @@ Load `huaming-export-docs-email` (+ comms for mail).
 
 Customer pack often **HMSG…** / **ES-…** Singapore beneficiary — do not mix with 报关-only set. Detail: `huaming-export-docs-email`.
 
-### 6 · Finance (赵珊 / 李倩)
+### 6 · Finance (赵珺 / 李倩)
 
 Load `references/vietnam-price-and-commission.md`.
 
 - **越南报价**：先越南价格表 2026（已含佣金）；表上没有的型号才用标准表 × 系数（OLTC 1.1 内含 20%；OCTC 2.8 内含 12%）。
 - **佣金**：无载 12%、有载 20%，**跟 HMSG 采购价无关**。禁止用销售发票 − 内部合同。对不上 @李倩。
-- **出货后赵珊要**：采购发票、销售发票、采购合同 SHSG、销售合同、提单、佣金金额；新加坡 ERP 采购/入库/应收 + 销售/出口/应付。称赵珊姐。
-- 给沈丽玲的报关包仍只是内部合同 + 开关编号，不要和赵珊这套混。
+- **出货后赵珺要**：采购发票、销售发票、采购合同 SHSG、销售合同、提单、佣金金额；新加坡 ERP 采购/入库/应收 + 销售/出口/应付。称赵珺姐。
+- 给沈丽玲的报关包仍只是内部合同 + 开关编号，不要和赵珺这套混。
 
 ### 7 · Buyer self-serve
 
@@ -190,7 +190,7 @@ Point buyers to **Huaming Hub**: https://erict16.github.io/huaming-hub/
 | 选型 / model string / type designation | selection |
 | 报价 / QS / Qu-ET / 系数 / AUD / 越南价格 | **huaming-quotation**（越南另见 `references/vietnam-price-and-commission.md`） |
 | 延保 / 5 年质保 | **huaming-quotation** + `references/overseas-extended-warranty.md` |
-| 佣金 / 赵珊 / 新加坡 ERP | **this skill** stage 6 + 同上 reference；邮件走 qq-email |
+| 佣金 / 赵珺 / 新加坡 ERP | **this skill** stage 6 + 同上 reference；邮件走 qq-email |
 | 回客户 / 发邮件 / Cc | export-comms + use-spark |
 | 出图 / 2D3D / 夏工 / 沈旭 / 陈伟荣 / 王俊杰 / 蔡坤 / 樊工 | export-comms → `references/engineer-drawing-request.md` + qq-email |
 | Form E / 箱单 / 发票 / Sanaky 清关 | export-docs-email |
@@ -209,6 +209,6 @@ Point buyers to **Huaming Hub**: https://erict16.github.io/huaming-hub/
 
 - `references/form-e-and-cipl.md`
 - `references/exmail-ftn-and-form-e.md`
-- `references/vietnam-price-and-commission.md` — 越南三张价表、HLG、佣金、赵珊财务包
+- `references/vietnam-price-and-commission.md` — 越南三张价表、HLG、佣金、赵珺财务包
 - `references/overseas-extended-warranty.md` — 海外延保（2025-02-19 签发）：默认 24/18；电力变按投运年限加价，>7 年不延保
 - Child skills’ own `references/` for deep tables
