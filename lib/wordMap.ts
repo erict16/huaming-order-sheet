@@ -84,6 +84,7 @@ export function oltcSdtValues(values: OrderValues): Array<string | undefined> {
   };
 
   set(0, s(values.designer_name));
+  // SDT 1 is Revision "00" ("Choose a number"), not the quotation / doc number.
   set(2, s(values.order_date));
   set(3, s(values.buyer));
   set(4, s(values.country));
