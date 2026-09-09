@@ -65,7 +65,7 @@ Turn transformer parameters into a **precise commercial type string**. For Eric,
 | One-line engineering disclaimer after result | “须华明工程确认” on chrome |
 | Dev `:5173`; kill TypeBooks `:3000` when switching | Leave TypeBooks on preview |
 
-**Interaction:** 填参数 → 点「选型」→ 右侧才出型号（spinner → result-enter). Details: `references/ui-selection-rules.md`.
+**Interaction:** 填参数 → 点「选型」→ 右侧才出型号（spinner → result-enter）. Details: `references/ui-selection-rules.md`.
 
 ## Ranking (critical)
 
