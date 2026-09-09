@@ -45,7 +45,6 @@ function fillPositions(next: OrderValues) {
   next.pos_max = d.max;
   next.pos_mid = d.mid;
   next.pos_min = d.min;
-  if (!next.raise_direction) next.raise_direction = "1→n 升压";
 }
 
 export function deriveValues(prev: OrderValues, patch: OrderValues): OrderValues {

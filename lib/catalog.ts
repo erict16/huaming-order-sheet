@@ -546,9 +546,26 @@ export const IP_OPTS = [
 ];
 
 export const PAINT_OPTS = [
-  opt("RAL7040", "RAL 7040"),
-  opt("RAL7035", "RAL 7035"),
   opt("RAL7032", "RAL 7032"),
+  opt("RAL7035", "RAL 7035"),
+  opt("RAL7040", "RAL 7040"),
+  opt("RAL7012", "RAL 7012"),
+  opt("RAL7001", "RAL 7001"),
+  opt("RAL9002", "RAL 9002"),
+  opt("RAL9003", "RAL 9003"),
+  opt("RAL5012", "RAL 5012"),
+  opt("RAL5015", "RAL 5015"),
+  opt("other", "其他", "Other", "Другое", "Khác"),
+];
+
+/** Transformer vector group — not OLTC 开关连接 Y/D. */
+export const VECTOR_GROUP_OPTS = [
+  opt("YNd11", "YNd11"),
+  opt("YNd1", "YNd1"),
+  opt("Dyn11", "Dyn11"),
+  opt("Dyn5", "Dyn5"),
+  opt("YNyn0", "YNyn0"),
+  opt("Dd0", "Dd0"),
   opt("other", "其他", "Other", "Другое", "Khác"),
 ];
 

@@ -57,6 +57,19 @@ function tieInWord(values: OrderValues): string | undefined {
   return undefined;
 }
 
+function paintWord(values: OrderValues): string | undefined {
+  const paint = s(values.paint);
+  if (paint === "other") return s(values.paint_other) || undefined;
+  if (!paint) return undefined;
+  return paint.replace("RAL", "RAL ");
+}
+
+function vectorGroupWord(values: OrderValues): string | undefined {
+  const vg = s(values.vector_group);
+  if (vg === "other") return s(values.vector_group_other) || undefined;
+  return vg || undefined;
+}
+
 function langWord(v: string): string | undefined {
   if (v === "zh") return "Chinese";
   if (v === "en") return "English";
@@ -93,7 +106,7 @@ export function oltcSdtValues(values: OrderValues): Array<string | undefined> {
   set(7, s(values.end_user));
   set(8, s(values.mdu_model) === "none" ? undefined : s(values.mdu_model));
   set(9, s(values.application));
-  set(10, s(values.vector_group));
+  set(10, vectorGroupWord(values));
   set(12, phasesWord(s(values.phases)));
   set(13, freqWord(s(values.frequency_hz)));
   const mva = n(values.rated_power_mva);
@@ -151,7 +164,7 @@ export function oltcSdtValues(values: OrderValues): Array<string | undefined> {
   if (h) set(78, h);
   if (v) set(82, v);
 
-  if (s(values.paint) && s(values.paint) !== "other") set(87, s(values.paint).replace("RAL", "RAL "));
+  set(87, paintWord(values));
   set(89, langWord(s(values.nameplate_language)));
   set(91, langWord(s(values.nameplate_language)));
   set(92, s(values.quantity) || "1");
@@ -177,7 +190,7 @@ export function cma7SdtValues(values: OrderValues): Array<string | undefined> {
     set(8, d.mid);
     set(9, d.min);
   }
-  if (s(values.paint) && s(values.paint) !== "other") set(21, s(values.paint).replace("RAL", "RAL "));
+  set(21, paintWord(values));
   set(23, langWord(s(values.nameplate_language)));
   set(25, langWord(s(values.nameplate_language)));
   set(26, s(values.quantity) || "1");
