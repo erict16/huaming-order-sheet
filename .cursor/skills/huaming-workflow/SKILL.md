@@ -49,19 +49,19 @@ Also: Grok bundled `docx` / `pdf` for document edits; `xlsx` via openpyxl/LibreO
 Inquiry / transformer data
         │
         ▼
-[1] SELECT  ── huaming-oltc-selection ──▶ type string (no price on shared UI)
+[1] SELECT  ── huaming-oltc-selection ──► type string (no price on shared UI)
         │
         ▼
-[2] PRICE   ── huaming-quotation ──▶ list×coeff×FX worksheet + Qu-ETxxxxxx.docx
+[2] PRICE   ── huaming-quotation ──► list×coeff×FX worksheet + Qu-ETxxxxxx.docx
         │
         ▼
-[3] SEND QS ── huaming-export-comms + qq-email ──▶ short draft → Eric approves → send
+[3] SEND QS ── huaming-export-comms + qq-email ──► short draft → Eric approves → send
         │
         ▼
-[4] PO / SC ── huaming-overseas-sales ──▶ Sales Confirmation + OS folder
+[4] PO / SC ── huaming-overseas-sales ──► Sales Confirmation + OS folder
         │
         ▼
-[5] SHIP    ── huaming-export-docs-email ──▶ CI+PL+Form E set (customer clearance pack)
+[5] SHIP    ── huaming-export-docs-email ──► CI+PL+Form E set (customer clearance pack)
         │
         ▼
 [6] FINANCE ── 赵珊财务包 + 新加坡 ERP + 李倩核佣金
