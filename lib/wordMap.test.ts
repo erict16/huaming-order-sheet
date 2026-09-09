@@ -42,6 +42,13 @@ describe("oltcSdtValues", () => {
     expect(v[67]).toBe("181");
     expect(v[74]).toContain("QJ4G-25");
     expect(v[8]).toBe("CMA7");
+    expect(v[1]).toBeUndefined();
+  });
+
+  it("does not write 报价单号 over the Revision 00 SDT", () => {
+    const v = oltcSdtValues({ order_no: "HM-Q-2026-001", designer_name: "Li" });
+    expect(v[0]).toBe("Li");
+    expect(v[1]).toBeUndefined();
   });
 
   it("puts kVA / HV / current / steps in the Word boxes next to those labels", () => {
