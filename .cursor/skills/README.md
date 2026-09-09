@@ -13,3 +13,5 @@ Included:
 - `huaming-export-comms`
 - `huaming-export-docs-email`
 - `qq-email` (`SKILL.md` pointer only — scripts stay in grok-skills)
+
+The signed overseas warranty scan (`overseas-extended-warranty-2025-02-19.png`) stays in grok-skills; the surcharge table is in `huaming-workflow/references/overseas-extended-warranty.md`.
