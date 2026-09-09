@@ -22,6 +22,7 @@ import {
   OLTC_FAMILIES,
   PAINT_OPTS,
   PHASE_OPTS,
+  VECTOR_GROUP_OPTS,
   PIPE_E2_OPTS,
   PIPE_HEIGHT_OPTS,
   PIPE_Q_OPTS,
@@ -59,7 +60,7 @@ function orderFields(): FieldDef[] {
   return [
     { key: "order_date", label: L("日期", "Date", "Дата", "Ngày"), type: "date" },
     { key: "order_no", label: L("报价单号", "Quotation No.", "Номер котировки", "Số báo giá"), type: "text" },
-    { key: "buyer", label: L("买方 / 变压器厂", "Buyer / transformer maker", "Покупатель / завод ТР", "Bên mua / nhà máy MBA"), type: "text", required: true, span: 2 },
+    { key: "buyer", label: L("买方 / 变压器厂", "Buyer / transformer maker", "Покупатель / завод ТР", "Bên mua / nhà máy MBA"), type: "text", required: true },
     { key: "end_user", label: L("最终用户", "End user", "Конечный пользователь", "Người dùng cuối"), type: "text" },
     { key: "country", label: L("国家 / 地区", "Country / region", "Страна / регион", "Quốc gia / khu vực"), type: "text", required: true },
     { key: "project", label: L("工程名称", "Project", "Объект", "Công trình"), type: "text" },
@@ -84,12 +85,18 @@ function transformerFields(opts?: { fluid?: boolean }): FieldDef[] {
     { key: "rated_power_mva", label: L("额定容量", "Rated power", "Номинальная мощность", "Công suất định mức"), type: "number", unit: "MVA", required: true },
     { key: "hv_kv", label: L("高压额定电压", "HV rated voltage", "Ном. напряжение ВН", "Điện áp cao"), type: "number", unit: "kV" },
     { key: "lv_kv", label: L("低压额定电压", "LV rated voltage", "Ном. напряжение НН", "Điện áp hạ"), type: "number", unit: "kV" },
-    { key: "vector_group", label: L("联结组别", "Vector group", "Группа соединения", "Tổ đấu dây"), type: "text", placeholder: L("例如 YNd11", "e.g. YNd11", "напр. YNd11", "vd. YNd11") },
+    { key: "vector_group", label: L("联结组别", "Vector group", "Группа соединения", "Tổ đấu dây"), type: "select", options: VECTOR_GROUP_OPTS },
+    {
+      key: "vector_group_other",
+      label: L("其他联结组别", "Other vector group", "Другая группа соединения", "Tổ đấu dây khác"),
+      type: "text",
+      placeholder: L("例如 YNyn6", "e.g. YNyn6", "напр. YNyn6", "vd. YNyn6"),
+      applies: (v) => v.vector_group === "other",
+    },
     { key: "frequency_hz", label: L("频率", "Frequency", "Частота", "Tần số"), type: "radio", options: FREQ_OPTS, required: true },
     { key: "phases", label: L("相数", "Phases", "Число фаз", "Số pha"), type: "radio", options: PHASE_OPTS, required: true },
     { key: "standard", label: L("标准", "Standard", "Стандарт", "Tiêu chuẩn"), type: "select", options: STD_OPTS },
     { key: "ambient_temp", label: L("环境温度", "Ambient temperature", "Температура среды", "Nhiệt độ môi trường"), type: "text", placeholder: L("−25 / +40 °C", "-25 / +40 °C", "−25 / +40 °C", "−25 / +40 °C") },
-    { key: "altitude_m", label: L("海拔", "Altitude", "Высота над ур. моря", "Độ cao"), type: "number", unit: "m" },
   ];
   if (opts?.fluid !== false) {
     fields.push({
@@ -205,7 +212,6 @@ function positionFields(): FieldDef[] {
     { key: "pos_max", label: L("最高档位号", "Max position no.", "Макс. положение", "Vị trí max"), type: "text", hint: L("由分接代码自动填，常见 1。", "Filled from tap code; usually 1.", "Из кода ответвлений; обычно 1.", "Tự điền từ mã nấc; thường 1.") },
     { key: "pos_mid", label: L("中间档位号", "Mid position", "Среднее положение", "Vị trí giữa"), type: "text", hint: L("10193 为 9A9B9C。", "10193 → 9A9B9C.", "10193 → 9A9B9C.", "10193 → 9A9B9C.") },
     { key: "pos_min", label: L("最低档位号", "Min position no.", "Мин. положение", "Vị trí min"), type: "text" },
-    { key: "raise_direction", label: L("升压方向", "Raise-voltage direction", "Направление повышения", "Hướng tăng áp"), type: "text", placeholder: L("例如 1→n 升压", "e.g. 1→n raises voltage", "напр. 1→n повышает", "vd. 1→n tăng áp") },
   ];
 }
 
@@ -243,6 +249,19 @@ function driveFields(includeMdu = true): FieldDef[] {
   return f;
 }
 
+function paintFields(): FieldDef[] {
+  return [
+    { key: "paint", label: L("漆色", "Paint", "Окраска", "Màu sơn"), type: "select", options: PAINT_OPTS },
+    {
+      key: "paint_other",
+      label: L("其他漆色", "Other paint", "Другая окраска", "Màu sơn khác"),
+      type: "text",
+      placeholder: L("RAL / C5 / 特殊漆", "RAL / C5 / special", "RAL / C5 / спец.", "RAL / C5 / đặc biệt"),
+      applies: (v) => v.paint === "other",
+    },
+  ];
+}
+
 function accessoryFields(opts?: { oil?: boolean }): FieldDef[] {
   const f: FieldDef[] = [];
   if (opts?.oil !== false) {
@@ -256,7 +275,7 @@ function accessoryFields(opts?: { oil?: boolean }): FieldDef[] {
   }
   f.push(
     { key: "rain_cover", label: L("防雨罩", "Rain cover", "Защитный кожух", "Nắp che mưa"), type: "select", options: YES_NO },
-    { key: "paint", label: L("漆色", "Paint", "Окраска", "Màu sơn"), type: "select", options: PAINT_OPTS },
+    ...paintFields(),
     { key: "nameplate_language", label: L("铭牌语言", "Nameplate language", "Язык таблички", "Ngôn ngữ nhãn"), type: "select", options: NAMEPLATE_OPTS },
   );
   return f;
@@ -521,7 +540,6 @@ const cma7Sheet: SheetDef = {
           fields: [
             matchingOltcField(),
             { key: "mdu_positions", label: L("操作位置数", "Operating positions", "Число положений", "Số vị trí thao tác"), type: "number", required: true },
-            { key: "raise_direction", label: L("升压方向", "Raise-voltage direction", "Направление повышения", "Hướng tăng áp"), type: "text" },
           ],
         },
       ],
@@ -560,7 +578,7 @@ const cma7Sheet: SheetDef = {
             { key: "mdu_side", label: L("安装位置", "Mounting side", "Сторона установки", "Bên lắp"), type: "radio", options: SIDE_OPTS },
             { key: "ambient_temp", label: L("环境温度", "Ambient temperature", "Температура среды", "Nhiệt độ môi trường"), type: "text" },
             { key: "nameplate_language", label: L("铭牌语言", "Nameplate language", "Язык таблички", "Ngôn ngữ nhãn"), type: "select", options: NAMEPLATE_OPTS },
-            { key: "paint", label: L("漆色", "Paint", "Окраска", "Màu sơn"), type: "select", options: PAINT_OPTS },
+            ...paintFields(),
           ],
         },
         { id: "notes", title: L("备注", "Notes", "Примечания", "Ghi chú"), fields: [notesField] },
@@ -599,7 +617,6 @@ const shmSheet: SheetDef = {
             matchingOltcField(),
             { key: "shm_model", label: L("机构型号", "Drive model", "Модель привода", "Model bộ truyền"), type: "radio", options: SHM_MODEL_OPTS, required: true, span: 2 },
             { key: "mdu_positions", label: L("操作位置数", "Operating positions", "Число положений", "Số vị trí"), type: "number", required: true },
-            { key: "raise_direction", label: L("升压方向", "Raise-voltage direction", "Направление повышения", "Hướng tăng áp"), type: "text" },
           ],
         },
       ],
@@ -638,7 +655,7 @@ const shmSheet: SheetDef = {
             { key: "position_tx", label: L("模拟位置输出", "Analogue position output", "Аналоговый выход положения", "Ngõ ra vị trí analog"), type: "select", options: POS_TX_OPTS },
             { key: "parallel", label: L("并列运行", "Parallel operation", "Параллельная работа", "Chạy song song"), type: "radio", options: YES_NO },
             { key: "nameplate_language", label: L("铭牌语言", "Nameplate language", "Язык таблички", "Ngôn ngữ nhãn"), type: "select", options: NAMEPLATE_OPTS },
-            { key: "paint", label: L("漆色", "Paint", "Окраска", "Màu sơn"), type: "select", options: PAINT_OPTS },
+            ...paintFields(),
           ],
         },
         { id: "notes", title: L("备注", "Notes", "Примечания", "Ghi chú"), fields: [notesField] },

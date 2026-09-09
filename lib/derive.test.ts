@@ -34,5 +34,6 @@ describe("deriveValues", () => {
     expect(v.pos_max).toBe("1");
     expect(v.pos_mid).toBe("9a9b9c");
     expect(v.pos_min).toBe("17");
+    expect(v.raise_direction).toBeUndefined();
   });
 });

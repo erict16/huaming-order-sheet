@@ -111,12 +111,24 @@ function nameplateOs(v: string): string | undefined {
   return undefined;
 }
 
-function paintOs(v: string): string | undefined {
-  if (!v || v === "other") return undefined;
-  if (v === "RAL7040") return "RAL7040";
-  if (v === "RAL7035") return "RAL7035";
-  if (v === "RAL7032") return "RAL7032";
-  return v;
+function paintOs(values: OrderValues): string | undefined {
+  const paint = s(values.paint);
+  if (paint === "other") return s(values.paint_other) || undefined;
+  if (!paint) return undefined;
+  return paint;
+}
+
+function paintOsStd(values: OrderValues): string | undefined {
+  const p = paintOs(values);
+  if (!p) return undefined;
+  if (s(values.paint) === "other") return p;
+  return `${p}-std.`;
+}
+
+function vectorGroupOs(values: OrderValues): string | undefined {
+  const vg = s(values.vector_group);
+  if (vg === "other") return s(values.vector_group_other) || undefined;
+  return vg || undefined;
 }
 
 function mduOs(v: string): string | undefined {
@@ -240,7 +252,7 @@ export function oltcCells(values: OrderValues): CellWrites {
   if (hv || lv) {
     set(out, "H23", `HV(${hv || "     "}) kV\nMV(     ) kV\nLV(${lv || "     "}) kV`);
   }
-  set(out, "O23", s(values.vector_group) || undefined);
+  set(out, "O23", vectorGroupOs(values));
 
   const pm = n(values.plus_minus);
   if (pm && values.regulation !== "linear") {
@@ -315,7 +327,7 @@ export function oltcCells(values: OrderValues): CellWrites {
   const vShaft = shaftQty(n(values.drive_shaft_vertical_mm));
   if (vShaft) set(out, `Z${vShaft.row}`, 1);
 
-  set(out, "H167", paintOs(s(values.paint)));
+  set(out, "H167", paintOs(values));
   set(out, "H171", nameplateOs(s(values.nameplate_language)));
   set(out, "H169", nameplateOs(s(values.nameplate_language)));
 
@@ -378,7 +390,7 @@ export function cma7Cells(values: OrderValues): CellWrites {
     set(out, "Z16", n(values.mdu_positions)!);
   }
   cma7Motor(values, out);
-  set(out, "H75", paintOs(s(values.paint)) ? `${paintOs(s(values.paint))}-std.` : undefined);
+  set(out, "H75", paintOsStd(values));
   set(out, "H79", nameplateOs(s(values.nameplate_language)));
   const notes = [s(values.notes), s(values.matching_oltc) ? `OLTC: ${s(values.matching_oltc)}` : ""]
     .filter(Boolean)
@@ -423,7 +435,7 @@ export function shmDCells(values: OrderValues): CellWrites {
   if (ctrl === "SHM-KX") set(out, "H49", "SHM_KX");
   if (ctrl === "HMIET") set(out, "H49", "HMIET-I");
 
-  set(out, "H61", paintOs(s(values.paint)) ? `${paintOs(s(values.paint))}-std.` : undefined);
+  set(out, "H61", paintOsStd(values));
   set(out, "H65", nameplateOs(s(values.nameplate_language)));
   const notes = [s(values.notes), s(values.matching_oltc) ? `OLTC: ${s(values.matching_oltc)}` : ""]
     .filter(Boolean)

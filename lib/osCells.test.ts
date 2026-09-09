@@ -98,6 +98,14 @@ describe("oltcCells", () => {
     expect(oltcCells({ designer_phone_cc: "++86", designer_phone: "+86 13800138000" }).Z5).toBe("+86 13800138000");
     expect(oltcCells({ designer_phone: "13800138000" }).Z5).toBe("13800138000");
   });
+
+  it("writes catalogue RAL and custom paint_other / vector_group_other", () => {
+    expect(oltcCells({ ...oltc, paint: "RAL5012" }).H167).toBe("RAL5012");
+    expect(oltcCells({ ...oltc, paint: "other" }).H167).toBeUndefined();
+    expect(oltcCells({ ...oltc, paint: "other", paint_other: "C5 RAL 9005" }).H167).toBe("C5 RAL 9005");
+    expect(oltcCells({ ...oltc, vector_group: "YNd11" }).O23).toBe("YNd11");
+    expect(oltcCells({ ...oltc, vector_group: "other", vector_group_other: "YNyn6" }).O23).toBe("YNyn6");
+  });
 });
 
 describe("cma7Cells", () => {
@@ -119,6 +127,11 @@ describe("cma7Cells", () => {
     expect(cells.Z16).toBe(19);
     expect(String(cells.A83)).toContain("CM2III-500Y/72.5B-10193W");
   });
+
+  it("writes custom paint without inventing -std.", () => {
+    expect(cma7Cells({ paint: "RAL7035" }).H75).toBe("RAL7035-std.");
+    expect(cma7Cells({ paint: "other", paint_other: "C5" }).H75).toBe("C5");
+  });
 });
 
 describe("shmDCells", () => {
@@ -126,5 +139,9 @@ describe("shmDCells", () => {
     const cells = shmDCells({ shm_model: "SHM-D", quantity: "1" });
     expect(cells.H16).toBe("SHM-D");
     expect(cells.H20).toBeUndefined();
+  });
+
+  it("writes paint_other when paint is 其他", () => {
+    expect(shmDCells({ shm_model: "SHM-D", paint: "other", paint_other: "RAL 5017" }).H61).toBe("RAL 5017");
   });
 });

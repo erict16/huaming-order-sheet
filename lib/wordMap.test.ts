@@ -45,6 +45,21 @@ describe("oltcSdtValues", () => {
     expect(v[1]).toBeUndefined();
   });
 
+  it("writes catalogue RAL and custom paint / vector group", () => {
+    const ral = oltcSdtValues({ paint: "RAL5015", vector_group: "Dyn11" });
+    expect(ral[87]).toBe("RAL 5015");
+    expect(ral[10]).toBe("Dyn11");
+    const other = oltcSdtValues({
+      paint: "other",
+      paint_other: "C5 RAL 9006",
+      vector_group: "other",
+      vector_group_other: "YNyn6",
+    });
+    expect(other[87]).toBe("C5 RAL 9006");
+    expect(other[10]).toBe("YNyn6");
+    expect(oltcSdtValues({ paint: "other" })[87]).toBeUndefined();
+  });
+
   it("does not write 报价单号 over the Revision 00 SDT", () => {
     const v = oltcSdtValues({ order_no: "HM-Q-2026-001", designer_name: "Li" });
     expect(v[0]).toBe("Li");
@@ -123,5 +138,10 @@ describe("cma7SdtValues", () => {
     expect(v[8]).toBe("9a9b9c");
     expect(v[9]).toBe("17");
     expect(v[29]).toContain("CM2III-500Y/72.5B-10193W");
+  });
+
+  it("writes custom CMA7 paint", () => {
+    expect(cma7SdtValues({ paint: "RAL9002" })[21]).toBe("RAL 9002");
+    expect(cma7SdtValues({ paint: "other", paint_other: "C5" })[21]).toBe("C5");
   });
 });
