@@ -6,7 +6,7 @@ App: `~/Github/oltc-selector` · stack **Next.js 15 + Tailwind v4** · engine `l
 
 1. **Idle first.** Right pane = “还没选型” until the user clicks **选型 / Select**.
 2. **Explicit run.** `selectOltc` runs on submit only (short spinner ~250–300 ms is fine).
-3. **Stale on edit.** Changing any field after a run marks result stale → banner “参数已改，请再点重新选型"; do **not** auto-replace the model.
+3. **Stale on edit.** Changing any field after a run marks result stale → banner “参数已改，请再点重新选型”; do **not** auto-replace the model.
 4. **Enter animation.** Result card uses calm rise/fade (`result-enter`); respect `prefers-reduced-motion`.
 5. **Progressive disclosure.** Main grid = duty fields only; mounting / medium / phases / vacuum / selector / across-tap BIL under **更多选项**.
 6. **Short copy.** One-line page blurb; tips under fields optional and ≤1 line. No ranking essays. Run **humanizer** on UI strings (no AI marketing tone).
