@@ -58,6 +58,7 @@ import type {
 function orderFields(): FieldDef[] {
   return [
     { key: "order_date", label: L("日期", "Date", "Дата", "Ngày"), type: "date" },
+    { key: "order_no", label: L("报价单号", "Quotation No.", "Номер котировки", "Số báo giá"), type: "text" },
     { key: "buyer", label: L("买方 / 变压器厂", "Buyer / transformer maker", "Покупатель / завод ТР", "Bên mua / nhà máy MBA"), type: "text", required: true, span: 2 },
     { key: "end_user", label: L("最终用户", "End user", "Конечный пользователь", "Người dùng cuối"), type: "text" },
     { key: "country", label: L("国家 / 地区", "Country / region", "Страна / регион", "Quốc gia / khu vực"), type: "text", required: true },
@@ -65,6 +66,12 @@ function orderFields(): FieldDef[] {
     { key: "quantity", label: L("数量", "Quantity", "Количество", "Số lượng"), type: "number", unit: "pcs", required: true },
     { key: "designer_name", label: L("设计人", "Designer", "Проектировщик", "Người thiết kế"), type: "text" },
     { key: "designer_email", label: L("邮箱", "Email", "Эл. почта", "Email"), type: "text" },
+    {
+      key: "designer_phone_cc",
+      label: L("国家区号", "Country code", "Код страны", "Mã quốc gia"),
+      type: "text",
+      placeholder: L("+86", "+86", "+86", "+86"),
+    },
     { key: "designer_phone", label: L("电话", "Phone", "Телефон", "Điện thoại"), type: "text" },
     { key: "delivery_date", label: L("要货期", "Delivery date", "Срок поставки", "Ngày giao"), type: "date" },
   ];

@@ -87,6 +87,17 @@ describe("oltcCells", () => {
   it("does not invent motor voltage on the OLTC sheet", () => {
     expect(cells.H22).toBeUndefined();
   });
+
+  it("writes 报价单号 to S13", () => {
+    expect(oltcCells({ ...oltc, order_no: "HM-Q-2026-001" }).S13).toBe("HM-Q-2026-001");
+  });
+
+  it("combines country code and phone on Z5 without doubling +", () => {
+    expect(oltcCells({ designer_phone_cc: "+86", designer_phone: "13800138000" }).Z5).toBe("+86 13800138000");
+    expect(oltcCells({ designer_phone_cc: "86", designer_phone: "13800138000" }).Z5).toBe("+86 13800138000");
+    expect(oltcCells({ designer_phone_cc: "++86", designer_phone: "+86 13800138000" }).Z5).toBe("+86 13800138000");
+    expect(oltcCells({ designer_phone: "13800138000" }).Z5).toBe("13800138000");
+  });
 });
 
 describe("cma7Cells", () => {

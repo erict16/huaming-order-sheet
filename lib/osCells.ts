@@ -163,10 +163,24 @@ function designationCells(values: OrderValues): { maxLine: string; midLine: stri
   return { maxLine, midLine, pos, mid };
 }
 
+/** Combine country calling code + local number as `+86 138…`. Does not double `+`. */
+export function formatIntlPhone(cc: string | undefined, phone: string | undefined): string {
+  const num = s(phone);
+  const raw = s(cc).replace(/^\++/, "").replace(/[\s-]/g, "");
+  if (!raw) return num;
+  let rest = num;
+  if (rest) {
+    const escaped = raw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    rest = rest.replace(new RegExp(`^\\+?${escaped}[\\s-]*`), "").trim();
+  }
+  const prefix = `+${raw}`;
+  return rest ? `${prefix} ${rest}` : prefix;
+}
+
 function commonHeader(values: OrderValues, out: CellWrites) {
   set(out, "H5", s(values.designer_name));
   set(out, "H6", s(values.designer_email));
-  set(out, "Z5", s(values.designer_phone));
+  set(out, "Z5", formatIntlPhone(values.designer_phone_cc, values.designer_phone));
   set(out, "Z3", s(values.order_date));
   set(out, "H8", s(values.buyer));
   set(out, "H9", s(values.end_user));
