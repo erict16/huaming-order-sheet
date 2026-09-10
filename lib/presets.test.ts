@@ -60,7 +60,7 @@ describe("ORDER_PRESETS", () => {
       }
       const applied = applyPreset(preset);
       for (const key of PRESET_CONTACT_KEYS) {
-        expect(applied[key], `applied ${preset.id}.${key}`).toBeUndefined();
+        expect(applied[key], `applied ${preset.id}.${key}`).toBe("");
       }
     }
   });
@@ -75,9 +75,9 @@ describe("ORDER_PRESETS", () => {
     expect(next.country).toBe("China");
     expect(next.delivery_date).toBe("90 days after PO");
     expect(next.family).toBe("CM2");
-    expect(next.designer_phone_cc).toBeUndefined();
-    expect(next.designer_phone).toBeUndefined();
-    expect(next.buyer).toBeUndefined();
+    expect(next.designer_phone_cc).toBe("");
+    expect(next.designer_phone).toBe("");
+    expect(next.buyer).toBe("");
   });
 });
 

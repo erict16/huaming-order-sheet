@@ -74,7 +74,7 @@ function orderFields(): FieldDef[] {
       label: L("国家区号", "Country code", "Код страны", "Mã quốc gia"),
       type: "combobox",
       options: COUNTRY_CODE_OPTS,
-      placeholder: L("+86", "+86", "+86", "+86"),
+      placeholder: L("选择区号", "Select code", "Код", "Chọn mã"),
     },
     {
       key: "designer_phone_cc_other",

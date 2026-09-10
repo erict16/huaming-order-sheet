@@ -190,7 +190,7 @@ export const PRESET_CONTACT_KEYS = [
 export function applyPreset(preset: OrderPreset): OrderValues {
   const next = deriveValues({}, { ...SHEET_DEFAULTS[preset.sheetId], ...preset.values });
   for (const key of PRESET_CONTACT_KEYS) {
-    delete next[key];
+    next[key] = "";
   }
   return next;
 }
