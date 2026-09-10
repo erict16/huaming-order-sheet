@@ -34,6 +34,7 @@ import Field from "./Field";
 import PipeTable from "./PipeTable";
 import PresetPicker from "./PresetPicker";
 import ReviewPanel from "./ReviewPanel";
+import SegmentedControl from "./SegmentedControl";
 
 export default function OrderWizard({ sheetId }: { sheetId: string }) {
   const id = sheetId as SheetId;
@@ -291,32 +292,17 @@ function ExportFormatControl({
   lang: Lang;
 }) {
   return (
-    <fieldset className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+    <fieldset className="rounded-xl bg-white px-4 py-3 shadow-sm ring-1 ring-slate-200/80">
       <legend className="px-1 text-sm font-semibold text-navy">{chromeText("exportFormat", lang)}</legend>
-      <div className="mt-2 inline-flex rounded-xl border border-slate-200 bg-slate-50 p-1">
-        <button
-          type="button"
-          disabled={!canWord}
-          onClick={() => onChange("word")}
-          className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
-            format === "word"
-              ? "bg-navy text-white shadow-sm"
-              : "text-ink-soft hover:text-navy disabled:opacity-40"
-          }`}
-        >
-          {chromeText("exportWord", lang)}
-        </button>
-        <button
-          type="button"
-          onClick={() => onChange("excel")}
-          className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
-            format === "excel"
-              ? "bg-navy text-white shadow-sm"
-              : "text-ink-soft hover:text-navy"
-          }`}
-        >
-          {chromeText("exportExcel", lang)}
-        </button>
+      <div className="mt-2">
+        <SegmentedControl
+          value={format}
+          onChange={onChange}
+          options={[
+            { value: "word", label: chromeText("exportWord", lang), disabled: !canWord },
+            { value: "excel", label: chromeText("exportExcel", lang) },
+          ]}
+        />
       </div>
     </fieldset>
   );

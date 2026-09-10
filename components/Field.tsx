@@ -1,10 +1,12 @@
 "use client";
 
+import { CalendarDaysIcon } from "@heroicons/react/24/outline";
 import { t } from "@/lib/copy";
 import { chromeText } from "@/lib/i18n";
 import { useLang } from "@/lib/useLang";
 import type { FieldDef, Lang } from "@/lib/types";
 import Combobox from "./Combobox";
+import SelectListbox from "./SelectListbox";
 
 export default function Field({
   field,
@@ -59,10 +61,10 @@ function Control({
               key={opt.value}
               type="button"
               onClick={() => onChange(opt.value)}
-              className={`rounded-xl border px-3 py-2 text-sm transition ${
+              className={`rounded-lg px-3 py-2 text-sm shadow-sm ring-1 ring-inset transition ${
                 active
-                  ? "border-navy bg-navy text-white"
-                  : "border-slate-300 bg-white text-ink-soft hover:border-slate-400"
+                  ? "bg-navy text-white ring-navy"
+                  : "bg-white text-ink-soft ring-slate-300 hover:ring-slate-400"
               }`}
             >
               {t(opt.label, lang)}
@@ -87,14 +89,12 @@ function Control({
 
   if (field.type === "select") {
     return (
-      <select className="field-control" value={value} onChange={(e) => onChange(e.target.value)}>
-        <option value="">—</option>
-        {(field.options ?? []).map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {t(opt.label, lang)}
-          </option>
-        ))}
-      </select>
+      <SelectListbox
+        options={field.options ?? []}
+        value={value}
+        onChange={onChange}
+        lang={lang}
+      />
     );
   }
 
@@ -109,10 +109,24 @@ function Control({
     );
   }
 
+  if (field.type === "date") {
+    return (
+      <div className="relative">
+        <input
+          className="field-control pr-10"
+          type="date"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        />
+        <CalendarDaysIcon className="pointer-events-none absolute right-3 top-1/2 size-5 -translate-y-1/2 text-ink-muted" />
+      </div>
+    );
+  }
+
   return (
     <input
       className="field-control"
-      type={field.type === "number" ? "number" : field.type === "date" ? "date" : "text"}
+      type={field.type === "number" ? "number" : "text"}
       value={value}
       placeholder={placeholder}
       onChange={(e) => onChange(e.target.value)}
