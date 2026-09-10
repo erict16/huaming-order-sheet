@@ -189,10 +189,21 @@ export function formatIntlPhone(cc: string | undefined, phone: string | undefine
   return rest ? `${prefix} ${rest}` : prefix;
 }
 
+/** ISO dates and custom calendar dates, else the commercial lead-time string. */
+export function resolveDeliveryDate(values: OrderValues): string {
+  const d = s(values.delivery_date);
+  if (d === "custom") return s(values.delivery_date_custom);
+  return d;
+}
+
+function resolvedPhoneCc(values: OrderValues): string {
+  return s(values.designer_phone_cc) === "other" ? s(values.designer_phone_cc_other) : s(values.designer_phone_cc);
+}
+
 function commonHeader(values: OrderValues, out: CellWrites) {
   set(out, "H5", s(values.designer_name));
   set(out, "H6", s(values.designer_email));
-  set(out, "Z5", formatIntlPhone(values.designer_phone_cc, values.designer_phone));
+  set(out, "Z5", formatIntlPhone(resolvedPhoneCc(values), values.designer_phone));
   set(out, "Z3", s(values.order_date));
   set(out, "H8", s(values.buyer));
   set(out, "H9", s(values.end_user));
@@ -200,7 +211,7 @@ function commonHeader(values: OrderValues, out: CellWrites) {
   set(out, "H12", n(values.quantity) ?? s(values.quantity));
   set(out, "H13", s(values.project));
   set(out, "S13", s(values.order_no));
-  set(out, "H14", s(values.delivery_date));
+  set(out, "H14", resolveDeliveryDate(values));
 }
 
 function relayCells(values: OrderValues, out: CellWrites) {
@@ -453,6 +464,13 @@ export function cellsForSheet(sheetId: string, values: OrderValues): CellWrites 
 
 export const TEMPLATE_FILE: Record<"oltc" | "cma7" | "shm-d", string> = {
   oltc: "in-tank-oltc-v1.2.xlsm",
-  cma7: "cma7-v1.2.xlsm",
-  "shm-d": "shm-d-v1.2.xlsm",
+  cma7: "cma7-order-specification-v1.2.xlsm",
+  "shm-d": "shm-d-order-specification-v1.2.xlsm",
 };
+
+export function excelTemplateFor(sheetId: string): string | undefined {
+  if (sheetId === "oltc" || sheetId === "cma7" || sheetId === "shm-d") {
+    return TEMPLATE_FILE[sheetId];
+  }
+  return undefined;
+}

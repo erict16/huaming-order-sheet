@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CONN_OPTS, PAINT_OPTS, VECTOR_GROUP_OPTS } from "./catalog";
+import { CONN_OPTS, COUNTRY_CODE_OPTS, DELIVERY_DATE_OPTS, PAINT_OPTS, VECTOR_GROUP_OPTS } from "./catalog";
 import { SHEETS, allFields, getSheet } from "./schema";
 
 describe("orderFields", () => {
@@ -15,7 +15,14 @@ describe("orderFields", () => {
       const cc = allFields(sheet, {}).find(({ field }) => field.key === "designer_phone_cc")!.field;
       expect(cc.label.zh).toBe("国家区号");
       expect(cc.label.en).toBe("Country code");
-      expect(cc.placeholder?.en).toBe("+86");
+      expect(cc.type).toBe("combobox");
+      expect(cc.options?.map((o) => o.value)).toEqual(COUNTRY_CODE_OPTS.map((o) => o.value));
+      expect(cc.options?.map((o) => o.value)).toEqual(expect.arrayContaining(["+86", "+90", "+62", "+91", "+7", "+61", "+84", "+998", "+60", "+66", "+55", "+39", "+49", "+1", "other"]));
+      const delivery = allFields(sheet, {}).find(({ field }) => field.key === "delivery_date")!.field;
+      expect(delivery.type).toBe("select");
+      expect(delivery.options?.map((o) => o.value)).toEqual(DELIVERY_DATE_OPTS.map((o) => o.value));
+      expect(allFields(sheet, { delivery_date: "custom" }).map(({ field }) => field.key)).toContain("delivery_date_custom");
+      expect(allFields(sheet, { designer_phone_cc: "other" }).map(({ field }) => field.key)).toContain("designer_phone_cc_other");
     }
   });
 

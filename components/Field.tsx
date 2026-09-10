@@ -4,6 +4,7 @@ import { t } from "@/lib/copy";
 import { chromeText } from "@/lib/i18n";
 import { useLang } from "@/lib/useLang";
 import type { FieldDef, Lang } from "@/lib/types";
+import Combobox from "./Combobox";
 
 export default function Field({
   field,
@@ -21,7 +22,7 @@ export default function Field({
   const span = field.span === 2 ? "sm:col-span-2" : "";
 
   return (
-    <label className={`block ${span}`}>
+    <div className={`block ${span}`}>
       <span className="field-label">
         {label}
         {field.unit ? <span className="ml-1 font-normal text-ink-muted">({field.unit})</span> : null}
@@ -31,7 +32,7 @@ export default function Field({
       </span>
       <Control field={field} value={value} onChange={onChange} placeholder={ph} lang={lang} />
       {hint ? <span className="mt-1.5 block text-xs leading-relaxed text-ink-muted">{hint}</span> : null}
-    </label>
+    </div>
   );
 }
 
@@ -69,6 +70,18 @@ function Control({
           );
         })}
       </div>
+    );
+  }
+
+  if (field.type === "combobox") {
+    return (
+      <Combobox
+        options={field.options ?? []}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        lang={lang}
+      />
     );
   }
 

@@ -121,5 +121,10 @@ export function deriveValues(prev: OrderValues, patch: OrderValues): OrderValues
     if (p) next.octc_contact = contactFromPositions(p);
   }
 
+  if (/^\d{4}-\d{2}-\d{2}$/.test(next.delivery_date || "") && !next.delivery_date_custom) {
+    next.delivery_date_custom = next.delivery_date;
+    next.delivery_date = "custom";
+  }
+
   return next;
 }

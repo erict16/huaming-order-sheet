@@ -1,6 +1,8 @@
 import {
   APP_OPTS,
+  COUNTRY_CODE_OPTS,
   CONN_OPTS,
+  DELIVERY_DATE_OPTS,
   CTRL_OPTS,
   CTRL_VOLT_OPTS,
   COMM_OPTS,
@@ -70,11 +72,30 @@ function orderFields(): FieldDef[] {
     {
       key: "designer_phone_cc",
       label: L("国家区号", "Country code", "Код страны", "Mã quốc gia"),
-      type: "text",
+      type: "combobox",
+      options: COUNTRY_CODE_OPTS,
       placeholder: L("+86", "+86", "+86", "+86"),
     },
+    {
+      key: "designer_phone_cc_other",
+      label: L("自定义区号", "Custom country code", "Свой код страны", "Mã quốc gia khác"),
+      type: "text",
+      placeholder: L("+353", "+353", "+353", "+353"),
+      applies: (v) => v.designer_phone_cc === "other",
+    },
     { key: "designer_phone", label: L("电话", "Phone", "Телефон", "Điện thoại"), type: "text" },
-    { key: "delivery_date", label: L("要货期", "Delivery date", "Срок поставки", "Ngày giao"), type: "date" },
+    {
+      key: "delivery_date",
+      label: L("要货期", "Delivery date", "Срок поставки", "Ngày giao"),
+      type: "select",
+      options: DELIVERY_DATE_OPTS,
+    },
+    {
+      key: "delivery_date_custom",
+      label: L("指定要货日期", "Specific delivery date", "Конкретный срок", "Ngày giao cụ thể"),
+      type: "date",
+      applies: (v) => v.delivery_date === "custom",
+    },
   ];
 }
 
@@ -355,7 +376,7 @@ const oltcSheet: SheetDef = {
       id: "review",
       kind: "review",
       title: L("核对导出", "Review & export", "Проверка и экспорт", "Kiểm tra và xuất"),
-      blurb: L("看完整张单，再下载 Excel。", "Read the whole sheet, then download Excel.", "Просмотрите бланк и скачайте Excel.", "Xem cả phiếu rồi tải Excel."),
+      blurb: L("看完整张单，再选 Word 或 Excel 下载。", "Read the whole sheet, then download Word or Excel.", "Просмотрите бланк и скачайте Word или Excel.", "Xem cả phiếu rồi tải Word hoặc Excel."),
       sections: [],
     },
   ],
@@ -425,7 +446,7 @@ const octcSheet: SheetDef = {
         { id: "notes", title: L("备注", "Notes", "Примечания", "Ghi chú"), fields: [notesField] },
       ],
     },
-    { id: "review", kind: "review", title: L("核对导出", "Review & export", "Проверка и экспорт", "Kiểm tra và xuất"), blurb: L("核对后下载 Excel。", "Download Excel after review.", "После проверки — Excel.", "Sau khi kiểm tra, tải Excel."), sections: [] },
+    { id: "review", kind: "review", title: L("核对导出", "Review & export", "Проверка и экспорт", "Kiểm tra và xuất"), blurb: L("核对后选 Word 或 Excel 下载。", "Then download Word or Excel.", "Затем Word или Excel.", "Sau đó tải Word hoặc Excel."), sections: [] },
   ],
 };
 
@@ -496,7 +517,7 @@ const drySheet: SheetDef = {
         { id: "notes", title: L("备注", "Notes", "Примечания", "Ghi chú"), fields: [notesField] },
       ],
     },
-    { id: "review", kind: "review", title: L("核对导出", "Review & export", "Проверка и экспорт", "Kiểm tra và xuất"), blurb: L("核对后下载 Excel。", "Download Excel after review.", "После проверки — Excel.", "Sau khi kiểm tra, tải Excel."), sections: [] },
+    { id: "review", kind: "review", title: L("核对导出", "Review & export", "Проверка и экспорт", "Kiểm tra và xuất"), blurb: L("核对后选 Word 或 Excel 下载。", "Then download Word or Excel.", "Затем Word или Excel.", "Sau đó tải Word hoặc Excel."), sections: [] },
   ],
 };
 
@@ -584,7 +605,7 @@ const cma7Sheet: SheetDef = {
         { id: "notes", title: L("备注", "Notes", "Примечания", "Ghi chú"), fields: [notesField] },
       ],
     },
-    { id: "review", kind: "review", title: L("核对导出", "Review & export", "Проверка и экспорт", "Kiểm tra và xuất"), blurb: L("核对后下载 Excel。", "Download Excel after review.", "После проверки — Excel.", "Sau khi kiểm tra, tải Excel."), sections: [] },
+    { id: "review", kind: "review", title: L("核对导出", "Review & export", "Проверка и экспорт", "Kiểm tra và xuất"), blurb: L("核对后选 Word 或 Excel 下载。", "Then download Word or Excel.", "Затем Word или Excel.", "Sau đó tải Word hoặc Excel."), sections: [] },
   ],
 };
 
@@ -661,7 +682,7 @@ const shmSheet: SheetDef = {
         { id: "notes", title: L("备注", "Notes", "Примечания", "Ghi chú"), fields: [notesField] },
       ],
     },
-    { id: "review", kind: "review", title: L("核对导出", "Review & export", "Проверка и экспорт", "Kiểm tra và xuất"), blurb: L("核对后下载 Excel。", "Download Excel after review.", "После проверки — Excel.", "Sau khi kiểm tra, tải Excel."), sections: [] },
+    { id: "review", kind: "review", title: L("核对导出", "Review & export", "Проверка и экспорт", "Kiểm tra và xuất"), blurb: L("核对后选 Word 或 Excel 下载。", "Then download Word or Excel.", "Затем Word или Excel.", "Sau đó tải Word hoặc Excel."), sections: [] },
   ],
 };
 

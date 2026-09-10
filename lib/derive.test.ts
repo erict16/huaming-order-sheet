@@ -24,6 +24,12 @@ describe("deriveValues", () => {
     expect(still.oltc_selector_grade).toBe("DE");
   });
 
+  it("migrates a stored ISO 要货期 into the custom calendar preset", () => {
+    const v = deriveValues({}, { delivery_date: "2026-09-01" });
+    expect(v.delivery_date).toBe("custom");
+    expect(v.delivery_date_custom).toBe("2026-09-01");
+  });
+
   it("fills 10193W positions 1 / 9a9b9c / 17", () => {
     const v = deriveValues(
       {},

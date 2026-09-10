@@ -16,6 +16,7 @@ export type FieldType =
   | "text"
   | "number"
   | "select"
+  | "combobox"
   | "radio"
   | "textarea"
   | "date";
