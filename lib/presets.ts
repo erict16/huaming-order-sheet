@@ -2,7 +2,7 @@ import { getFamily } from "./catalog";
 import { L } from "./copy";
 import { SHEET_DEFAULTS } from "./defaults";
 import { deriveValues } from "./derive";
-import type { I18nText, OrderValues } from "./types";
+import type { I18nText, OrderValues, SheetId } from "./types";
 
 export interface OrderPreset {
   id: string;
@@ -193,4 +193,20 @@ export function applyPreset(preset: OrderPreset): OrderValues {
     delete next[key];
   }
   return next;
+}
+
+export function pendingPresetKey(id: SheetId): string {
+  return `hm-os:pending-preset:${id}`;
+}
+
+/** Apply ?preset= once; otherwise restore stored draft onto sheet defaults. */
+export function hydrateSheetValues(
+  id: SheetId,
+  search: string,
+  stored: OrderValues,
+  pendingId?: string | null,
+): OrderValues {
+  const preset = getPreset(new URLSearchParams(search).get("preset") || pendingId || "");
+  if (preset) return applyPreset(preset);
+  return deriveValues({}, { ...(SHEET_DEFAULTS[id] ?? {}), ...stored });
 }

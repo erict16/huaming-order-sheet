@@ -18,7 +18,7 @@ import {
   type ExportFormat,
 } from "@/lib/excel";
 import { chromeText } from "@/lib/i18n";
-import { applyPreset, getPreset } from "@/lib/presets";
+import { applyPreset, hydrateSheetValues, pendingPresetKey } from "@/lib/presets";
 import {
   applicableFields,
   getSheet,
@@ -51,17 +51,20 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
   );
 
   useEffect(() => {
-    const stored = loadValues(id);
     const params = new URLSearchParams(window.location.search);
-    const preset = getPreset(params.get("preset"));
-    const merged = preset
-      ? applyPreset(preset)
-      : { ...(SHEET_DEFAULTS[id] ?? {}), ...stored };
-    setValues(deriveValues({}, merged));
-    if (preset) {
-      const url = new URL(window.location.href);
-      url.searchParams.delete("preset");
-      window.history.replaceState({}, "", url.pathname + url.search + url.hash);
+    const q = params.get("preset");
+    const sessionKey = pendingPresetKey(id);
+    if (q) sessionStorage.setItem(sessionKey, q);
+    const next = hydrateSheetValues(id, window.location.search, loadValues(id), sessionStorage.getItem(sessionKey));
+    saveValues(id, next);
+    setValues(next);
+    if (q || sessionStorage.getItem(sessionKey)) {
+      sessionStorage.removeItem(sessionKey);
+      if (q) {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("preset");
+        window.history.replaceState({}, "", url.pathname + url.search + url.hash);
+      }
     }
     setLoaded(true);
   }, [id]);

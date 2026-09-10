@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { TEMPLATE_FILE } from "./osCells";
-import { applyPreset, getPreset, ORDER_PRESETS, PRESET_CONTACT_KEYS } from "./presets";
+import { applyPreset, getPreset, hydrateSheetValues, ORDER_PRESETS, PRESET_CONTACT_KEYS } from "./presets";
 
 describe("ORDER_PRESETS", () => {
   it("has five named families from the 2025 inventory", () => {
@@ -63,6 +63,21 @@ describe("ORDER_PRESETS", () => {
         expect(applied[key], `applied ${preset.id}.${key}`).toBeUndefined();
       }
     }
+  });
+
+  it("hydrates ?preset= over stored drafts and still omits contact fields", () => {
+    const next = hydrateSheetValues(
+      "oltc",
+      "?preset=cm2",
+      { designer_phone_cc: "+86", designer_phone: "13800138000", buyer: "Old" },
+    );
+    expect(next.project).toBe("模板-CM2");
+    expect(next.country).toBe("China");
+    expect(next.delivery_date).toBe("90 days after PO");
+    expect(next.family).toBe("CM2");
+    expect(next.designer_phone_cc).toBeUndefined();
+    expect(next.designer_phone).toBeUndefined();
+    expect(next.buyer).toBeUndefined();
   });
 });
 
