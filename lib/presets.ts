@@ -21,16 +21,15 @@ export const ORDER_PRESETS: OrderPreset[] = [
     sheetId: "oltc",
     title: L("模板-CM2", "Preset CM2", "Шаблон CM2", "Mẫu CM2"),
     blurb: L(
-      "真空组合式 · 500 A · 72.5 kV · 中国 +86 · 合同后 90 天",
-      "Vacuum combined · 500 A · 72.5 kV · China +86 · 90 days after PO",
+      "真空组合式 · 500 A · 72.5 kV · 中国市场 · 合同后 90 天",
+      "Vacuum combined · 500 A · 72.5 kV · China market · 90 days after PO",
       "Вакуумный комбинированный · 500 А · 72.5 кВ",
-      "Chân không tổ hợp · 500 A · 72.5 kV · +86 · 90 ngày",
+      "Chân không tổ hợp · 500 A · 72.5 kV · thị trường Trung Quốc · 90 ngày",
     ),
     values: {
       family: "CM2",
       project: "模板-CM2",
       country: "China",
-      designer_phone_cc: "+86",
       delivery_date: "90 days after PO",
       application: "power",
       rated_power_mva: "31.5",
@@ -51,16 +50,15 @@ export const ORDER_PRESETS: OrderPreset[] = [
     sheetId: "oltc",
     title: L("模板-SHZV", "Preset SHZV", "Шаблон SHZV", "Mẫu SHZV"),
     blurb: L(
-      "箱内真空 · 600 A · 252 kV · 土耳其 +90 · 合同后 120 天",
-      "In-tank vacuum · 600 A · 252 kV · Turkey +90 · 120 days after PO",
+      "箱内真空 · 600 A · 252 kV · 土耳其市场 · 合同后 120 天",
+      "In-tank vacuum · 600 A · 252 kV · Turkey market · 120 days after PO",
       "Вакуумный в баке · 600 А · 252 кВ",
-      "Chân không trong thùng · 600 A · 252 kV · +90 · 120 ngày",
+      "Chân không trong thùng · 600 A · 252 kV · thị trường Thổ · 120 ngày",
     ),
     values: {
       family: "SHZV",
       project: "模板-SHZV",
       country: "Turkey",
-      designer_phone_cc: "+90",
       delivery_date: "120 days after PO",
       application: "power",
       rated_power_mva: "180",
@@ -82,16 +80,15 @@ export const ORDER_PRESETS: OrderPreset[] = [
     sheetId: "oltc",
     title: L("模板-CV", "Preset CV", "Шаблон CV", "Mẫu CV"),
     blurb: L(
-      "油浸复合式 · 350 A · 40.5 kV · 印尼 +62 · 合同后 90 天",
-      "Oil compound · 350 A · 40.5 kV · Indonesia +62 · 90 days after PO",
+      "油浸复合式 · 350 A · 40.5 kV · 印尼市场 · 合同后 90 天",
+      "Oil compound · 350 A · 40.5 kV · Indonesia market · 90 days after PO",
       "Масляный составной · 350 А · 40.5 кВ",
-      "Dầu compound · 350 A · 40.5 kV · +62 · 90 ngày",
+      "Dầu compound · 350 A · 40.5 kV · thị trường Indonesia · 90 ngày",
     ),
     values: {
       family: "CV",
       project: "模板-CV",
       country: "Indonesia",
-      designer_phone_cc: "+62",
       delivery_date: "90 days after PO",
       application: "power",
       rated_power_mva: "20",
@@ -113,16 +110,15 @@ export const ORDER_PRESETS: OrderPreset[] = [
     sheetId: "oltc",
     title: L("模板-CM", "Preset CM", "Шаблон CM", "Mẫu CM"),
     blurb: L(
-      "油浸组合式 · 500 A · 126 kV · 印度 +91 · 合同后 150 天",
-      "Oil combined · 500 A · 126 kV · India +91 · 150 days after PO",
+      "油浸组合式 · 500 A · 126 kV · 印度市场 · 合同后 150 天",
+      "Oil combined · 500 A · 126 kV · India market · 150 days after PO",
       "Масляный комбинированный · 500 А · 126 кВ",
-      "Dầu tổ hợp · 500 A · 126 kV · +91 · 150 ngày",
+      "Dầu tổ hợp · 500 A · 126 kV · thị trường Ấn Độ · 150 ngày",
     ),
     values: {
       family: "CM",
       project: "模板-CM",
       country: "India",
-      designer_phone_cc: "+91",
       delivery_date: "150 days after PO",
       application: "power",
       rated_power_mva: "63",
@@ -143,16 +139,15 @@ export const ORDER_PRESETS: OrderPreset[] = [
     sheetId: "oltc",
     title: L("模板-CV2", "Preset CV2 / VCV", "Шаблон CV2", "Mẫu CV2"),
     blurb: L(
-      "真空复合式 VCV · 350 A · 72.5 kV · 越南 +84 · 合同后 90 天",
-      "Vacuum compound VCV · 350 A · 72.5 kV · Vietnam +84 · 90 days after PO",
+      "真空复合式 VCV · 350 A · 72.5 kV · 越南市场 · 合同后 90 天",
+      "Vacuum compound VCV · 350 A · 72.5 kV · Vietnam market · 90 days after PO",
       "Вакуумный составной VCV · 350 А · 72.5 кВ",
-      "Chân không compound VCV · 350 A · 72.5 kV · +84 · 90 ngày",
+      "Chân không compound VCV · 350 A · 72.5 kV · thị trường Việt Nam · 90 ngày",
     ),
     values: {
       family: "CV2",
       project: "模板-CV2",
       country: "Vietnam",
-      designer_phone_cc: "+84",
       delivery_date: "90 days after PO",
       application: "power",
       rated_power_mva: "25",
@@ -181,6 +176,21 @@ export function getPreset(id: string | null | undefined): OrderPreset | undefine
   return fam ? ORDER_PRESETS.find((p) => p.family === fam.code) : undefined;
 }
 
+/** Spec starter kits — never copy a salesperson/customer contact card. */
+export const PRESET_CONTACT_KEYS = [
+  "designer_name",
+  "designer_email",
+  "designer_phone",
+  "designer_phone_cc",
+  "designer_phone_cc_other",
+  "buyer",
+  "end_user",
+] as const;
+
 export function applyPreset(preset: OrderPreset): OrderValues {
-  return deriveValues({}, { ...SHEET_DEFAULTS[preset.sheetId], ...preset.values });
+  const next = deriveValues({}, { ...SHEET_DEFAULTS[preset.sheetId], ...preset.values });
+  for (const key of PRESET_CONTACT_KEYS) {
+    delete next[key];
+  }
+  return next;
 }

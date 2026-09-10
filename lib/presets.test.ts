@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { TEMPLATE_FILE } from "./osCells";
-import { applyPreset, getPreset, ORDER_PRESETS } from "./presets";
+import { applyPreset, getPreset, ORDER_PRESETS, PRESET_CONTACT_KEYS } from "./presets";
 
 describe("ORDER_PRESETS", () => {
   it("has five named families from the 2025 inventory", () => {
@@ -18,43 +18,51 @@ describe("ORDER_PRESETS", () => {
     ]);
   });
 
-  it("prefills typical ratings, phone cc, and delivery strings Excel accepts", () => {
+  it("prefills typical ratings and delivery lead time, not contact cards", () => {
     const cm2 = applyPreset(ORDER_PRESETS[0]);
     expect(cm2.family).toBe("CM2");
     expect(cm2.oltc_current_a).toBe("500");
     expect(cm2.oltc_um_kv).toBe("72.5");
     expect(cm2.oltc_connection).toBe("Y");
     expect(cm2.oltc_selector_grade).toBe("B");
-    expect(cm2.designer_phone_cc).toBe("+86");
     expect(cm2.delivery_date).toBe("90 days after PO");
     expect(cm2.tap_code).toBe("10193W");
+    expect(cm2.country).toBe("China");
 
     const shzv = applyPreset(ORDER_PRESETS[1]);
     expect(shzv.family).toBe("SHZV");
     expect(shzv.oltc_current_a).toBe("600");
     expect(shzv.oltc_um_kv).toBe("252");
     expect(shzv.oltc_selector_grade).toBe("D");
-    expect(shzv.designer_phone_cc).toBe("+90");
     expect(shzv.mdu_model).toBe("SHM-D");
 
     const cv = applyPreset(ORDER_PRESETS[2]);
     expect(cv.family).toBe("CV");
     expect(cv.oltc_current_a).toBe("350");
     expect(cv.oltc_selector_grade).toBe("");
-    expect(cv.designer_phone_cc).toBe("+62");
 
     const cm = applyPreset(ORDER_PRESETS[3]);
     expect(cm.family).toBe("CM");
     expect(cm.oltc_um_kv).toBe("126");
     expect(cm.oltc_selector_grade).toBe("C");
-    expect(cm.designer_phone_cc).toBe("+91");
 
     const cv2 = applyPreset(ORDER_PRESETS[4]);
     expect(cv2.family).toBe("CV2");
     expect(cv2.oltc_current_a).toBe("350");
     expect(cv2.oltc_um_kv).toBe("72.5");
-    expect(cv2.designer_phone_cc).toBe("+84");
     expect(getPreset("VCV")?.family).toBe("CV2");
+  });
+
+  it("omits buyer/designer contact fields from every preset", () => {
+    for (const preset of ORDER_PRESETS) {
+      for (const key of PRESET_CONTACT_KEYS) {
+        expect(preset.values[key], `${preset.id}.${key}`).toBeUndefined();
+      }
+      const applied = applyPreset(preset);
+      for (const key of PRESET_CONTACT_KEYS) {
+        expect(applied[key], `applied ${preset.id}.${key}`).toBeUndefined();
+      }
+    }
   });
 });
 
