@@ -26,10 +26,26 @@
   }
 
   .field-control {
-    @apply w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-[15px] text-ink shadow-sm transition
+    @apply w-full rounded-lg bg-white px-3.5 py-2.5 text-[15px] text-ink shadow-sm
+      outline outline-1 -outline-offset-1 outline-slate-300 transition
       placeholder:text-slate-400
-      focus:border-steel focus:outline-none focus:ring-4 focus:ring-steel/15
-      hover:border-slate-400;
+      hover:outline-slate-400
+      focus:outline-2 focus:-outline-offset-2 focus:outline-steel;
+  }
+
+  .plus-trigger {
+    @apply field-control relative flex w-full items-center justify-between gap-2 pr-10 text-left;
+  }
+
+  .plus-options {
+    @apply absolute z-40 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white py-1 text-sm shadow-panel
+      ring-1 ring-slate-200/80
+      transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0;
+  }
+
+  .plus-option {
+    @apply relative cursor-default select-none px-3 py-2 text-ink
+      data-[focus]:bg-navy data-[focus]:text-white;
   }
 
   .card {

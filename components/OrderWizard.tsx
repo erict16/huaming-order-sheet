@@ -9,9 +9,16 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import { t } from "@/lib/copy";
+import { SHEET_DEFAULTS } from "@/lib/defaults";
 import { deriveValues } from "@/lib/derive";
-import { exportOrderSheet } from "@/lib/excel";
+import {
+  defaultExportFormat,
+  exportOrderSheet,
+  hasWordExport,
+  type ExportFormat,
+} from "@/lib/excel";
 import { chromeText } from "@/lib/i18n";
+import { applyPreset, hydrateSheetValues, pendingPresetKey } from "@/lib/presets";
 import {
   applicableFields,
   getSheet,
@@ -20,77 +27,45 @@ import {
 } from "@/lib/schema";
 import { clearValues, loadValues, saveValues } from "@/lib/storage";
 import { typeFromValues } from "@/lib/typeString";
-import type { OrderValues, SheetId } from "@/lib/types";
+import type { Lang, OrderValues, SheetId } from "@/lib/types";
 import { useLang } from "@/lib/useLang";
 import FamilyPicker from "./FamilyPicker";
 import Field from "./Field";
 import PipeTable from "./PipeTable";
+import PresetPicker from "./PresetPicker";
 import ReviewPanel from "./ReviewPanel";
-
-const DEFAULTS: Record<string, OrderValues> = {
-  oltc: {
-    frequency_hz: "50",
-    phases: "III",
-    regulation: "reversing",
-    plus_minus: "8",
-    oltc_tap_mid: "3",
-    quantity: "1",
-    mdu_model: "CMA7",
-    standard: "IEC 60214",
-    insulating_fluid: "mineral",
-    nameplate_language: "en",
-  },
-  octc: {
-    frequency_hz: "50",
-    phases: "III",
-    quantity: "1",
-    octc_drive: "handwheel",
-    connection: "Y",
-    octc_series: "IV",
-  },
-  dry: {
-    family: "CZ",
-    unit_count: "3",
-    phases: "I",
-    frequency_hz: "50",
-    quantity: "1",
-    mdu_model: "CMA7",
-    dry_positions: "9",
-    oltc_current_a: "500",
-    oltc_um_kv: "40.5",
-  },
-  cma7: {
-    frequency_hz: "50",
-    quantity: "1",
-    motor_voltage: "380_3",
-    control_voltage: "220_ac",
-    heater: "yes",
-    mdu_ip: "IP54",
-  },
-  "shm-d": {
-    frequency_hz: "50",
-    quantity: "1",
-    shm_model: "SHM-D",
-    heater: "yes",
-    mdu_ip: "IP54",
-  },
-};
+import SegmentedControl from "./SegmentedControl";
 
 export default function OrderWizard({ sheetId }: { sheetId: string }) {
   const id = sheetId as SheetId;
   const sheet = getSheet(id);
   const { lang } = useLang();
-  const [values, setValues] = useState<OrderValues>(DEFAULTS[id] ?? {});
+  const [values, setValues] = useState<OrderValues>(SHEET_DEFAULTS[id] ?? {});
   const [loaded, setLoaded] = useState(false);
   const [step, setStep] = useState(0);
   const [exporting, setExporting] = useState(false);
   const [exportErr, setExportErr] = useState("");
   const [savedFlash, setSavedFlash] = useState(false);
+  const [exportFormat, setExportFormat] = useState<ExportFormat>(
+    sheet ? defaultExportFormat(sheet) : "excel",
+  );
 
   useEffect(() => {
-    const stored = loadValues(id);
-    const merged = { ...(DEFAULTS[id] ?? {}), ...stored };
-    setValues(deriveValues({}, merged));
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get("preset");
+    const sessionKey = pendingPresetKey(id);
+    if (q) sessionStorage.setItem(sessionKey, q);
+    const next = hydrateSheetValues(id, window.location.search, loadValues(id), sessionStorage.getItem(sessionKey));
+    saveValues(id, next);
+    setValues(next);
+    if (q || sessionStorage.getItem(sessionKey)) {
+      sessionStorage.removeItem(sessionKey);
+      if (q) {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("preset");
+        window.history.replaceState({}, "", url.pathname + url.search + url.hash);
+      }
+    }
     setLoaded(true);
   }, [id]);
 
@@ -121,7 +96,7 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
 
   function handleClear() {
     clearValues(id);
-    setValues(deriveValues({}, DEFAULTS[id] ?? {}));
+    setValues(deriveValues({}, SHEET_DEFAULTS[id] ?? {}));
     setStep(0);
   }
 
@@ -130,7 +105,7 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
     setExportErr("");
     setExporting(true);
     try {
-      await exportOrderSheet(sheet, values);
+      await exportOrderSheet(sheet, values, exportFormat);
     } catch (err) {
       setExportErr(err instanceof Error ? err.message : String(err));
     } finally {
@@ -146,6 +121,7 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
   }
 
   const familyBlocked = current.kind === "family" ? !values.family : false;
+  const canWord = hasWordExport(sheet);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
@@ -191,11 +167,20 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
             transition={{ duration: 0.12 }}
           >
             {current.kind === "family" && sheet.families ? (
-              <FamilyPicker
-                families={sheet.families}
-                value={values.family || ""}
-                onChange={(code) => setField("family", code)}
-              />
+              <div className="space-y-6">
+                {id === "oltc" ? (
+                  <PresetPicker
+                    onApply={(preset) => {
+                      setValues(applyPreset(preset));
+                    }}
+                  />
+                ) : null}
+                <FamilyPicker
+                  families={sheet.families}
+                  value={values.family || ""}
+                  onChange={(code) => setField("family", code)}
+                />
+              </div>
             ) : null}
 
             {current.kind === "review" ? (
@@ -215,6 +200,12 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
                     {exportErr}
                   </p>
                 ) : null}
+                <ExportFormatControl
+                  format={exportFormat}
+                  onChange={setExportFormat}
+                  canWord={canWord}
+                  lang={lang}
+                />
                 <ReviewPanel sheet={sheet} values={values} typeStr={typeStr.compact} />
               </div>
             ) : null}
@@ -272,7 +263,11 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
           </button>
         ) : (
           <button type="button" className="btn-primary" disabled={exporting} onClick={() => void handleExport()}>
-            {exporting ? "…" : chromeText("export", lang)}
+            {exporting
+              ? "…"
+              : exportFormat === "word"
+                ? chromeText("exportWord", lang)
+                : chromeText("exportExcel", lang)}
           </button>
         )}
         <button type="button" className="btn-secondary ml-auto" onClick={handleSave}>
@@ -285,5 +280,33 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
         </button>
       </div>
     </div>
+  );
+}
+
+function ExportFormatControl({
+  format,
+  onChange,
+  canWord,
+  lang,
+}: {
+  format: ExportFormat;
+  onChange: (v: ExportFormat) => void;
+  canWord: boolean;
+  lang: Lang;
+}) {
+  return (
+    <fieldset className="rounded-xl bg-white px-4 py-3 shadow-sm ring-1 ring-slate-200/80">
+      <legend className="px-1 text-sm font-semibold text-navy">{chromeText("exportFormat", lang)}</legend>
+      <div className="mt-2">
+        <SegmentedControl
+          value={format}
+          onChange={onChange}
+          options={[
+            { value: "word", label: chromeText("exportWord", lang), disabled: !canWord },
+            { value: "excel", label: chromeText("exportExcel", lang) },
+          ]}
+        />
+      </div>
+    </fieldset>
   );
 }

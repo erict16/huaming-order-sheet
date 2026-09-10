@@ -97,6 +97,14 @@ describe("oltcCells", () => {
     expect(oltcCells({ designer_phone_cc: "86", designer_phone: "13800138000" }).Z5).toBe("+86 13800138000");
     expect(oltcCells({ designer_phone_cc: "++86", designer_phone: "+86 13800138000" }).Z5).toBe("+86 13800138000");
     expect(oltcCells({ designer_phone: "13800138000" }).Z5).toBe("13800138000");
+    expect(oltcCells({ designer_phone_cc: "other", designer_phone_cc_other: "+353", designer_phone: "861234567" }).Z5).toBe("+353 861234567");
+  });
+
+  it("writes commercial lead-time or custom calendar date to H14", () => {
+    expect(oltcCells({ delivery_date: "90 days after PO" }).H14).toBe("90 days after PO");
+    expect(oltcCells({ delivery_date: "TBC" }).H14).toBe("TBC");
+    expect(oltcCells({ delivery_date: "custom", delivery_date_custom: "2026-12-01" }).H14).toBe("2026-12-01");
+    expect(oltcCells({ delivery_date: "2026-06-15" }).H14).toBe("2026-06-15");
   });
 
   it("writes catalogue RAL and custom paint_other / vector_group_other", () => {
