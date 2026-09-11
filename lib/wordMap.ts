@@ -218,4 +218,8 @@ export const WORD_TEMPLATE: Record<string, { file: string; mime: string }> = {
     file: "dry-order-sheet.docx",
     mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   },
+  hwv: {
+    file: "hwv-hwdk-order-spec.docx",
+    mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  },
 };

@@ -51,6 +51,7 @@ const chrome = {
   dryHint: L("CZ 是单相结构。三相干变通常订 3×CZI，由一台电动机构机械联动。", "CZ is single-phase. Three-phase dry transformers usually order 3×CZI on one motor drive.", "CZ — однофазный. Для 3ф сухих ТР обычно 3×CZI с одним приводом.", "CZ là một pha. MBA khô ba pha thường 3×CZI một bộ truyền động."),
   cma7Hint: L("CMA7 是传统电动机构。请写明带动的开关型号和档位数，否则机构行程对不上。", "CMA7 is the classic motor drive. State the tap-changer type and positions so the travel matches.", "CMA7 — классический привод. Укажите тип РПН и число положений.", "CMA7 là bộ truyền động cổ điển. Ghi kiểu OLTC và số vị trí."),
   shmdHint: L("SHM-D 是数字机构，可带控制器和通信。SHM-DL 带就地显示。", "SHM-D is the digital drive; optional controller and comms. SHM-DL has a local display.", "SHM-D — цифровой привод, опции контроллера и связи. SHM-DL — с местным дисплеем.", "SHM-D là bộ số; có thể kèm bộ điều khiển và truyền thông. SHM-DL có màn hình tại chỗ."),
+  hwvHint: L("HWV / HWDK 是外附油箱真空有载，用 2023-8 Word 表，不是箱内 V1.2。没有 B/C/D。电机电源到机构单。", "HWV / HWDK is external-tank vacuum OLTC on the 2023-8 Word form, not in-tank V1.2. No B/C/D. Motor volts go on the MDU sheet.", "HWV / HWDK — вакуумный РПН в боковом баке, бланк Word 2023-8.", "HWV / HWDK là OLTC chân không thùng phụ, phiếu Word 2023-8."),
   noFamily: L("请先选择系列", "Please pick a family first", "Сначала выберите серию", "Hãy chọn họ máy trước"),
 } satisfies Record<string, I18nText>;
 

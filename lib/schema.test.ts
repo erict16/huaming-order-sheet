@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CONN_OPTS, COUNTRY_CODE_OPTS, DELIVERY_DATE_OPTS, PAINT_OPTS, VECTOR_GROUP_OPTS } from "./catalog";
+import { CONN_OPTS, COUNTRY_CODE_OPTS, DELIVERY_DATE_OPTS, HWV_FAMILIES, OLTC_FAMILIES, PAINT_OPTS, VECTOR_GROUP_OPTS } from "./catalog";
 import { SHEETS, allFields, getSheet } from "./schema";
 
 describe("orderFields", () => {
@@ -87,5 +87,18 @@ describe("transformer / accessories polish", () => {
     const custom = allFields(oltc, { paint: "other" }).find(({ field }) => field.key === "paint_other")!.field;
     expect(custom.type).toBe("text");
     expect(custom.label.zh).toBe("其他漆色");
+  });
+});
+
+describe("HWV sheet", () => {
+  it("keeps HWV/HWDK off the in-tank OLTC family list", () => {
+    expect(OLTC_FAMILIES.map((f) => f.code)).not.toContain("HWV");
+    expect(OLTC_FAMILIES.map((f) => f.code)).not.toContain("HWDK");
+    expect(HWV_FAMILIES.map((f) => f.code)).toEqual(["HWV", "HWDK"]);
+    expect(HWV_FAMILIES.find((f) => f.code === "HWDK")?.category).toBe("external");
+    expect(HWV_FAMILIES.every((f) => !f.hasSelectorGrade)).toBe(true);
+    const hwv = getSheet("hwv")!;
+    expect(hwv.families?.map((f) => f.code)).toEqual(["HWV", "HWDK"]);
+    expect(SHEETS.map((s) => s.id)).toContain("hwv");
   });
 });

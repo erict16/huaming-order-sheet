@@ -1,6 +1,8 @@
 import * as XLSX from "xlsx";
 import { fillDocx } from "./fillDocx";
+import { fillFormTextDocx } from "./fillFormText";
 import { fillWorkbook } from "./fillXlsm";
+import { hwvFormValues } from "./hwvMap";
 import { cellsForSheet, excelTemplateFor } from "./osCells";
 import { allFields } from "./schema";
 import { t } from "./copy";
@@ -140,6 +142,11 @@ export async function exportOrderSheet(
     }
     if (sheet.id === "cma7") {
       const filled = await fillDocx(template, cma7SdtValues(values));
+      downloadBuf(filled, `HM-OS_${safe}.docx`, plan.mime);
+      return;
+    }
+    if (sheet.id === "hwv") {
+      const filled = await fillFormTextDocx(template, hwvFormValues(values));
       downloadBuf(filled, `HM-OS_${safe}.docx`, plan.mime);
       return;
     }

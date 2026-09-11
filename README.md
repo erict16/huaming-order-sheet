@@ -4,11 +4,12 @@
 
 有载、CMA7 下载的是官方 **Word 订货规范书**（老版本 OS）。空白项按常规。数据只存在当前浏览器，点「保存」即可。
 
-## 五张订货单
+## 六张订货单
 
 | 网页 | 对应规格表 | 填写要点 |
 |---|---|---|
 | **有载 OLTC** | In-tank OLTC Order Specification-V1.2.xlsm | 先选系列。型号按 `CM2III-500Y/72.5B-10193W` 自动拼。出轴、电位电阻、Q/S/R/E2、QJ4/QJ4G/QJ6、防爆盖按出图清单勾。机构电气到 CMA7 / SHM-D 单。 |
+| **HWV / HWDK** | HWV （HWDK） Order Specifications-2023-8.doc | 外附油箱真空有载。型号如 `HWVIII-400Y/72.5-10193W`，没有 B/C/D。HWDK 常配 SHM-X。电机电源仍到机构单。 |
 | **无励磁 OCTC** | OCTC Order Specifications | 笼式 WSL/WDL、鼓式 WSG/WDG/WLG。 |
 | **干式 CZ** | Dry Type order sheet | 室内干变真空有载。三相通常 **3×CZI**。 |
 | **CMA7** | CMA7 Order Specification-V1.2.xlsm | 必须写所配开关型号和档位数。电机可到 415 V。 |

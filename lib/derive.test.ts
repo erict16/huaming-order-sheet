@@ -30,6 +30,14 @@ describe("deriveValues", () => {
     expect(v.delivery_date_custom).toBe("2026-09-01");
   });
 
+  it("switches HWDK onto SHM-X and strips HWV selector grade", () => {
+    const hwdk = deriveValues({ mdu_model: "CMA7" }, { family: "HWDK" });
+    expect(hwdk.mdu_model).toBe("SHM-X");
+    const hwv = deriveValues({ mdu_model: "SHM-X", oltc_selector_grade: "B" }, { family: "HWV", oltc_um_kv: "72.5" });
+    expect(hwv.mdu_model).toBe("CMA7");
+    expect(hwv.oltc_selector_grade).toBe("");
+  });
+
   it("fills 10193W positions 1 / 9a9b9c / 17", () => {
     const v = deriveValues(
       {},
