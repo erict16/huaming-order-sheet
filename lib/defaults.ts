@@ -12,6 +12,7 @@ export const SHEET_DEFAULTS: Record<SheetId, OrderValues> = {
     standard: "IEC 60214",
     insulating_fluid: "mineral",
     nameplate_language: "en",
+    tx_kind: "separated",
     designer_phone_cc: "+86",
   },
   octc: {
@@ -21,6 +22,7 @@ export const SHEET_DEFAULTS: Record<SheetId, OrderValues> = {
     octc_drive: "handwheel",
     connection: "Y",
     octc_series: "IV",
+    tx_kind: "separated",
     designer_phone_cc: "+86",
   },
   dry: {

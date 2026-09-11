@@ -86,6 +86,31 @@ describe("hwvFormValues", () => {
     expect(checks[49]).toBe(true);
     expect(hwvFormValues(hwviii400()).texts[25]).toBeUndefined();
   });
+
+  it("ticks Generator / Auto and writes I / Imax", () => {
+    const v = deriveValues(SHEET_DEFAULTS.hwv, {
+      family: "HWV",
+      application: "generator",
+      tx_kind: "auto",
+      through_current_a: "125.5",
+      imax_a: "149.4",
+    });
+    const { texts, checks } = hwvFormValues(v);
+    expect(checks[13]).toBe(true);
+    expect(checks[9]).toBe(false);
+    expect(checks[16]).toBe(true);
+    expect(checks[15]).toBe(false);
+    expect(texts[23]).toBe("125.5");
+    expect(texts[24]).toBe("149.4");
+  });
+
+  it("maps Network onto the Power checkbox", () => {
+    const v = deriveValues(SHEET_DEFAULTS.hwv, { family: "HWV", application: "network" });
+    const { checks } = hwvFormValues(v);
+    expect(checks[9]).toBe(true);
+    expect(checks[13]).toBe(false);
+    expect(checks[14]).toBe(false);
+  });
 });
 
 describe("HWV Word fill", () => {

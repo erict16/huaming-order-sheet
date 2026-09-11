@@ -61,7 +61,25 @@ function paintWord(values: OrderValues): string | undefined {
   const paint = s(values.paint);
   if (paint === "other") return s(values.paint_other) || undefined;
   if (!paint) return undefined;
+  if (paint === "ANSI70") return "ANSI 70";
   return paint.replace("RAL", "RAL ");
+}
+
+function applicationWord(values: OrderValues): string | undefined {
+  const app = s(values.application);
+  if (app === "other") return s(values.application_other) || undefined;
+  const map: Record<string, string> = {
+    network: "Network",
+    power: "Power",
+    generator: "Generator",
+    capacity: "Capacity regulation",
+    furnace: "Furnace",
+    rectifier: "Rectifier",
+    hvdc: "HVDC",
+    reactor: "Reactor",
+    test: "Test transformer",
+  };
+  return map[app] || app || undefined;
 }
 
 function vectorGroupWord(values: OrderValues): string | undefined {
@@ -105,7 +123,7 @@ export function oltcSdtValues(values: OrderValues): Array<string | undefined> {
   set(6, FAMILY_HEAD[s(values.family)]);
   set(7, s(values.end_user));
   set(8, s(values.mdu_model) === "none" ? undefined : s(values.mdu_model));
-  set(9, s(values.application));
+  set(9, applicationWord(values));
   set(10, vectorGroupWord(values));
   set(12, phasesWord(s(values.phases)));
   set(13, freqWord(s(values.frequency_hz)));

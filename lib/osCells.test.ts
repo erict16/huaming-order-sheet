@@ -111,12 +111,41 @@ describe("oltcCells", () => {
     expect(oltcCells({ ...oltc, paint: "RAL5012" }).H167).toBe("RAL5012");
     expect(oltcCells({ ...oltc, paint: "other" }).H167).toBeUndefined();
     expect(oltcCells({ ...oltc, paint: "other", paint_other: "C5 RAL 9005" }).H167).toBe("C5 RAL 9005");
+    expect(oltcCells({ ...oltc, paint: "ANSI70" }).H167).toBe("ANSI 70");
     expect(oltcCells({ ...oltc, vector_group: "YNd11" }).O23).toBe("YNd11");
     expect(oltcCells({ ...oltc, vector_group: "other", vector_group_other: "YNyn6" }).O23).toBe("YNyn6");
+  });
+
+  it("writes I / Imax, Network, autotransformer and C4-H", () => {
+    const cells = oltcCells({
+      ...oltc,
+      application: "network",
+      tx_kind: "auto",
+      through_current_a: "300",
+      imax_a: "300",
+      corrosive_class: "C4-H",
+    });
+    expect(cells.Z12).toBe("Network");
+    expect(cells.H17).toBe("2. Auto transformer");
+    expect(cells.I28).toBe(300);
+    expect(cells.Z28).toBe(300);
+    expect(cells.H168).toBe("C4-H");
   });
 });
 
 describe("cma7Cells", () => {
+  it("writes 230 V 1-phase 60 Hz", () => {
+    const cells = cma7Cells({
+      matching_oltc: "CVIII-350D/40.5-18353W",
+      mdu_positions: "33",
+      frequency_hz: "60",
+      motor_voltage: "230_1",
+    });
+    expect(cells.H20).toBe("3. 单相电机_AC");
+    expect(cells.H21).toBe("2. frequency_60");
+    expect(cells.H22).toBe(230);
+  });
+
   it("writes 415 V 3-phase 50 Hz", () => {
     const cells = cma7Cells({
       matching_oltc: "CM2III-500Y/72.5B-10193W",

@@ -49,6 +49,10 @@ describe("oltcSdtValues", () => {
     const ral = oltcSdtValues({ paint: "RAL5015", vector_group: "Dyn11" });
     expect(ral[87]).toBe("RAL 5015");
     expect(ral[10]).toBe("Dyn11");
+    expect(oltcSdtValues({ paint: "ANSI70" })[87]).toBe("ANSI 70");
+    expect(oltcSdtValues({ paint: "RAL7033" })[87]).toBe("RAL 7033");
+    expect(oltcSdtValues({ application: "network" })[9]).toBe("Network");
+    expect(oltcSdtValues({ vector_group: "YNd11yn12" })[10]).toBe("YNd11yn12");
     const other = oltcSdtValues({
       paint: "other",
       paint_other: "C5 RAL 9006",

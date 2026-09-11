@@ -114,6 +114,7 @@ function nameplateOs(v: string): string | undefined {
 function paintOs(values: OrderValues): string | undefined {
   const paint = s(values.paint);
   if (paint === "other") return s(values.paint_other) || undefined;
+  if (paint === "ANSI70") return "ANSI 70";
   if (!paint) return undefined;
   return paint;
 }
@@ -121,8 +122,32 @@ function paintOs(values: OrderValues): string | undefined {
 function paintOsStd(values: OrderValues): string | undefined {
   const p = paintOs(values);
   if (!p) return undefined;
-  if (s(values.paint) === "other") return p;
+  if (s(values.paint) === "other" || s(values.paint) === "ANSI70") return p;
   return `${p}-std.`;
+}
+
+function applicationOs(values: OrderValues): string | undefined {
+  const app = s(values.application);
+  if (app === "other") return s(values.application_other) || undefined;
+  const map: Record<string, string> = {
+    network: "Network",
+    power: "Power",
+    generator: "Generator",
+    capacity: "Capacity regulation",
+    furnace: "Furnace",
+    rectifier: "Rectifier",
+    hvdc: "HVDC",
+    reactor: "Reactor",
+    test: "Test transformer",
+  };
+  return map[app];
+}
+
+function txKindOs(v: string): string | undefined {
+  if (v === "separated") return "1. Separate winding transformer";
+  if (v === "auto") return "2. Auto transformer";
+  if (v === "booster") return "3. Booster transformer";
+  return undefined;
 }
 
 function vectorGroupOs(values: OrderValues): string | undefined {
@@ -247,10 +272,12 @@ export function oltcCells(values: OrderValues): CellWrites {
   const { compact } = typeFromValues("oltc", values);
   set(out, "H16", s(values.family));
   set(out, "C78", s(values.family));
+  set(out, "Z12", applicationOs(values));
   set(out, "W16", s(values.phases));
   set(out, "F78", s(values.phases));
   set(out, "AE16", mduOs(s(values.mdu_model)));
 
+  set(out, "H17", txKindOs(s(values.tx_kind)));
   set(out, "H18", freqOs(s(values.frequency_hz)));
   set(out, "H19", fluidOs(s(values.insulating_fluid)));
   set(out, "Z18", s(values.ambient_temp));
@@ -274,6 +301,8 @@ export function oltcCells(values: OrderValues): CellWrites {
   set(out, "H29", regulationOs(s(values.regulation)));
   const inA = n(values.through_current_a);
   if (inA != null) set(out, "I28", inA);
+  const imax = n(values.imax_a);
+  if (imax != null) set(out, "Z28", imax);
   const ust = n(values.step_voltage_v);
   if (ust != null) set(out, "I30", ust);
   set(out, "H31", s(values.recovery_voltage_kv) ? `( ${s(values.recovery_voltage_kv)} ) kV` : undefined);
@@ -339,6 +368,8 @@ export function oltcCells(values: OrderValues): CellWrites {
   if (vShaft) set(out, `Z${vShaft.row}`, 1);
 
   set(out, "H167", paintOs(values));
+  const corrosive = s(values.corrosive_class);
+  if (corrosive && corrosive !== "none") set(out, "H168", corrosive);
   set(out, "H171", nameplateOs(s(values.nameplate_language)));
   set(out, "H169", nameplateOs(s(values.nameplate_language)));
 
@@ -353,7 +384,7 @@ export function oltcCells(values: OrderValues): CellWrites {
 function cma7Motor(values: OrderValues, out: CellWrites) {
   const mv = s(values.motor_voltage);
   const freq = s(values.frequency_hz);
-  if (mv === "220_1" || mv === "110_1" || mv === "240_1") {
+  if (mv === "220_1" || mv === "230_1" || mv === "110_1" || mv === "240_1") {
     set(out, "H20", "3. 单相电机_AC");
   } else if (mv) {
     set(out, "H20", "1. Three-phase motor_3ACN");
@@ -367,6 +398,7 @@ function cma7Motor(values: OrderValues, out: CellWrites) {
     "440_3": 440,
     "220_3": 220,
     "220_1": 220,
+    "230_1": 230,
     "240_1": 240,
     "110_1": 110,
   };
@@ -433,7 +465,7 @@ export function shmDCells(values: OrderValues): CellWrites {
     set(out, "H20", "400");
   } else if (mv === "415_3") {
     set(out, "H20", "415");
-  } else if (mv === "220_3" || mv === "220_1") {
+  } else if (mv === "220_3" || mv === "220_1" || mv === "230_1" || mv === "240_1") {
     set(out, "H20", "AC 220-240V 50/60Hz");
   }
 

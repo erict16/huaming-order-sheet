@@ -77,6 +77,14 @@ describe("ORDER_PRESETS", () => {
     expect(havec.family).toBe("CV");
     expect(havec.oltc_current_a).toBe("350");
     expect(havec.through_current_a).toBe("300");
+    expect(havec.imax_a).toBe("300");
+    expect(havec.application).toBe("network");
+    expect(havec.tx_kind).toBe("auto");
+    expect(havec.range_minus).toBe("20");
+    expect(havec.range_plus).toBe("6");
+    expect(havec.tap_range_pct).toBe("−20/+6%");
+    expect(havec.vector_group).toBe("YNa0");
+    expect(havec.paint).toBe("RAL7033");
     expect(havec.notes).toMatch(/300 A/);
 
     const hwv = applyPreset(getPreset("ue-hwv")!);
@@ -87,6 +95,18 @@ describe("ORDER_PRESETS", () => {
 
     expect(getPreset("VCV")?.family).toBe("CV2");
     expect(getPreset("CV2")?.id).toBe("mee-tienyen-cv2");
+
+    const tien = applyPreset(getPreset("mee-tienyen-cv2")!);
+    expect(tien.application).toBe("network");
+    expect(tien.tx_kind).toBe("separated");
+    expect(tien.vector_group).toBe("YNd11yn12");
+    expect(tien.imax_a).toBe("239.07");
+    expect(tien.paint).toBe("RAL7033");
+    expect(tien.corrosive_class).toBe("C4-H");
+
+    const tira = applyPreset(getPreset("tirathai-cv")!);
+    expect(tira.application).toBe("test");
+    expect(tira.tx_kind).toBe("separated");
   });
 
   it("omits buyer/designer contact fields from every preset", () => {
