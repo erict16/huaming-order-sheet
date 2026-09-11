@@ -4,12 +4,15 @@ import {
   CONN_OPTS,
   CORROSIVE_OPTS,
   COUNTRY_CODE_OPTS,
+  CTRL_OPTS,
   CTRL_VOLT_OPTS,
   DELIVERY_DATE_OPTS,
+  HWV_CTRL_OPTS,
   HWV_FAMILIES,
   MOTOR_VOLT_OPTS,
   OLTC_FAMILIES,
   PAINT_OPTS,
+  POS_TX_OPTS,
   VECTOR_GROUP_OPTS,
 } from "./catalog";
 import { SHEETS, allFields, getSheet } from "./schema";
@@ -165,5 +168,31 @@ describe("HWV sheet", () => {
     const hwv = getSheet("hwv")!;
     expect(hwv.families?.map((f) => f.code)).toEqual(["HWV", "HWDK"]);
     expect(SHEETS.map((s) => s.id)).toContain("hwv");
+  });
+});
+
+describe("CMA7 / SHM-D option lists", () => {
+  it("offers ET-SZ6 and SHM-K on CTRL_OPTS (already on HWV)", () => {
+    expect(CTRL_OPTS.map((o) => o.value)).toEqual(["none", "HMC-3C", "ET-SZ6", "SHM-K", "SHM-KX", "HMIET"]);
+    expect(HWV_CTRL_OPTS.map((o) => o.value)).toEqual(expect.arrayContaining(["ET-SZ6", "SHM-K"]));
+    const shm = allFields(getSheet("shm-d")!, {}).find(({ field }) => field.key === "controller")!.field;
+    expect(shm.options?.map((o) => o.value)).toEqual(CTRL_OPTS.map((o) => o.value));
+  });
+
+  it("offers 0–5 V and 1–5 V analogue position output", () => {
+    expect(POS_TX_OPTS.map((o) => o.value)).toEqual([
+      "potentiometer",
+      "bcd",
+      "4_20",
+      "0_5v",
+      "1_5v",
+      "none",
+    ]);
+    expect(POS_TX_OPTS.find((o) => o.value === "0_5v")?.label.en).toBe("0–5 V");
+    expect(POS_TX_OPTS.find((o) => o.value === "1_5v")?.label.en).toBe("1–5 V");
+    for (const id of ["cma7", "shm-d"] as const) {
+      const field = allFields(getSheet(id)!, {}).find(({ field }) => field.key === "position_tx")!.field;
+      expect(field.options?.map((o) => o.value), id).toEqual(POS_TX_OPTS.map((o) => o.value));
+    }
   });
 });

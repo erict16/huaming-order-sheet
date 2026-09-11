@@ -412,6 +412,8 @@ export const MDU_OPTS = [
 export const CTRL_OPTS = [
   opt("none", "不配", "None", "Нет", "Không"),
   opt("HMC-3C", "HMC-3C"),
+  opt("ET-SZ6", "ET-SZ6"),
+  opt("SHM-K", "SHM-K"),
   opt("SHM-KX", "SHM-KX"),
   opt("HMIET", "HMIET"),
 ];
@@ -631,6 +633,8 @@ export const POS_TX_OPTS = [
   opt("potentiometer", "电位器", "Potentiometer", "Потенциометр", "Biến trở"),
   opt("bcd", "BCD 码", "BCD", "BCD", "BCD"),
   opt("4_20", "4–20 mA"),
+  opt("0_5v", "0–5 V"),
+  opt("1_5v", "1–5 V"),
   opt("none", "不配", "None", "Нет", "Không"),
 ];
 

@@ -20,6 +20,7 @@ const FAMILY_HEAD: Record<string, string> = {
   CM2: "CM2(Vacuum)",
   CMD: "CMD",
   SHZV: "SHZV(Vacuum）",
+  SHZVG: "SHZVG(Vacuum)",
 };
 
 const FAMILY_ROW: Record<string, string> = {
@@ -30,6 +31,7 @@ const FAMILY_ROW: Record<string, string> = {
   CM2: "CM2",
   CMD: "CMD",
   SHZV: "SHZV",
+  SHZVG: "SHZVG",
 };
 
 function phasesWord(v: string): string | undefined {
