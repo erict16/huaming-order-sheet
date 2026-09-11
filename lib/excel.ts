@@ -3,6 +3,7 @@ import { fillDocx } from "./fillDocx";
 import { fillFormTextDocx } from "./fillFormText";
 import { fillWorkbook } from "./fillXlsm";
 import { hwvFormValues } from "./hwvMap";
+import { octcFormValues } from "./octcMap";
 import { cellsForSheet, excelTemplateFor } from "./osCells";
 import { allFields } from "./schema";
 import { t } from "./copy";
@@ -10,7 +11,7 @@ import { typeFromValues } from "./typeString";
 import type { Lang, OrderValues, SheetDef } from "./types";
 import { cma7SdtValues, oltcSdtValues, WORD_TEMPLATE } from "./wordMap";
 
-export const APP_VERSION = "1.2.1";
+export const APP_VERSION = "1.2.2";
 export const SCHEMA_VERSION = "3";
 
 export type ExportFormat = "word" | "excel";
@@ -147,6 +148,11 @@ export async function exportOrderSheet(
     }
     if (sheet.id === "hwv") {
       const filled = await fillFormTextDocx(template, hwvFormValues(values));
+      downloadBuf(filled, `HM-OS_${safe}.docx`, plan.mime);
+      return;
+    }
+    if (sheet.id === "octc") {
+      const filled = await fillFormTextDocx(template, octcFormValues(values));
       downloadBuf(filled, `HM-OS_${safe}.docx`, plan.mime);
       return;
     }
