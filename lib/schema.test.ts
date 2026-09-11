@@ -1,5 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { CONN_OPTS, COUNTRY_CODE_OPTS, DELIVERY_DATE_OPTS, HWV_FAMILIES, OLTC_FAMILIES, PAINT_OPTS, VECTOR_GROUP_OPTS } from "./catalog";
+import {
+  APP_OPTS,
+  CONN_OPTS,
+  CORROSIVE_OPTS,
+  COUNTRY_CODE_OPTS,
+  CTRL_VOLT_OPTS,
+  DELIVERY_DATE_OPTS,
+  HWV_FAMILIES,
+  MOTOR_VOLT_OPTS,
+  OLTC_FAMILIES,
+  PAINT_OPTS,
+  VECTOR_GROUP_OPTS,
+} from "./catalog";
 import { SHEETS, allFields, getSheet } from "./schema";
 
 describe("orderFields", () => {
@@ -43,19 +55,25 @@ describe("transformer / accessories polish", () => {
     }
   });
 
-  it("offers six common vector groups plus 其他, not free text", () => {
+  it("offers real OS vector groups plus 其他, not free text", () => {
     const oltc = getSheet("oltc")!;
     const vg = allFields(oltc, {}).find(({ field }) => field.key === "vector_group")!.field;
     expect(vg.type).toBe("select");
-    expect(vg.options?.map((o) => o.value)).toEqual(["YNd11", "YNd1", "Dyn11", "Dyn5", "YNyn0", "Dd0", "other"]);
-    expect(VECTOR_GROUP_OPTS.map((o) => o.label.zh).slice(0, 6)).toEqual([
+    expect(vg.options?.map((o) => o.value)).toEqual([
       "YNd11",
       "YNd1",
       "Dyn11",
       "Dyn5",
       "YNyn0",
       "Dd0",
+      "YNa0",
+      "YNd11yn12",
+      "Ynd11d11",
+      "Yd11",
+      "Dyn1",
+      "other",
     ]);
+    expect(VECTOR_GROUP_OPTS.map((o) => o.value)).toContain("YNd11yn12");
     const other = allFields(oltc, { vector_group: "other" }).find(({ field }) => field.key === "vector_group_other");
     expect(other).toBeTruthy();
     expect(allFields(oltc, { vector_group: "YNd11" }).map(({ field }) => field.key)).not.toContain("vector_group_other");
@@ -79,14 +97,61 @@ describe("transformer / accessories polish", () => {
       "RAL9003",
       "RAL5012",
       "RAL5015",
+      "RAL7033",
+      "ANSI70",
       "other",
     ]);
-    expect(PAINT_OPTS.filter((o) => o.value !== "other").every((o) => o.label.zh.startsWith("RAL "))).toBe(true);
+    expect(PAINT_OPTS.find((o) => o.value === "RAL7033")?.label.zh).toBe("RAL 7033");
+    expect(PAINT_OPTS.find((o) => o.value === "ANSI70")?.label.zh).toBe("ANSI 70");
     const oltc = getSheet("oltc")!;
     expect(allFields(oltc, { paint: "RAL7040" }).map(({ field }) => field.key)).not.toContain("paint_other");
     const custom = allFields(oltc, { paint: "other" }).find(({ field }) => field.key === "paint_other")!.field;
     expect(custom.type).toBe("text");
     expect(custom.label.zh).toBe("其他漆色");
+  });
+
+  it("covers Network / Generator / 调容 / 试验变 on APP_OPTS", () => {
+    expect(APP_OPTS.map((o) => o.value)).toEqual([
+      "network",
+      "power",
+      "generator",
+      "capacity",
+      "furnace",
+      "rectifier",
+      "hvdc",
+      "reactor",
+      "test",
+      "other",
+    ]);
+    expect(APP_OPTS.find((o) => o.value === "network")?.label.zh).toBe("电网");
+    expect(APP_OPTS.find((o) => o.value === "capacity")?.label.zh).toBe("调容");
+    expect(APP_OPTS.find((o) => o.value === "test")?.label.zh).toBe("试验变");
+  });
+
+  it("has motor 230 V 1-ph and 230/240 AC / 125 DC control", () => {
+    expect(MOTOR_VOLT_OPTS.map((o) => o.value)).toContain("230_1");
+    expect(CTRL_VOLT_OPTS.map((o) => o.value)).toEqual(
+      expect.arrayContaining(["230_ac", "240_ac", "125_dc"]),
+    );
+  });
+
+  it("puts I / Imax and tx_kind on OLTC, OCTC and HWV", () => {
+    for (const id of ["oltc", "octc", "hwv"] as const) {
+      const keys = allFields(getSheet(id)!, {}).map(({ field }) => field.key);
+      expect(keys, id).toContain("through_current_a");
+      expect(keys, id).toContain("imax_a");
+      expect(keys, id).toContain("tx_kind");
+    }
+    const oltc = allFields(getSheet("oltc")!, {});
+    expect(oltc.find(({ field }) => field.key === "oltc_current_a")?.field.label.zh).toContain("Ium");
+    expect(oltc.find(({ field }) => field.key === "through_current_a")?.field.label.zh).toContain("I");
+    expect(oltc.find(({ field }) => field.key === "range_plus")?.field).toBeTruthy();
+    expect(oltc.find(({ field }) => field.key === "range_minus")?.field).toBeTruthy();
+    expect(oltc.find(({ field }) => field.key === "corrosive_class")?.field.options?.map((o) => o.value)).toEqual(
+      CORROSIVE_OPTS.map((o) => o.value),
+    );
+    const dryKeys = allFields(getSheet("dry")!, {}).map(({ field }) => field.key);
+    expect(dryKeys).not.toContain("tx_kind");
   });
 });
 

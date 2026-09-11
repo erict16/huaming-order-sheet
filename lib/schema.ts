@@ -6,6 +6,7 @@ import {
   CTRL_OPTS,
   CTRL_VOLT_OPTS,
   COMM_OPTS,
+  CORROSIVE_OPTS,
   DRY_FAMILIES,
   DRY_MOUNT_OPTS,
   FILTER_OPTS,
@@ -117,9 +118,26 @@ function orderFields(): FieldDef[] {
   ];
 }
 
-function transformerFields(opts?: { fluid?: boolean }): FieldDef[] {
+function transformerFields(opts?: { fluid?: boolean; txKind?: boolean }): FieldDef[] {
   const fields: FieldDef[] = [
     { key: "application", label: L("用途", "Application", "Применение", "Ứng dụng"), type: "select", options: APP_OPTS },
+    {
+      key: "application_other",
+      label: L("其他用途", "Other application", "Другое применение", "Ứng dụng khác"),
+      type: "text",
+      applies: (v) => v.application === "other",
+    },
+  ];
+  if (opts?.txKind !== false) {
+    fields.push({
+      key: "tx_kind",
+      label: L("变压器结构", "Type of transformer", "Тип трансформатора", "Kiểu MBA"),
+      type: "radio",
+      options: HWV_TX_OPTS,
+      span: 2,
+    });
+  }
+  fields.push(
     { key: "transformer_type", label: L("变压器型号", "Transformer type", "Тип трансформатора", "Kiểu MBA"), type: "text" },
     { key: "rated_power_mva", label: L("额定容量", "Rated power", "Номинальная мощность", "Công suất định mức"), type: "number", unit: "MVA", required: true },
     { key: "hv_kv", label: L("高压额定电压", "HV rated voltage", "Ном. напряжение ВН", "Điện áp cao"), type: "number", unit: "kV" },
@@ -136,7 +154,7 @@ function transformerFields(opts?: { fluid?: boolean }): FieldDef[] {
     { key: "phases", label: L("相数", "Phases", "Число фаз", "Số pha"), type: "radio", options: PHASE_OPTS, required: true },
     { key: "standard", label: L("标准", "Standard", "Стандарт", "Tiêu chuẩn"), type: "select", options: STD_OPTS },
     { key: "ambient_temp", label: L("环境温度", "Ambient temperature", "Температура среды", "Nhiệt độ môi trường"), type: "text", placeholder: L("−25 / +40 °C", "-25 / +40 °C", "−25 / +40 °C", "−25 / +40 °C") },
-  ];
+  );
   if (opts?.fluid !== false) {
     fields.push({
       key: "insulating_fluid",
@@ -241,7 +259,26 @@ function oltcRatingFields(): FieldDef[] {
       hint: L("10 节距 · 19 位置 · 3 中间 · W 正反。由上面参数自动生成，必要时可改。", "pitch·positions·mid·W/G. Auto-filled; override if engineering requires.", "шаг·положения·середина·W/G. Заполняется само.", "bước·vị trí·giữa·W/G. Tự điền."),
     },
     { key: "step_voltage_v", label: L("级电压 Ust", "Step voltage Ust", "Ступенчатое напряжение Ust", "Điện áp nấc Ust"), type: "number", unit: "V" },
-    { key: "through_current_a", label: L("变压器分接电流", "Transformer tap current", "Ток регулируемой обмотки", "Dòng quấn điều áp"), type: "number", unit: "A" },
+    {
+      key: "through_current_a",
+      label: L("变压器额定电流 I", "Transformer rated current I", "Ном. ток ТР I", "Dòng MBA I"),
+      type: "number",
+      unit: "A",
+      hint: L("绕组相电流，不是目录 Ium。", "Phase current of the winding, not catalogue Ium.", "Ток фазы обмотки, не Ium.", "Dòng pha cuộn, không phải Ium."),
+    },
+    { key: "imax_a", label: L("变压器最大电流 Imax", "Transformer max. current Imax", "Макс. ток Imax", "Dòng max Imax"), type: "number", unit: "A" },
+    {
+      key: "range_minus",
+      label: L("调压 −%", "Range −%", "Диапазон −%", "Dải −%"),
+      type: "number",
+      unit: "%",
+    },
+    {
+      key: "range_plus",
+      label: L("调压 +%", "Range +%", "Диапазон +%", "Dải +%"),
+      type: "number",
+      unit: "%",
+    },
     { key: "tap_range_pct", label: L("调压范围", "Tap range", "Диапазон регулирования", "Dải điều áp"), type: "text", placeholder: L("±8×1.25%", "±8×1.25%", "±8×1.25%", "±8×1.25%") },
   ];
 }
@@ -297,6 +334,12 @@ function paintFields(): FieldDef[] {
       type: "text",
       placeholder: L("RAL / C5 / 特殊漆", "RAL / C5 / special", "RAL / C5 / спец.", "RAL / C5 / đặc biệt"),
       applies: (v) => v.paint === "other",
+    },
+    {
+      key: "corrosive_class",
+      label: L("防腐等级", "Corrosive class", "Класс коррозии", "Cấp ăn mòn"),
+      type: "select",
+      options: CORROSIVE_OPTS,
     },
   ];
 }
@@ -444,6 +487,13 @@ const octcSheet: SheetDef = {
           fields: [
             { key: "octc_series", label: L("结构系列", "Series", "Серия", "Series"), type: "radio", options: OCTC_SERIES_OPTS, required: true, hint: L("中性点 Y 常用 IV，线端 D 常用 II。", "Neutral Y usually IV; line-end D usually II.", "Нейтраль Y обычно IV; линейный D обычно II.", "Trung tính Y thường IV; đầu dây D thường II.") },
             { key: "current_a", label: L("额定电流", "Rated current", "Номинальный ток", "Dòng định mức"), type: "select", unit: "A", required: true },
+            {
+              key: "through_current_a",
+              label: L("变压器额定电流 I", "Transformer rated current I", "Ном. ток ТР I", "Dòng MBA I"),
+              type: "number",
+              unit: "A",
+            },
+            { key: "imax_a", label: L("变压器最大电流 Imax", "Transformer max. current Imax", "Макс. ток Imax", "Dòng max Imax"), type: "number", unit: "A" },
             { key: "um_kv", label: L("设备最高电压 Um", "Highest voltage Um", "Наибольшее напряжение Um", "Um"), type: "select", unit: "kV", required: true },
             { key: "connection", label: L("连接", "Connection", "Соединение", "Đấu nối"), type: "radio", options: CONN_OPTS, required: true },
             { key: "octc_positions", label: L("分接位置数", "Number of tapping positions", "Число положений", "Số vị trí nấc"), type: "number", required: true },
@@ -459,7 +509,7 @@ const octcSheet: SheetDef = {
       title: L("安装与备注", "Mounting & notes", "Монтаж и примечания", "Lắp đặt và ghi chú"),
       blurb: L("箱内安装为主。需要电动时选 CMA7。", "Usually in-tank. Choose CMA7 if motorized.", "Обычно в баке. CMA7 — если с двигателем.", "Thường trong thùng. CMA7 nếu có động cơ."),
       sections: [
-        { id: "mechanical", title: L("安装", "Mounting", "Монтаж", "Lắp đặt"), fields: mechanicalFields().filter((f) => f.key !== "flange_type") },
+        { id: "mechanical", title: L("安装", "Mounting", "Монтаж", "Lắp đặt"), fields: [...mechanicalFields().filter((f) => f.key !== "flange_type"), ...paintFields()] },
         { id: "drive", title: L("若配电动机构", "If motorized", "Если с приводом", "Nếu có động cơ"), fields: driveFields(false), hint: L("手轮方案可跳过。", "Skip if handwheel.", "Пропустите при штурвале.", "Bỏ qua nếu tay quay.") },
         { id: "notes", title: L("备注", "Notes", "Примечания", "Ghi chú"), fields: [notesField] },
       ],
@@ -491,7 +541,7 @@ const drySheet: SheetDef = {
       blurb: L("干变、室内、真空切换。默认三相订 3 台单相 CZ。", "Dry, indoor, vacuum switching. Default 3 single-phase CZ for three-phase.", "Сухой, внутри, вакуум. По умолчанию 3 однофазных CZ.", "Khô, trong nhà, chân không. Mặc định 3 CZ một pha."),
       sections: [
         { id: "order", title: L("订单 / 联系人", "Order / contact", "Заказ / контакт", "Đơn / liên hệ"), fields: orderFields() },
-        { id: "transformer", title: L("干式变压器", "Dry-type transformer", "Сухой трансформатор", "MBA khô"), fields: transformerFields({ fluid: false }) },
+        { id: "transformer", title: L("干式变压器", "Dry-type transformer", "Сухой трансформатор", "MBA khô"), fields: transformerFields({ fluid: false, txKind: false }) },
       ],
     },
     {
@@ -864,15 +914,17 @@ const hwvSheet: SheetDef = {
               applies: (v) => v.range_shape !== "asymmetric",
             },
             {
-              key: "tap_plus_pct",
+              key: "range_plus",
               label: L("调压 +%", "Range +%", "Диапазон +%", "Dải +%"),
-              type: "text",
+              type: "number",
+              unit: "%",
               applies: (v) => v.range_shape === "asymmetric",
             },
             {
-              key: "tap_minus_pct",
+              key: "range_minus",
               label: L("调压 −%", "Range −%", "Диапазон −%", "Dải −%"),
-              type: "text",
+              type: "number",
+              unit: "%",
               applies: (v) => v.range_shape === "asymmetric",
             },
             {
@@ -1030,6 +1082,12 @@ const hwvSheet: SheetDef = {
               label: L("其他漆色", "Other paint", "Другая окраска", "Màu sơn khác"),
               type: "text",
               applies: (v) => v.paint === "other",
+            },
+            {
+              key: "corrosive_class",
+              label: L("防腐等级", "Corrosive class", "Класс коррозии", "Cấp ăn mòn"),
+              type: "select",
+              options: CORROSIVE_OPTS,
             },
             { key: "nameplate_language", label: L("铭牌语言", "Nameplate language", "Язык таблички", "Ngôn ngữ nhãn"), type: "select", options: NAMEPLATE_OPTS },
           ],

@@ -383,11 +383,15 @@ export const STD_OPTS = [
 ];
 
 export const APP_OPTS = [
+  opt("network", "电网", "Network", "Сеть", "Lưới điện"),
   opt("power", "电力变压器", "Power transformer", "Силовой трансформатор", "Máy biến áp lực"),
+  opt("generator", "发电机变", "Generator", "Генераторный", "MBA máy phát"),
+  opt("capacity", "调容", "Capacity regulation", "Регул. мощности", "Điều công suất"),
   opt("furnace", "电炉变", "Furnace transformer", "Печной трансформатор", "MBA lò"),
   opt("rectifier", "整流变", "Rectifier transformer", "Выпрямительный трансформатор", "MBA chỉnh lưu"),
   opt("hvdc", "换流/HVDC", "HVDC / converter", "ППТ / преобразователь", "HVDC / biến đổi"),
   opt("reactor", "电抗器", "Reactor", "Реактор", "Cuộn kháng"),
+  opt("test", "试验变", "Test transformer", "Испытательный", "MBA thử"),
   opt("other", "其他", "Other", "Другое", "Khác"),
 ];
 
@@ -547,14 +551,18 @@ export const MOTOR_VOLT_OPTS = [
   opt("440_3", "AC 440 V 三相", "AC 440 V 3-ph", "AC 440 В 3ф", "AC 440 V 3 pha"),
   opt("220_3", "AC 220 V 三相", "AC 220 V 3-ph", "AC 220 В 3ф", "AC 220 V 3 pha"),
   opt("220_1", "AC 220 V 单相", "AC 220 V 1-ph", "AC 220 В 1ф", "AC 220 V 1 pha"),
+  opt("230_1", "AC 230 V 单相", "AC 230 V 1-ph", "AC 230 В 1ф", "AC 230 V 1 pha"),
   opt("240_1", "AC 240 V 单相", "AC 240 V 1-ph", "AC 240 В 1ф", "AC 240 V 1 pha"),
   opt("110_1", "AC 110 V 单相", "AC 110 V 1-ph", "AC 110 В 1ф", "AC 110 V 1 pha"),
 ];
 
 export const CTRL_VOLT_OPTS = [
   opt("220_ac", "AC 220 V"),
+  opt("230_ac", "AC 230 V"),
+  opt("240_ac", "AC 240 V"),
   opt("110_ac", "AC 110 V"),
   opt("220_dc", "DC 220 V"),
+  opt("125_dc", "DC 125 V"),
   opt("110_dc", "DC 110 V"),
   opt("24_dc", "DC 24 V"),
   opt("same", "与电机相同", "Same as motor", "Как у двигателя", "Cùng điện áp motor"),
@@ -576,7 +584,19 @@ export const PAINT_OPTS = [
   opt("RAL9003", "RAL 9003"),
   opt("RAL5012", "RAL 5012"),
   opt("RAL5015", "RAL 5015"),
+  opt("RAL7033", "RAL 7033"),
+  opt("ANSI70", "ANSI 70"),
   opt("other", "其他", "Other", "Другое", "Khác"),
+];
+
+export const CORROSIVE_OPTS = [
+  opt("none", "不要求", "None", "Нет", "Không"),
+  opt("C3", "C3"),
+  opt("C4", "C4"),
+  opt("C4-H", "C4-H"),
+  opt("C4-M", "C4-M"),
+  opt("C5", "C5"),
+  opt("C5-M", "C5-M"),
 ];
 
 /** Transformer vector group — not OLTC 开关连接 Y/D. */
@@ -587,6 +607,11 @@ export const VECTOR_GROUP_OPTS = [
   opt("Dyn5", "Dyn5"),
   opt("YNyn0", "YNyn0"),
   opt("Dd0", "Dd0"),
+  opt("YNa0", "YNa0"),
+  opt("YNd11yn12", "YNd11yn12"),
+  opt("Ynd11d11", "Ynd11d11"),
+  opt("Yd11", "Yd11"),
+  opt("Dyn1", "Dyn1"),
   opt("other", "其他", "Other", "Другое", "Khác"),
 ];
 
@@ -756,10 +781,12 @@ export const HWV_FREQ_OPTS = [
 
 export const HWV_APP_OPTS = [
   opt("power", "电力变", "Power", "Силовой", "MBA lực"),
+  opt("network", "电网", "Network", "Сеть", "Lưới điện"),
   opt("capacity", "容量调节", "Capacity regulation", "Регул. мощности", "Điều công suất"),
   opt("furnace", "电炉变", "Furnace", "Печной", "MBA lò"),
   opt("rectifier", "整流变", "Rectifier", "Выпрямительный", "MBA chỉnh lưu"),
   opt("generator", "发电机变", "Generator", "Генераторный", "MBA máy phát"),
+  opt("test", "试验变", "Test transformer", "Испытательный", "MBA thử"),
   opt("other", "其他", "Others", "Другое", "Khác"),
 ];
 

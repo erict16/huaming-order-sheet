@@ -133,5 +133,14 @@ export function deriveValues(prev: OrderValues, patch: OrderValues): OrderValues
     next.delivery_date = "custom";
   }
 
+  if ("range_plus" in patch || "range_minus" in patch) {
+    const plus = num(next.range_plus);
+    const minus = num(next.range_minus);
+    if (plus != null && minus != null) {
+      next.tap_range_pct = plus === minus ? `±${plus}%` : `−${minus}/+${plus}%`;
+      if (plus !== minus) next.range_shape = "asymmetric";
+    }
+  }
+
   return next;
 }

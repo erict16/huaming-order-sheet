@@ -50,4 +50,20 @@ describe("deriveValues", () => {
     expect(v.pos_min).toBe("17");
     expect(v.raise_direction).toBeUndefined();
   });
+
+  it("derives tap_range_pct from range_plus / range_minus without breaking 10193W", () => {
+    const base = deriveValues(
+      {},
+      { family: "CM2", regulation: "reversing", plus_minus: "8", oltc_tap_mid: "3" },
+    );
+    expect(base.tap_code).toBe("10193W");
+    const asym = deriveValues(base, { range_minus: "20", range_plus: "6" });
+    expect(asym.tap_range_pct).toBe("−20/+6%");
+    expect(asym.range_shape).toBe("asymmetric");
+    expect(asym.tap_code).toBe("10193W");
+    expect(asym.plus_minus).toBe("8");
+    const sym = deriveValues(base, { range_minus: "16", range_plus: "16" });
+    expect(sym.tap_range_pct).toBe("±16%");
+    expect(sym.tap_code).toBe("10193W");
+  });
 });

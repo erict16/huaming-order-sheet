@@ -29,6 +29,7 @@ function paintWord(values: OrderValues): string {
   const paint = s(values.paint);
   if (paint === "other") return s(values.paint_other);
   if (!paint) return "";
+  if (paint === "ANSI70") return "ANSI 70";
   return paint.replace("RAL", "RAL ");
 }
 
@@ -113,14 +114,18 @@ export function hwvFormValues(values: OrderValues): {
   if (ctrl === "SHM-K") on(8);
 
   const app = s(values.application);
-  if (app === "power") on(9);
+  if (app === "power" || app === "network") on(9);
   else if (app === "capacity") on(10);
   else if (app === "furnace") on(11);
   else if (app === "rectifier") on(12);
   else if (app === "generator") on(13);
-  else if (app === "other") {
+  else if (app === "other" || app === "test" || app === "hvdc" || app === "reactor") {
     on(14);
-    setT(7, s(values.application_other));
+    setT(
+      7,
+      s(values.application_other) ||
+        (app === "test" ? "Test transformer" : app === "hvdc" ? "HVDC" : app === "reactor" ? "Reactor" : ""),
+    );
   }
 
   const tx = s(values.tx_kind);
@@ -176,10 +181,13 @@ export function hwvFormValues(values: OrderValues): {
 
   setT(16, s(values.hv_kv));
 
-  const shape = s(values.range_shape);
+  const plusPct = s(values.range_plus) || s(values.tap_plus_pct);
+  const minusPct = s(values.range_minus) || s(values.tap_minus_pct);
+  const shape =
+    s(values.range_shape) || (plusPct && minusPct && plusPct !== minusPct ? "asymmetric" : "symmetric");
   if (shape === "asymmetric") {
-    setT(18, s(values.tap_plus_pct));
-    setT(19, s(values.tap_minus_pct));
+    setT(18, plusPct);
+    setT(19, minusPct);
     setT(21, s(values.steps_plus));
     setT(22, s(values.steps_minus));
   } else {
