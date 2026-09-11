@@ -37,7 +37,7 @@ const chrome = {
   exportWord: L("导出 Word", "Export Word", "Экспорт Word", "Xuất Word"),
   exportExcel: L("导出 Excel", "Export Excel", "Экспорт Excel", "Xuất Excel"),
   exportFormat: L("导出格式", "Export format", "Формат экспорта", "Định dạng xuất"),
-  presets: L("常用模板", "Typical templates", "Типовые шаблоны", "Mẫu thường dùng"),
+  presets: L("按真实订单起单", "Start from a real order", "Начать с реального заказа", "Bắt đầu từ đơn thật"),
   presetApply: L("一键填入", "Prefill", "Заполнить", "Điền sẵn"),
   search: L("搜索", "Search", "Поиск", "Tìm"),
   noMatches: L("无匹配", "No matches", "Нет совпадений", "Không khớp"),
