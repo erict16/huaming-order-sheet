@@ -4,7 +4,7 @@ import { getSheet } from "./schema";
 
 describe("export plan", () => {
   it("bumps the patch version", () => {
-    expect(APP_VERSION).toBe("1.2.1");
+    expect(APP_VERSION).toBe("1.2.2");
   });
 
   it("lets the user choose Word or official xlsm on OLTC / CMA7 / SHM-D", () => {
@@ -31,7 +31,18 @@ describe("export plan", () => {
 
   it("falls back to generic xlsx when there is no official workbook", () => {
     expect(resolveExportPlan(getSheet("octc")!, "excel")).toEqual({ kind: "xlsx" });
-    expect(resolveExportPlan(getSheet("octc")!, "word")).toEqual({ kind: "xlsx" });
+    expect(resolveExportPlan(getSheet("dry")!, "excel")).toEqual({ kind: "xlsx" });
+  });
+
+  it("exports OCTC as the official 2011 Word OS", () => {
+    const octc = getSheet("octc")!;
+    expect(defaultExportFormat(octc)).toBe("word");
+    expect(resolveExportPlan(octc, "word")).toEqual({
+      kind: "word",
+      file: "octc-order-spec.docx",
+      mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    });
+    expect(resolveExportPlan(octc, "excel")).toEqual({ kind: "xlsx" });
   });
 
   it("exports HWV/HWDK as the official 2023-8 Word OS only", () => {
