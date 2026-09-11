@@ -11,7 +11,7 @@ import {
 } from "./presets";
 import { typeFromValues } from "./typeString";
 
-const ALLOWED_SHEETS = ["oltc", "octc", "dry", "cma7"] as const;
+const ALLOWED_SHEETS = ["oltc", "octc", "dry", "cma7", "shm-d", "hwv"] as const;
 
 function compactOf(id: string): string {
   const preset = ORDER_PRESETS.find((p) => p.id === id);
@@ -44,7 +44,7 @@ describe("ORDER_PRESETS", () => {
     expect(ORDER_PRESETS.map((p) => p.sheetId)).toEqual([
       "oltc",
       "oltc",
-      "oltc",
+      "hwv",
       "octc",
       "dry",
       "oltc",
@@ -54,7 +54,7 @@ describe("ORDER_PRESETS", () => {
     expect(ORDER_PRESETS.every((p) => (ALLOWED_SHEETS as readonly string[]).includes(p.sheetId))).toBe(
       true,
     );
-    expect(ORDER_PRESETS.some((p) => (p.sheetId as string) === "hwv")).toBe(false);
+    expect(ORDER_PRESETS.some((p) => p.sheetId === "hwv")).toBe(true);
     for (const preset of ORDER_PRESETS) {
       expect(preset.title.zh, preset.id).not.toMatch(/模板/);
       expect(preset.values.project, preset.id).not.toMatch(/模板/);
@@ -72,7 +72,7 @@ describe("ORDER_PRESETS", () => {
     expect(compactOf("trafoindo-salak-cv2")).toBe("CV2III-350D/40.5-10193W");
   });
 
-  it("keeps CV 300 A on catalog CV-350 and HWV on the oltc sheet", () => {
+  it("keeps CV 300 A on catalog CV-350 and HWV on the hwv sheet", () => {
     const havec = applyPreset(getPreset("hlg-havec-cv")!);
     expect(havec.family).toBe("CV");
     expect(havec.oltc_current_a).toBe("350");
@@ -81,7 +81,7 @@ describe("ORDER_PRESETS", () => {
 
     const hwv = applyPreset(getPreset("ue-hwv")!);
     expect(hwv.family).toBe("HWV");
-    expect(getPreset("ue-hwv")?.sheetId).toBe("oltc");
+    expect(getPreset("ue-hwv")?.sheetId).toBe("hwv");
     expect(hwv.oltc_current_a).toBe("400");
     expect(hwv.tap_code).toBe("10193W");
 

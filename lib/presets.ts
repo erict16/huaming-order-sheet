@@ -7,7 +7,7 @@ import type { I18nText, OrderValues, SheetId } from "./types";
 export interface OrderPreset {
   id: string;
   family: string;
-  sheetId: "oltc" | "octc" | "dry" | "cma7";
+  sheetId: SheetId;
   title: I18nText;
   blurb: I18nText;
   values: OrderValues;
@@ -122,7 +122,7 @@ export const ORDER_PRESETS: OrderPreset[] = [
   {
     id: "ue-hwv",
     family: "HWV",
-    sheetId: "oltc",
+    sheetId: "hwv",
     title: L(
       "United Energy · HWV",
       "United Energy · HWV",
