@@ -176,21 +176,6 @@ export const OLTC_FAMILIES: FamilyDef[] = [
     ),
   },
   {
-    code: "HWV",
-    category: "external",
-    hasSelectorGrade: false,
-    structure: "combined",
-    vacuum: true,
-    currents: { I: [400, 800, 1000], III: [400, 800, 1000] },
-    umKv: [17.5, 40.5, 72.5],
-    desc: L(
-      "真空，外附油箱安装（侧箱）。箱顶/外附方案。",
-      "Vacuum OLTC in an external side-tank compartment.",
-      "Вакуумный РПН в боковом отсеке.",
-      "OLTC chân không lắp thùng phụ bên hông.",
-    ),
-  },
-  {
     code: "SY",
     category: "legacy",
     hasSelectorGrade: false,
@@ -287,6 +272,41 @@ export const OCTC_FAMILIES: FamilyDef[] = [
   },
 ];
 
+/** External-tank vacuum OLTC — own sheet, not the in-tank V1.2 xlsm. */
+export const HWV_FAMILIES: FamilyDef[] = [
+  {
+    code: "HWV",
+    category: "external",
+    hasSelectorGrade: false,
+    structure: "combined",
+    vacuum: true,
+    currents: { I: [400, 800, 1000], III: [400, 800, 1000] },
+    umKv: [17.5, 40.5, 72.5],
+    desc: L(
+      "真空，外附油箱（侧箱）。型号如 HWVIII-400Y/72.5-10193W，没有 B/C/D。",
+      "Vacuum OLTC in an external side-tank. Type like HWVIII-400Y/72.5-10193W — no selector grade.",
+      "Вакуумный РПН в боковом отсеке. Без класса B/C/D.",
+      "OLTC chân không thùng phụ. Kiểu HWVIII-400Y/72.5-10193W, không cấp B/C/D.",
+    ),
+  },
+  {
+    code: "HWDK",
+    aliases: ["HWDKIII", "HWDKI"],
+    category: "external",
+    hasSelectorGrade: false,
+    structure: "combined",
+    vacuum: true,
+    currents: { I: [400, 800, 1000], III: [400, 800, 1000] },
+    umKv: [17.5, 40.5, 72.5],
+    desc: L(
+      "真空外附，常配 SHM-X。回路电流只在 HWDK 填。",
+      "External vacuum, often with SHM-X. Circulating current is HWDK-only.",
+      "Вакуумный внешний, часто SHM-X. Ток циркуляции только у HWDK.",
+      "Chân không thùng phụ, thường SHM-X. Dòng tuần hoàn chỉ HWDK.",
+    ),
+  },
+];
+
 export const DRY_FAMILIES: FamilyDef[] = [
   {
     code: "CZ",
@@ -307,6 +327,7 @@ export const DRY_FAMILIES: FamilyDef[] = [
 
 export const ALL_FAMILIES: FamilyDef[] = [
   ...OLTC_FAMILIES,
+  ...HWV_FAMILIES,
   ...OCTC_FAMILIES,
   ...DRY_FAMILIES,
 ];
@@ -720,6 +741,117 @@ export const DELIVERY_DATE_OPTS = [
   opt("180 days after PO", "合同后 180 天", "180 days after PO", "180 дней после PO", "180 ngày sau PO"),
   opt("TBC", "待定 TBC", "TBC", "TBC", "TBC"),
   opt("custom", "指定日历日期", "Specific calendar date", "Конкретная дата", "Ngày cụ thể"),
+];
+
+export const HWV_PHASE_OPTS = [
+  PHASE_OPTS[0],
+  PHASE_OPTS[2],
+  opt("other", "其他", "Others", "Другое", "Khác"),
+];
+
+export const HWV_FREQ_OPTS = [
+  ...FREQ_OPTS,
+  opt("other", "其他", "Others", "Другое", "Khác"),
+];
+
+export const HWV_APP_OPTS = [
+  opt("power", "电力变", "Power", "Силовой", "MBA lực"),
+  opt("capacity", "容量调节", "Capacity regulation", "Регул. мощности", "Điều công suất"),
+  opt("furnace", "电炉变", "Furnace", "Печной", "MBA lò"),
+  opt("rectifier", "整流变", "Rectifier", "Выпрямительный", "MBA chỉnh lưu"),
+  opt("generator", "发电机变", "Generator", "Генераторный", "MBA máy phát"),
+  opt("other", "其他", "Others", "Другое", "Khác"),
+];
+
+export const HWV_TX_OPTS = [
+  opt("separated", "独立绕组", "Separated winding", "Раздельные обмотки", "Cuộn tách"),
+  opt("auto", "自耦", "Auto-transformer", "Автотрансформатор", "Tự ngẫu"),
+  opt("booster", "调压变", "Booster transformer", "Вольтодобавочный", "MBA tăng áp"),
+];
+
+export const HWV_AMBIENT_OPTS = [
+  opt("-25~+40", "−25～+40 ℃"),
+  opt("-40~+40", "−40～+40 ℃"),
+  opt("other", "其他", "Others", "Другое", "Khác"),
+];
+
+export const HWV_FLUX_OPTS = [
+  opt("cfvv", "恒磁通 CFVV", "Constant flux (CFVV)", "Постоянный поток", "Từ thông cố định"),
+  opt("vfvv", "变磁通 VFVV（附图纸）", "Variable flux (attach drawing)", "Переменный поток", "Từ thông biến"),
+  opt("combined", "混合调压（附图纸）", "Combined (attach drawing)", "Комбинированное", "Hỗn hợp"),
+];
+
+export const HWV_TAP_WINDING_OPTS = [
+  opt("star_neutral", "星形中性点", "Star at neutral", "Звезда на нейтрали", "Sao trung tính"),
+  opt("star_middle", "星形绕组中部", "Star at middle of winding", "Звезда в середине", "Sao giữa cuộn"),
+  opt("star_end", "星形绕组末端", "Star at end of winding", "Звезда в конце", "Sao cuối cuộn"),
+  opt("delta_end", "角形末端", "Delta at end of winding", "Треугольник в конце", "Tam giác cuối"),
+  opt("delta_middle", "角形中部", "Delta at middle of winding", "Треугольник в середине", "Tam giác giữa"),
+  opt("1plus2", "单相 + 两相", "One single-phase + one two-phase", "1ф + 2ф", "1 pha + 2 pha"),
+  opt("linear_end", "线性末端", "Linear at end of winding", "Линейное в конце", "Tuyến tính cuối"),
+  opt("linear_middle", "线性中部", "Linear at middle of winding", "Линейное в середине", "Tuyến tính giữa"),
+];
+
+export const HWV_MDU_OPTS = [
+  opt("CMA7", "CMA7"),
+  opt("SHM-D", "SHM-D"),
+  opt("SHM-X", "SHM-X（HWDK 常用）", "SHM-X (usual for HWDK)", "SHM-X (часто HWDK)", "SHM-X (thường HWDK)"),
+  opt("none", "不配 / 已有", "None / existing", "Нет / имеющийся", "Không / có sẵn"),
+];
+
+export const HWV_CTRL_OPTS = [
+  opt("none", "不配", "None", "Нет", "Không"),
+  opt("HMC-3C", "HMC-3C"),
+  opt("ET-SZ6", "ET-SZ6"),
+  opt("SHM-K", "SHM-K"),
+];
+
+export const HWV_RELAY_OPTS = [
+  opt("qj4", "QJ4-25 · 跳闸 + 信号", "QJ4-25 trip + signal", "QJ4-25 откл. + сигнал", "QJ4-25 cắt + tín hiệu"),
+  opt("qj4g", "QJ4G-25 · 只跳闸", "QJ4G-25 trip only", "QJ4G-25 только откл.", "QJ4G-25 chỉ cắt"),
+  opt("qj6", "QJ6-25 · 两路跳闸", "QJ6-25 two trip contacts", "QJ6-25 два откл.", "QJ6-25 hai tiếp điểm cắt"),
+  opt("other", "其他", "Others", "Другое", "Khác"),
+];
+
+export const HWV_PRV_OPTS = [
+  opt("rupture", "只要防爆膜", "Rupture disk only", "Только разрывной диск", "Chỉ đĩa nổ"),
+  opt("rupture_prv", "防爆膜 + 释压阀", "Rupture disk & relief valve", "Диск и клапан", "Đĩa nổ + van"),
+  opt("prv_no_signal", "释压阀，无信号", "Relief valve, no signal", "Клапан без сигнала", "Van, không tín hiệu"),
+  opt("prv_one", "释压阀，1 组转换接点", "Relief valve, one C/O", "Клапан, 1 C/O", "Van, 1 C/O"),
+  opt("prv_two", "释压阀，2 组转换接点", "Relief valve, two C/O", "Клапан, 2 C/O", "Van, 2 C/O"),
+];
+
+export const HWV_MOUNT_OPTS = [
+  opt("weld", "焊在变压器油箱上", "Weld onto the transformer tank", "Приварка к баку", "Hàn vào thùng"),
+  opt("bolts", "螺栓固定", "Fix onto the tank by bolts", "Болтами к баку", "Bu lông"),
+];
+
+export const HWV_HWDK_CONN_OPTS = [
+  opt("9_linear", "9 档 / 线性", "9-pos. / linear", "9 пол. / линейное", "9 nấc / tuyến tính"),
+  opt("17", "17 档", "17-pos.", "17 пол.", "17 nấc"),
+  opt("linear", "线性", "Linear", "Линейное", "Tuyến tính"),
+  opt("33_reversing", "33 档 / 正反", "33-pos. / reversing", "33 пол. / реверс", "33 nấc / đảo"),
+  opt("reversing", "正反", "Reversing", "Реверс", "Đảo chiều"),
+];
+
+export const HWV_CAPACITY_OPTS = [
+  opt("constant", "恒容量", "Constant", "Постоянная", "Không đổi"),
+  opt("decreasing", "递减容量", "Decreasing", "Убывающая", "Giảm dần"),
+];
+
+export const HWV_OVERLOAD_OPTS = [
+  opt("iec", "按 IEC 60354", "Acc. to IEC 60354", "По IEC 60354", "Theo IEC 60354"),
+  opt("above", "高于 IEC 60354", "> IEC 60354", "> IEC 60354", "> IEC 60354"),
+];
+
+export const HWV_UST_OPTS = [
+  opt("constant", "恒定级电压", "Constant Ust", "Постоянное Ust", "Ust cố định"),
+  opt("variable", "变化级电压", "Variable Ust", "Переменное Ust", "Ust biến"),
+];
+
+export const HWV_RANGE_SHAPE_OPTS = [
+  opt("symmetric", "对称 ±", "Symmetric ±", "Симметрично ±", "Đối xứng ±"),
+  opt("asymmetric", "不对称 + / −", "Asymmetric + / −", "Несимметрично + / −", "Lệch + / −"),
 ];
 
 export function umOptions(allowed?: number[]) {

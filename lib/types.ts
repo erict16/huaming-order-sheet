@@ -1,6 +1,6 @@
 export type Lang = "zh" | "en" | "ru" | "vi";
 
-export type SheetId = "oltc" | "octc" | "dry" | "cma7" | "shm-d";
+export type SheetId = "oltc" | "octc" | "dry" | "cma7" | "shm-d" | "hwv";
 
 export type PhaseCode = "I" | "II" | "III";
 export type Connection = "Y" | "D";

@@ -33,4 +33,15 @@ describe("export plan", () => {
     expect(resolveExportPlan(getSheet("octc")!, "excel")).toEqual({ kind: "xlsx" });
     expect(resolveExportPlan(getSheet("octc")!, "word")).toEqual({ kind: "xlsx" });
   });
+
+  it("exports HWV/HWDK as the official 2023-8 Word OS only", () => {
+    const hwv = getSheet("hwv")!;
+    expect(defaultExportFormat(hwv)).toBe("word");
+    expect(resolveExportPlan(hwv, "word")).toEqual({
+      kind: "word",
+      file: "hwv-hwdk-order-spec.docx",
+      mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    });
+    expect(resolveExportPlan(hwv, "excel")).toEqual({ kind: "xlsx" });
+  });
 });

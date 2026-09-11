@@ -51,6 +51,13 @@ export function deriveValues(prev: OrderValues, patch: OrderValues): OrderValues
   const next: OrderValues = { ...prev, ...patch };
   const fam = getFamily(next.family || "");
 
+  if ("family" in patch && next.family === "HWDK" && (prev.mdu_model === "CMA7" || !prev.mdu_model)) {
+    next.mdu_model = "SHM-X";
+  }
+  if ("family" in patch && next.family === "HWV" && prev.mdu_model === "SHM-X") {
+    next.mdu_model = "CMA7";
+  }
+
   if ("family" in patch || "phases" in patch) {
     const amps = currentsFor(fam, next.phases || "III");
     const cur = num(next.oltc_current_a);
