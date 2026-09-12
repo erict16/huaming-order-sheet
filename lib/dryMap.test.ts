@@ -143,6 +143,42 @@ describe("drySdtValues", () => {
     expect(one[72]).toBe("indoor");
     expect(one[72]).not.toContain("Quantity");
   });
+
+  it("writes provided insulation PF/BIL onto SDTs 28–35 and skips them on catalog", () => {
+    const provided = drySdtValues({
+      ins_fill: "provided",
+      ins_earth_pf_kv: "90",
+      ins_earth_li_kv: "250",
+      ins_a_pf_kv: "45",
+      ins_a_li_kv: "105",
+      ins_a1_pf_kv: "35",
+      ins_a1_li_kv: "75",
+      ins_b_pf_kv: "90",
+      ins_b_li_kv: "250",
+    });
+    expect(provided[28]).toBe("90");
+    expect(provided[29]).toBe("250");
+    expect(provided[30]).toBe("45");
+    expect(provided[31]).toBe("105");
+    expect(provided[32]).toBe("35");
+    expect(provided[33]).toBe("75");
+    expect(provided[34]).toBe("90");
+    expect(provided[35]).toBe("250");
+    const catalog = drySdtValues({
+      ins_fill: "catalog",
+      ins_earth_pf_kv: "90",
+      ins_earth_li_kv: "250",
+    });
+    expect(catalog[28]).toBeUndefined();
+    expect(catalog[29]).toBeUndefined();
+  });
+
+  it("writes variable Ust max/min onto SDTs 26–27", () => {
+    const v = drySdtValues({ ust_mode: "variable", ust_max_v: "1200", ust_min_v: "800", step_voltage_v: "950" });
+    expect(v[26]).toBe("1200");
+    expect(v[27]).toBe("800");
+    expect(v[25]).toBeUndefined();
+  });
 });
 
 describe("dryCheckValues", () => {
@@ -185,6 +221,65 @@ describe("dryCheckValues", () => {
     expect(c[35]).toBe(false);
     expect(c[37]).toBe(false);
   });
+
+  it("ticks catalog vs provided insulation from ins_fill, and leaves altitude and CZ terminals off", () => {
+    const catalog = dryCheckValues({ ins_fill: "catalog" });
+    expect(catalog[18]).toBe(true);
+    expect(catalog[19]).toBe(false);
+    expect(catalog[3]).toBe(false);
+    expect(catalog[4]).toBe(false);
+    expect(catalog[20]).toBe(false);
+    expect(catalog[31]).toBe(false);
+    expect(catalog[32]).toBe(false);
+    expect(catalog[33]).toBe(false);
+    expect(catalog[34]).toBe(false);
+
+    const provided = dryCheckValues({ ins_fill: "provided" });
+    expect(provided[19]).toBe(true);
+    expect(provided[18]).toBe(false);
+
+    const blank = dryCheckValues({ family: "CZ", oltc_current_a: "500" });
+    expect(blank[18]).toBe(false);
+    expect(blank[19]).toBe(false);
+    expect(blank[3]).toBe(false);
+    expect(blank[4]).toBe(false);
+    expect(blank[31]).toBe(false);
+  });
+
+  it("ticks each tap-winding diagram from the official Word labels", () => {
+    const idx: Record<string, number> = {
+      star_neutral: 9,
+      star_middle: 10,
+      star_end: 11,
+      delta_end: 12,
+      delta_middle: 14,
+      "1plus2": 15,
+      linear_end: 16,
+      linear_middle: 17,
+    };
+    for (const [key, i] of Object.entries(idx)) {
+      const c = dryCheckValues({ tap_winding: key });
+      expect(c[i], key).toBe(true);
+      for (const j of Object.values(idx)) {
+        if (j !== i) expect(c[j], `${key} must not tick ${j}`).toBe(false);
+      }
+      expect(c[13]).toBe(false);
+    }
+  });
+
+  it("ticks variable Ust from ust_mode and does not invent CVT ticks", () => {
+    const c = dryCheckValues({
+      family: "CZ",
+      ust_mode: "variable",
+      controller: "HMC-3C",
+    });
+    expect(c[8]).toBe(true);
+    expect(c[7]).toBe(false);
+    expect(c[20]).toBe(false);
+    expect(c[24]).toBe(false);
+    expect(c[27]).toBe(false);
+    expect(c[29]).toBe(false);
+  });
 });
 
 describe("dry Word fill", () => {
@@ -220,5 +315,28 @@ describe("dry Word fill", () => {
     expect(xml).not.toContain("13800138000");
     const boxes = readLegacyCheckboxes(xml);
     expect(boxes).toHaveLength(DRY_CHECKBOX_COUNT);
+  });
+
+  it("ticks provided insulation on the official dry-order-sheet.docx", async () => {
+    const buf = readFileSync(template);
+    const filled = await fillDocx(
+      buf,
+      drySdtValues({
+        ins_fill: "provided",
+        ins_earth_pf_kv: "90",
+        ins_earth_li_kv: "250",
+      }),
+      dryCheckValues({ ins_fill: "provided" }),
+    );
+    const zip = await JSZip.loadAsync(filled);
+    const xml = await zip.file("word/document.xml")!.async("string");
+    const texts = readSdtTexts(xml);
+    expect(texts[28]).toBe("90");
+    expect(texts[29]).toBe("250");
+    const boxes = readLegacyCheckboxes(xml);
+    expect(boxes[19]).toBe(true);
+    expect(boxes[18]).toBe(false);
+    expect(boxes[3]).toBe(false);
+    expect(boxes[31]).toBe(false);
   });
 });

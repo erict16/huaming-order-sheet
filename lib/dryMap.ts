@@ -123,10 +123,10 @@ function remarksWord(values: OrderValues): string | undefined {
 
 /**
  * 39 FORMCHECKBOX on dry-order-sheet.docx, document order.
- * 0–2 ambient  3–4 altitude  5–6 capacity  7–8 Ust
+ * 0–2 ambient  3–4 altitude (no wizard key)  5–6 capacity  7–8 Ust
  * 9–17 regulation location  18–19 insulation
- * 20–30 CVT (leave off for CZ)  31–34 CZ terminals  35–36 MDU side
- * 37 supporting frame std  38 frame other colour
+ * 20–30 CVT (leave off)  31–34 CZ terminals (no wizard key)
+ * 35–36 MDU side  37 supporting frame std  38 frame other colour (no key)
  */
 export function dryCheckValues(values: OrderValues): boolean[] {
   const on = new Array<boolean>(DRY_CHECKBOX_COUNT).fill(false);
@@ -145,11 +145,28 @@ export function dryCheckValues(values: OrderValues): boolean[] {
     else tick(5);
   }
 
-  if (s(values.step_voltage_v)) tick(7);
+  const ust = s(values.ust_mode);
+  if (ust === "variable") tick(8);
+  else if (ust === "constant" || s(values.step_voltage_v)) tick(7);
 
-  const conn = s(values.oltc_connection);
-  if (conn === "Y") tick(9);
-  else if (conn === "D") tick(12);
+  const loc: Record<string, number> = {
+    star_neutral: 9,
+    star_middle: 10,
+    star_end: 11,
+    delta_end: 12,
+    delta_middle: 14,
+    "1plus2": 15,
+    linear_end: 16,
+    linear_middle: 17,
+  };
+  const locKey =
+    s(values.tap_winding) ||
+    (s(values.oltc_connection) === "D" ? "delta_end" : s(values.oltc_connection) === "Y" ? "star_neutral" : "");
+  if (loc[locKey] != null) tick(loc[locKey]);
+
+  const ins = s(values.ins_fill);
+  if (ins === "provided") tick(19);
+  else if (ins === "catalog") tick(18);
 
   const side = s(values.mdu_side);
   if (side === "right") tick(35);
@@ -197,7 +214,23 @@ export function drySdtValues(values: OrderValues): Array<string | undefined> {
   }
   set(18, regulatedKv(values));
   set(19, s(values.dry_positions));
-  set(25, s(values.step_voltage_v));
+  if (s(values.ust_mode) === "variable") {
+    set(26, s(values.ust_max_v));
+    set(27, s(values.ust_min_v));
+  } else {
+    set(25, s(values.step_voltage_v));
+  }
+
+  if (s(values.ins_fill) === "provided") {
+    set(28, s(values.ins_earth_pf_kv));
+    set(29, s(values.ins_earth_li_kv));
+    set(30, s(values.ins_a_pf_kv));
+    set(31, s(values.ins_a_li_kv));
+    set(32, s(values.ins_a1_pf_kv));
+    set(33, s(values.ins_a1_li_kv));
+    set(34, s(values.ins_b_pf_kv));
+    set(35, s(values.ins_b_li_kv));
+  }
 
   set(53, columnsWord(s(values.unit_count)));
   set(54, s(values.oltc_current_a));
