@@ -152,12 +152,12 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
             <button
               type="button"
               onClick={() => go(i)}
-              className={`rounded-full px-3 py-1 text-xs font-semibold ${
+              className={`rounded-full px-3 py-1 text-xs font-semibold transition duration-150 active:translate-y-px ${
                 i === step
-                  ? "bg-navy text-white"
+                  ? "bg-navy-50 text-navy ring-1 ring-navy/30"
                   : i < step
-                    ? "bg-navy/10 text-navy"
-                    : "bg-slate-100 text-ink-muted"
+                    ? "bg-white text-navy ring-1 ring-slate-200"
+                    : "bg-transparent text-ink-muted ring-1 ring-transparent hover:bg-white"
               }`}
             >
               {i + 1}. {t(s.title, lang)}

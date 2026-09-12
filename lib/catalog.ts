@@ -348,7 +348,7 @@ export const FAMILY_GROUP_LABEL = {
   vacuum_combined: L("真空 · 组合式", "Vacuum · combined", "Вакуум · комбинированный", "Chân không · tổ hợp"),
   vacuum_compound: L("真空 · 复合式", "Vacuum · compound", "Вакуум · составной", "Chân không · compound"),
   external: L("外附油箱", "External compartment", "Боковой отсек", "Thùng phụ"),
-  legacy: L("legacy 油浸", "Legacy oil", "Устаревший масляный", "Dầu kiểu cũ"),
+  legacy: L("老系列", "Older series", "Старая серия", "Dòng cũ"),
   dry: L("干式真空", "Dry vacuum", "Сухой вакуумный", "Khô chân không"),
   octc_cage: L("笼式无励磁", "Cage OCTC", "Клетьевой ПБВ", "OCTC kiểu lồng"),
   octc_drum: L("鼓式无励磁", "Drum OCTC", "Барабанный ПБВ", "OCTC tang trống"),
