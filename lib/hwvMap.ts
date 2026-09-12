@@ -21,8 +21,10 @@ function stripPm(v: string): string {
 }
 
 function deliveryWord(values: OrderValues): string {
-  if (s(values.delivery_date) === "custom") return s(values.delivery_date_custom);
-  return s(values.delivery_date);
+  const d = s(values.delivery_date);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+  if (d === "custom") return s(values.delivery_date_custom);
+  return s(values.delivery_lead) || d;
 }
 
 function paintWord(values: OrderValues): string {

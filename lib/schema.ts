@@ -107,14 +107,15 @@ function orderFields(): FieldDef[] {
     {
       key: "delivery_date",
       label: L("要货期", "Delivery date", "Срок поставки", "Ngày giao"),
-      type: "select",
-      options: DELIVERY_DATE_OPTS,
+      type: "date",
     },
     {
-      key: "delivery_date_custom",
-      label: L("指定要货日期", "Specific delivery date", "Конкретный срок", "Ngày giao cụ thể"),
-      type: "date",
-      applies: (v) => v.delivery_date === "custom",
+      key: "delivery_lead",
+      label: L("或按合同后天数", "Or days after PO", "Или дней после PO", "Hoặc số ngày sau PO"),
+      type: "radio",
+      options: DELIVERY_DATE_OPTS,
+      span: 2,
+      hint: L("点输入框出日历。不选日期就按合同后天数。", "Click the field for a calendar. Skip the date to use days-after-PO.", "Календарь в поле. Без даты — срок после PO.", "Bấm ô để mở lịch. Không chọn ngày thì theo số ngày sau PO."),
     },
   ];
 }
@@ -161,10 +162,11 @@ function transformerFields(opts?: { fluid?: boolean; txKind?: boolean }): FieldD
   if (opts?.txKind !== false) {
     fields.push({
       key: "tx_kind",
-      label: L("变压器结构", "Type of transformer", "Тип трансформатора", "Kiểu MBA"),
+      label: L("变压器型式", "Type of transformer", "Тип трансформатора", "Kiểu MBA"),
       type: "radio",
       options: HWV_TX_OPTS,
       span: 2,
+      hint: L("这是变压器本身：独立绕组、自耦、串联调压。组合式/复合式是开关系列，上一页选。", "This is the transformer (separated / auto / booster). Combined vs compound is the OLTC family on the previous step.", "Это тип ТР, не серия РПН.", "Đây là kiểu MBA. Tổ hợp/compound là series OLTC, chọn ở bước trước."),
     });
   }
   fields.push(
@@ -429,32 +431,19 @@ function needsTieIn(v: OrderValues): boolean {
   return v.potential_connection === "with" || v.potential_connection === "check";
 }
 
+function detailedIns(v: OrderValues): boolean {
+  return v.ins_fill === "provided";
+}
+
 function insulationFields(): FieldDef[] {
   return [
-    { key: "ins_fill", label: L("绝缘水平", "Insulation levels", "Уровни изоляции", "Cấp cách điện"), type: "radio", options: INS_FILL_OPTS, span: 2 },
-    { key: "ins_earth_pf_kv", label: L("对地工频", "To earth, PF", "На землю, пром. частота", "Đối đất tần số"), type: "number", unit: "kV", hint: L("随 Um 自动填目录值，可改。", "Filled from Um table; override if specified.", "Из таблицы Um; можно изменить.", "Theo bảng Um; có thể sửa.") },
-    { key: "ins_earth_li_kv", label: L("对地雷电冲击", "To earth, LI", "На землю, импульс", "Đối đất xung sét"), type: "number", unit: "kV" },
-    { key: "ins_a_pf_kv", label: L("同相调压绕组 (a) 工频", "Across winding (a), PF", "Обмотка (a), ПЧ", "Cuộn (a) tần số"), type: "number", unit: "kV" },
-    { key: "ins_a_li_kv", label: L("同相调压绕组 (a) 冲击", "Across winding (a), LI", "Обмотка (a), импульс", "Cuộn (a) xung"), type: "number", unit: "kV" },
-    { key: "ins_a1_pf_kv", label: L("相邻分接 (a1) 工频", "Between taps (a1), PF", "Между ответвл. (a1)", "Giữa nấc (a1)"), type: "number", unit: "kV" },
-    { key: "ins_a1_li_kv", label: L("相邻分接 (a1) 冲击", "Between taps (a1), LI", "Между ответвл. (a1), импульс", "Giữa nấc (a1) xung"), type: "number", unit: "kV" },
-    { key: "ins_b_pf_kv", label: L("相间 (b) 工频", "Between phases (b), PF", "Между фазами (b)", "Giữa pha (b)"), type: "number", unit: "kV" },
-    { key: "ins_b_li_kv", label: L("相间 (b) 冲击", "Between phases (b), LI", "Между фазами (b), импульс", "Giữa pha (b) xung"), type: "number", unit: "kV" },
-    { key: "ins_c1_pf_kv", label: L("粗细调 (c1) 工频", "Coarse–fine (c1), PF", "Грубо-точный (c1)", "Thô–tinh (c1)"), type: "number", unit: "kV" },
-    { key: "ins_c1_li_kv", label: L("粗细调 (c1) 冲击", "Coarse–fine (c1), LI", "Грубо-точный (c1), импульс", "Thô–tinh (c1) xung"), type: "number", unit: "kV" },
-    { key: "ins_c2_pf_kv", label: L("粗调相间 (c2) 工频", "Coarse phases (c2), PF", "Грубые фазы (c2)", "Thô giữa pha (c2)"), type: "number", unit: "kV" },
-    { key: "ins_c2_li_kv", label: L("粗调相间 (c2) 冲击", "Coarse phases (c2), LI", "Грубые фазы (c2), импульс", "Thô giữa pha (c2) xung"), type: "number", unit: "kV" },
-    { key: "ins_d_pf_kv", label: L("粗调绕组 (d) 工频", "Coarse winding (d), PF", "Грубая обмотка (d)", "Cuộn thô (d)"), type: "number", unit: "kV" },
-    { key: "ins_d_li_kv", label: L("粗调绕组 (d) 冲击", "Coarse winding (d), LI", "Грубая обмотка (d), импульс", "Cuộn thô (d) xung"), type: "number", unit: "kV" },
-    { key: "recovery_voltage_kv", label: L("恢复电压", "Recovery voltage", "Напряжение восстановления", "Điện áp phục hồi"), type: "number", unit: "kV" },
-    { key: "special_winding", label: L("特殊绕组布置", "Special winding arrangement", "Особая схема обмотки", "Bố trí cuộn đặc biệt"), type: "radio", options: YES_NO },
     {
       key: "potential_connection",
       label: L("电位电阻", "Potential / tie-in resistor", "Потенциальный резистор", "Điện trở thế"),
-      type: "select",
+      type: "radio",
       options: POTENTIAL_OPTS,
       span: 2,
-      hint: L("不带就不用填绕组尺寸。带或交给华明核算时，再填 R1–R4 / H1 / H2 / Cw / Ca。", "Skip winding sizes if without. Fill R1–R4 / H1 / H2 / Cw / Ca only when fitted or Huaming is to check.", "Размеры обмотки — только если резистор нужен или считает Huaming.", "Không mang thì khỏi điền. Có hoặc Huaming tính mới điền R1–R4."),
+      hint: L("不带：不用填绕组图。带或交给华明核算：才出现 R1–R4、H1/H2、Cw/Ca。复合式恢复电压 >15 kV、组合式 >35 kV 通常要带。", "Without: no winding layout. With / Huaming to check: R1–R4, H1/H2, Cw/Ca. Typical when recovery voltage is high.", "Без резистора схема не нужна.", "Không mang thì khỏi điền sơ đồ. Có hoặc Huaming tính mới hiện R1–R4."),
     },
     { key: "tie_in_mounting", label: L("电位电阻安装", "Tie-in mounting", "Крепление резистора", "Cách lắp điện trở"), type: "select", options: TIE_IN_OPTS, applies: needsTieIn },
     { key: "wind_r1_mm", label: L("绕组 R1", "Winding R1", "Обмотка R1", "Cuộn R1"), type: "number", unit: "mm", applies: needsTieIn },
@@ -465,6 +454,23 @@ function insulationFields(): FieldDef[] {
     { key: "wind_h2_mm", label: L("绕组 H2", "Winding H2", "Обмотка H2", "Cuộn H2"), type: "number", unit: "mm", applies: needsTieIn },
     { key: "wind_cw_pf", label: L("Cw", "Cw", "Cw", "Cw"), type: "number", unit: "pF", applies: needsTieIn },
     { key: "wind_ca_pf", label: L("Ca", "Ca", "Ca", "Ca"), type: "number", unit: "pF", applies: needsTieIn },
+    { key: "recovery_voltage_kv", label: L("恢复电压", "Recovery voltage", "Напряжение восстановления", "Điện áp phục hồi"), type: "number", unit: "kV", applies: needsTieIn },
+    { key: "special_winding", label: L("特殊绕组布置", "Special winding arrangement", "Особая схема обмотки", "Bố trí cuộn đặc biệt"), type: "radio", options: YES_NO, applies: needsTieIn },
+    { key: "ins_fill", label: L("绝缘水平", "Insulation levels", "Уровни изоляции", "Cấp cách điện"), type: "radio", options: INS_FILL_OPTS, span: 2 },
+    { key: "ins_earth_pf_kv", label: L("对地工频", "To earth, PF", "На землю, пром. частота", "Đối đất tần số"), type: "number", unit: "kV", hint: L("随 Um 自动填目录值，可改。", "Filled from Um table; override if specified.", "Из таблицы Um; можно изменить.", "Theo bảng Um; có thể sửa."), applies: detailedIns },
+    { key: "ins_earth_li_kv", label: L("对地雷电冲击", "To earth, LI", "На землю, импульс", "Đối đất xung sét"), type: "number", unit: "kV", applies: detailedIns },
+    { key: "ins_a_pf_kv", label: L("同相调压绕组 (a) 工频", "Across winding (a), PF", "Обмотка (a), ПЧ", "Cuộn (a) tần số"), type: "number", unit: "kV", applies: detailedIns },
+    { key: "ins_a_li_kv", label: L("同相调压绕组 (a) 冲击", "Across winding (a), LI", "Обмотка (a), импульс", "Cuộn (a) xung"), type: "number", unit: "kV", applies: detailedIns },
+    { key: "ins_a1_pf_kv", label: L("相邻分接 (a1) 工频", "Between taps (a1), PF", "Между ответвл. (a1)", "Giữa nấc (a1)"), type: "number", unit: "kV", applies: detailedIns },
+    { key: "ins_a1_li_kv", label: L("相邻分接 (a1) 冲击", "Between taps (a1), LI", "Между ответвл. (a1), импульс", "Giữa nấc (a1) xung"), type: "number", unit: "kV", applies: detailedIns },
+    { key: "ins_b_pf_kv", label: L("相间 (b) 工频", "Between phases (b), PF", "Между фазами (b)", "Giữa pha (b)"), type: "number", unit: "kV", applies: detailedIns },
+    { key: "ins_b_li_kv", label: L("相间 (b) 冲击", "Between phases (b), LI", "Между фазами (b), импульс", "Giữa pha (b) xung"), type: "number", unit: "kV", applies: detailedIns },
+    { key: "ins_c1_pf_kv", label: L("粗细调 (c1) 工频", "Coarse–fine (c1), PF", "Грубо-точный (c1)", "Thô–tinh (c1)"), type: "number", unit: "kV", applies: detailedIns },
+    { key: "ins_c1_li_kv", label: L("粗细调 (c1) 冲击", "Coarse–fine (c1), LI", "Грубо-точный (c1), импульс", "Thô–tinh (c1) xung"), type: "number", unit: "kV", applies: detailedIns },
+    { key: "ins_c2_pf_kv", label: L("粗调相间 (c2) 工频", "Coarse phases (c2), PF", "Грубые фазы (c2)", "Thô giữa pha (c2)"), type: "number", unit: "kV", applies: detailedIns },
+    { key: "ins_c2_li_kv", label: L("粗调相间 (c2) 冲击", "Coarse phases (c2), LI", "Грубые фазы (c2), импульс", "Thô giữa pha (c2) xung"), type: "number", unit: "kV", applies: detailedIns },
+    { key: "ins_d_pf_kv", label: L("粗调绕组 (d) 工频", "Coarse winding (d), PF", "Грубая обмотка (d)", "Cuộn thô (d)"), type: "number", unit: "kV", applies: detailedIns },
+    { key: "ins_d_li_kv", label: L("粗调绕组 (d) 冲击", "Coarse winding (d), LI", "Грубая обмотка (d), импульс", "Cuộn thô (d) xung"), type: "number", unit: "kV", applies: detailedIns },
   ];
 }
 
@@ -1057,7 +1063,7 @@ const hwvSheet: SheetDef = {
               type: "text",
               applies: (v) => v.application === "other",
             },
-            { key: "tx_kind", label: L("变压器结构", "Type of transformer", "Тип трансформатора", "Kiểu MBA"), type: "radio", options: HWV_TX_OPTS, span: 2 },
+            { key: "tx_kind", label: L("变压器型式", "Type of transformer", "Тип трансформатора", "Kiểu MBA"), type: "radio", options: HWV_TX_OPTS, span: 2, hint: L("这是变压器本身，不是开关系列。", "This is the transformer, not the OLTC family.", "Это тип ТР, не серия РПН.", "Đây là kiểu MBA, không phải series OLTC.") },
             { key: "phases", label: L("相数", "Phases", "Число фаз", "Số pha"), type: "radio", options: HWV_PHASE_OPTS, required: true },
             {
               key: "phases_other",

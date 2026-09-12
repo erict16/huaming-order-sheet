@@ -879,8 +879,9 @@ export const DELIVERY_DATE_OPTS = [
   opt("150 days after PO", "合同后 150 天", "150 days after PO", "150 дней после PO", "150 ngày sau PO"),
   opt("180 days after PO", "合同后 180 天", "180 days after PO", "180 дней после PO", "180 ngày sau PO"),
   opt("TBC", "待定 TBC", "TBC", "TBC", "TBC"),
-  opt("custom", "指定日历日期", "Specific calendar date", "Конкретная дата", "Ngày cụ thể"),
 ];
+
+export const DELIVERY_LEAD_VALUES = DELIVERY_DATE_OPTS.map((o) => o.value);
 
 export const HWV_PHASE_OPTS = [
   PHASE_OPTS[0],
@@ -905,9 +906,9 @@ export const HWV_APP_OPTS = [
 ];
 
 export const HWV_TX_OPTS = [
-  opt("separated", "独立绕组", "Separated winding", "Раздельные обмотки", "Cuộn tách"),
-  opt("auto", "自耦", "Auto-transformer", "Автотрансформатор", "Tự ngẫu"),
-  opt("booster", "调压变", "Booster transformer", "Вольтодобавочный", "MBA tăng áp"),
+  opt("separated", "独立绕组（非自耦）", "Separated winding", "Раздельные обмотки", "Cuộn tách"),
+  opt("auto", "自耦变压器", "Auto-transformer", "Автотрансформатор", "MBA tự ngẫu"),
+  opt("booster", "串联调压变", "Booster transformer", "Вольтодобавочный", "MBA tăng áp"),
 ];
 
 export const HWV_AMBIENT_OPTS = [

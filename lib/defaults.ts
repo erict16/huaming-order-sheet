@@ -19,6 +19,7 @@ export const SHEET_DEFAULTS: Record<SheetId, OrderValues> = {
     tap_winding: "star_neutral",
     ust_mode: "constant",
     ins_fill: "catalog",
+    potential_connection: "without",
     temp_sensor: "without",
     ambient_band: "-25~50",
     oltc_side: "hv",
