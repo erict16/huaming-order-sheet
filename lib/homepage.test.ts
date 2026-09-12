@@ -17,6 +17,8 @@ describe("ice chrome", () => {
     expect(shell).toContain("skipToContent");
     expect(shell).toContain("langSwitch");
     expect(picker).toContain("grid-cols-[4.75rem_repeat(2,minmax(0,1fr))_repeat(3,minmax(0,1fr))]");
+    expect(picker).toContain("row.families.map");
+    expect(picker).not.toContain("f: FamilyDef | undefined");
     expect(picker).toContain('"CM"');
     expect(picker).toContain('"CV2"');
     expect(picker).toContain("w-full");

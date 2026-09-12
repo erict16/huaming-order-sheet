@@ -11,11 +11,10 @@ function Chip({
   active,
   onPick,
 }: {
-  f: FamilyDef | undefined;
+  f: FamilyDef;
   active: boolean;
   onPick: (code: string) => void;
 }) {
-  if (!f) return <div />;
   return (
     <button
       type="button"
@@ -52,15 +51,17 @@ function SlotRow({
 }) {
   const oilSlots = [oil[0], oil[1]];
   const vacSlots = [vac[0], vac[1], vac[2]];
+  const cell = (code: string | undefined, key: string) => {
+    const f = code ? byCode.get(code) : undefined;
+    // empty cells keep the oil/vacuum columns aligned
+    if (!f) return <div key={key} />;
+    return <Chip key={key} f={f} active={value === code} onPick={onChange} />;
+  };
   return (
     <>
       <div className="flex items-center text-sm font-medium text-ink-soft">{label}</div>
-      {oilSlots.map((code, i) => (
-        <Chip key={`o${i}`} f={code ? byCode.get(code) : undefined} active={!!code && value === code} onPick={onChange} />
-      ))}
-      {vacSlots.map((code, i) => (
-        <Chip key={`v${i}`} f={code ? byCode.get(code) : undefined} active={!!code && value === code} onPick={onChange} />
-      ))}
+      {oilSlots.map((code, i) => cell(code, `o${i}`))}
+      {vacSlots.map((code, i) => cell(code, `v${i}`))}
     </>
   );
 }
@@ -92,9 +93,11 @@ function StackedGroup({
         {visible.map((row) => (
           <div key={row.label}>
             <p className="mb-1.5 text-xs text-ink-muted">{row.label}</p>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="flex flex-wrap gap-2">
               {row.families.map((f) => (
-                <Chip key={f.code} f={f} active={value === f.code} onPick={onChange} />
+                <div key={f.code} className="min-w-[calc(50%-0.25rem)] flex-1">
+                  <Chip f={f} active={value === f.code} onPick={onChange} />
+                </div>
               ))}
             </div>
           </div>
