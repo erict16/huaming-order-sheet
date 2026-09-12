@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -42,6 +42,7 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
   const id = sheetId as SheetId;
   const sheet = getSheet(id);
   const { lang } = useLang();
+  const reduceMotion = useReducedMotion();
   const [values, setValues] = useState<OrderValues>(SHEET_DEFAULTS[id] ?? {});
   const [loaded, setLoaded] = useState(false);
   const [step, setStep] = useState(0);
@@ -97,7 +98,7 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
 
   function go(next: number) {
     setStep(Math.max(0, Math.min(stepCount - 1, next)));
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
   }
 
   function handleClear() {
@@ -133,25 +134,33 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
       <div className="text-center">
         <p className="text-sm text-ink-muted">{t(sheet.meta.tag, lang)}</p>
-        <h1 className="mt-1 text-[1.75rem] font-semibold leading-tight text-navy sm:text-[2rem]">{t(sheet.meta.title, lang)}</h1>
+        <h1 className="mt-1 text-balance text-[1.75rem] font-semibold leading-tight text-navy sm:text-[2rem]">
+          {t(sheet.meta.title, lang)}
+        </h1>
         <p className="mt-2 text-sm text-ink-muted">
-          {step + 1}/{sheet.steps.length} {t(current.title, lang)}
+          {chromeText("stepOf", lang, { n: step + 1, total: sheet.steps.length })}
+          <span className="text-ink-soft"> · {t(current.title, lang)}</span>
         </p>
       </div>
 
-      <nav className="mt-5 flex items-center justify-center gap-1.5" aria-label={chromeText("stepOf", lang, { n: step + 1, total: sheet.steps.length })}>
+      <nav
+        className="mt-5 flex items-center justify-center gap-1 overflow-x-auto"
+        aria-label={chromeText("stepOf", lang, { n: step + 1, total: sheet.steps.length })}
+      >
         {sheet.steps.map((s, i) => (
           <button
             key={s.id}
             type="button"
             onClick={() => go(i)}
             title={t(s.title, lang)}
-            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold transition duration-150 active:translate-y-px ${
+            aria-label={t(s.title, lang)}
+            aria-current={i === step ? "step" : undefined}
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold tabular-nums transition-colors duration-150 active:translate-y-px focus:outline-none focus-visible:ring-2 focus-visible:ring-steel focus-visible:ring-offset-2 ${
               i === step
                 ? "bg-navy text-white"
                 : i < step
                   ? "bg-navy-50 text-navy"
-                  : "text-ink-muted hover:bg-white"
+                  : "bg-white text-ink-muted ring-1 ring-slate-200 hover:bg-navy-50"
             }`}
           >
             {i + 1}
@@ -166,17 +175,17 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
       ) : null}
 
       {t(current.blurb, lang).trim() ? (
-        <p className="mt-4 text-sm text-ink-soft">{t(current.blurb, lang)}</p>
+        <p className="mt-4 text-pretty text-sm text-ink-soft">{t(current.blurb, lang)}</p>
       ) : null}
 
       <div className="mt-6 overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div
             key={current.id}
-            initial={{ opacity: 0 }}
+            initial={reduceMotion ? false : { opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.12 }}
+            exit={reduceMotion ? undefined : { opacity: 0 }}
+            transition={{ duration: reduceMotion ? 0 : 0.12 }}
           >
             {step === 0 && current.kind !== "family" ? (
               <PresetPicker
@@ -188,7 +197,7 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
             ) : null}
 
             {current.kind === "family" && sheet.families ? (
-              <div className="space-y-5">
+              <div className="scroll-mb-24 space-y-5">
                 <FamilyPicker
                   families={sheet.families}
                   value={values.family || ""}
@@ -205,7 +214,7 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
             ) : null}
 
             {current.kind === "review" ? (
-              <div className="space-y-4">
+              <div className="scroll-mb-24 space-y-4">
                 {missing.length ? (
                   <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
                     <p className="font-semibold">{chromeText("missing", lang)}</p>
@@ -238,7 +247,7 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
                   );
                   if (!fields.length) return null;
                   return (
-                    <section key={section.id} className="card mb-5 p-5 sm:p-6">
+                    <section key={section.id} className="card mb-5 scroll-mb-24 p-5 sm:p-6">
                       <h2 className="text-lg font-semibold text-navy">{t(section.title, lang)}</h2>
                       {section.hint ? (
                         <p className="mt-1 text-sm text-ink-soft">{t(section.hint, lang)}</p>
@@ -294,45 +303,60 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
         </AnimatePresence>
       </div>
 
-      <div className="no-print sticky bottom-0 z-20 mt-8 flex flex-wrap gap-2 border-t border-slate-200 bg-[#f4f6f8]/95 py-3 backdrop-blur">
-        {step === 0 ? (
-          <Link href="/" className="btn-secondary">
-            <ArrowLeftIcon className="h-4 w-4" />
-            {chromeText("backHome", lang)}
-          </Link>
-        ) : (
-          <button type="button" className="btn-secondary" onClick={() => go(step - 1)}>
-            <ArrowLeftIcon className="h-4 w-4" />
-            {chromeText("prev", lang)}
-          </button>
-        )}
-        {step < sheet.steps.length - 1 ? (
+      <div className="no-print sticky bottom-0 z-20 mt-8 flex flex-wrap items-center gap-2 border-t border-slate-200 bg-[#f4f6f8] pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div className="flex min-w-0 flex-wrap gap-2">
+          {step === 0 ? (
+            <Link href="/" className="btn-secondary min-h-10">
+              <ArrowLeftIcon className="h-4 w-4" aria-hidden="true" />
+              {chromeText("backHome", lang)}
+            </Link>
+          ) : (
+            <button type="button" className="btn-secondary min-h-10" onClick={() => go(step - 1)}>
+              <ArrowLeftIcon className="h-4 w-4" aria-hidden="true" />
+              {chromeText("prev", lang)}
+            </button>
+          )}
+          {step < sheet.steps.length - 1 ? (
+            <button
+              type="button"
+              className="btn-primary min-h-10"
+              disabled={familyBlocked}
+              onClick={() => go(step + 1)}
+            >
+              {chromeText("next", lang)}
+              <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="btn-primary min-h-10"
+              disabled={exporting}
+              aria-busy={exporting}
+              onClick={() => void handleExport()}
+            >
+              {exporting
+                ? "…"
+                : exportFormat === "word"
+                  ? chromeText("exportWord", lang)
+                  : chromeText("exportExcel", lang)}
+            </button>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-2 sm:ml-auto">
           <button
             type="button"
-            className="btn-primary"
-            disabled={familyBlocked}
-            onClick={() => go(step + 1)}
+            className="btn-secondary min-h-10"
+            onClick={handleSave}
+            aria-live="polite"
           >
-            {chromeText("next", lang)}
-            <ArrowRightIcon className="h-4 w-4" />
+            {savedFlash ? <CheckIcon className="h-4 w-4" aria-hidden="true" /> : null}
+            {savedFlash ? chromeText("savedFlash", lang) : chromeText("save", lang)}
           </button>
-        ) : (
-          <button type="button" className="btn-primary" disabled={exporting} onClick={() => void handleExport()}>
-            {exporting
-              ? "…"
-              : exportFormat === "word"
-                ? chromeText("exportWord", lang)
-                : chromeText("exportExcel", lang)}
+          <button type="button" className="btn-secondary min-h-10 text-rose-700" onClick={handleClear}>
+            <TrashIcon className="h-4 w-4" aria-hidden="true" />
+            {chromeText("clear", lang)}
           </button>
-        )}
-        <button type="button" className="btn-secondary ml-auto" onClick={handleSave}>
-          {savedFlash ? <CheckIcon className="h-4 w-4" /> : null}
-          {savedFlash ? chromeText("savedFlash", lang) : chromeText("save", lang)}
-        </button>
-        <button type="button" className="btn-secondary text-rose-700" onClick={handleClear}>
-          <TrashIcon className="h-4 w-4" />
-          {chromeText("clear", lang)}
-        </button>
+        </div>
       </div>
     </div>
   );
@@ -350,10 +374,11 @@ function ExportFormatControl({
   lang: Lang;
 }) {
   return (
-    <fieldset className="rounded-xl bg-white px-4 py-3 shadow-sm ring-1 ring-slate-200/80">
+    <fieldset className="rounded-xl border border-slate-200 bg-white px-4 py-4">
       <legend className="px-1 text-sm font-semibold text-navy">{chromeText("exportFormat", lang)}</legend>
       <div className="mt-2">
         <SegmentedControl
+          fullWidth
           value={format}
           onChange={onChange}
           options={[

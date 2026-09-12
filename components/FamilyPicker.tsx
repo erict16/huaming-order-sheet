@@ -19,7 +19,8 @@ function Chip({
     <button
       type="button"
       onClick={() => onPick(f.code)}
-      className={`flex h-11 w-full items-center justify-center gap-1 rounded-lg font-mono text-sm font-semibold tracking-tight transition duration-150 active:translate-y-px ${
+      aria-pressed={active}
+      className={`flex h-11 w-full items-center justify-center gap-1 rounded-lg font-mono text-sm font-semibold tracking-tight transition-colors duration-150 active:translate-y-px focus:outline-none focus-visible:ring-2 focus-visible:ring-steel focus-visible:ring-offset-2 ${
         active ? "bg-navy text-white" : "bg-white text-navy ring-1 ring-slate-200 hover:ring-navy/40"
       }`}
     >

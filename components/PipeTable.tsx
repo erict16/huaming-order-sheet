@@ -22,20 +22,28 @@ export default function PipeTable({
   const { lang } = useLang();
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto rounded-lg ring-1 ring-slate-200">
       <table className="w-full min-w-[36rem] border-collapse text-sm">
         <thead>
-          <tr className="text-left text-ink-muted">
-            <th className="w-12 py-2 pr-3 font-semibold">管</th>
-            <th className="py-2 pr-3 font-semibold">接头</th>
-            <th className="w-36 py-2 font-semibold">管高 mm</th>
+          <tr className="bg-slate-50 text-left text-ink-muted">
+            <th scope="col" className="w-12 px-3 py-2.5 font-semibold">
+              管
+            </th>
+            <th scope="col" className="px-3 py-2.5 font-semibold">
+              接头
+            </th>
+            <th scope="col" className="w-36 px-3 py-2.5 font-semibold">
+              管高 mm
+            </th>
           </tr>
         </thead>
         <tbody>
           {ROWS.map((row) => (
             <tr key={row.key} className="border-t border-slate-100">
-              <td className="py-2.5 pr-3 align-middle font-semibold text-navy">{row.label}</td>
-              <td className="py-2.5 pr-3 align-middle">
+              <th scope="row" className="px-3 py-2.5 align-middle font-semibold text-navy">
+                {row.label}
+              </th>
+              <td className="px-3 py-2.5 align-middle">
                 <SelectListbox
                   options={row.options}
                   value={values[row.key] ?? ""}
@@ -43,7 +51,7 @@ export default function PipeTable({
                   lang={lang}
                 />
               </td>
-              <td className="w-36 py-2.5 align-middle">
+              <td className="w-36 px-3 py-2.5 align-middle tabular-nums">
                 <SelectListbox
                   options={PIPE_HEIGHT_OPTS}
                   value={values[row.heightKey] ?? ""}
