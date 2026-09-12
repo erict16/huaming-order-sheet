@@ -239,6 +239,54 @@ describe("hwvFormValues", () => {
     expect(checks[26]).toBe(false);
     expect(texts[10]).toBeUndefined();
   });
+
+  it("puts leftover schema keys into remarks, not invented boxes", () => {
+    const { texts, checks } = hwvFormValues({
+      ...hwviii400(),
+      project: "United Energy Wilson retrofit",
+      corrosive_class: "C4-M",
+      notes: "indoor",
+    });
+    expect(texts[50]).toContain("United Energy Wilson retrofit");
+    expect(texts[50]).toContain("C4-M");
+    expect(texts[50]).toContain("indoor");
+    expect(checks[6]).toBe(false);
+    expect(checks[7]).toBe(false);
+    expect(checks[8]).toBe(false);
+    expect(hwvFormValues({ ...hwviii400(), corrosive_class: "none" }).texts[50]).toBeUndefined();
+  });
+
+  it("does not invent HMC-3W; leftover controller goes to remarks", () => {
+    const { texts, checks } = hwvFormValues({ ...hwviii400(), controller: "HMC-3W" });
+    expect(checks[6]).toBe(false);
+    expect(checks[7]).toBe(false);
+    expect(checks[8]).toBe(false);
+    expect(texts[50]).toBe("HMC-3W");
+    const ticked = hwvFormValues({ ...hwviii400(), controller: "HMC-3C" });
+    expect(ticked.checks[6]).toBe(true);
+    expect(ticked.texts[50]).toBeUndefined();
+  });
+
+  it("does not write designer contact into transformer user or remarks", () => {
+    const { texts } = hwvFormValues({
+      family: "HWV",
+      phases: "III",
+      designer_name: "Li",
+      designer_phone_cc: "+86",
+      designer_phone: "13800138000",
+    });
+    expect(texts[0]).toBeUndefined();
+    expect(texts[50]).toBeUndefined();
+    expect(texts.filter((x) => x && String(x).includes("138"))).toEqual([]);
+    expect(texts.filter((x) => x && String(x).includes("Li"))).toEqual([]);
+  });
+
+  it("writes SHM-X on HWV into remarks because the form has no SHM-X box", () => {
+    const { texts, checks } = hwvFormValues({ ...hwviii400(), mdu_model: "SHM-X" });
+    expect(checks[4]).toBe(false);
+    expect(checks[5]).toBe(false);
+    expect(texts[50]).toBe("SHM-X");
+  });
 });
 
 describe("HWV Word fill", () => {

@@ -80,6 +80,46 @@ function tapDiagram(values: OrderValues): string {
 
 /**
  * Official 2023-8 HWV/HWDK Word OS: 51 FORMTEXT + 68 FORMCHECKBOX, document order.
+ *
+ * FORMTEXT T00–T50 (51):
+ *   T00 transformer user  T01 country  T02 delivery/port
+ *   T03 transformer SN  T04 Huaming SN  T05 quantity  T06 PO/date
+ *   T07 application others  T08 phases others  T09 freq others Hz  T10 ambient others ℃
+ *   T11 capacity MVA constant  T12 decreasing MVA  T13 decreasing from position
+ *   T14 overload >IEC %  T15 overload hours  T16 rated voltage kV
+ *   T17 range ± %  T18 range + %  T19 range − %
+ *   T20 steps ±  T21 steps +  T22 steps −
+ *   T23 I A  T24 Imax A  T25 circulating A (HWDK)
+ *   T26 constant Ust V  T27 variable Ust max  T28 variable Ust min  T29 recovery kV
+ *   T30–T35 type table: Type, phases, Ium, Y/D, Um, diagram
+ *   T36–T38 HWV positions max / mid / min
+ *   T39–T46 insulation PF/BIL (earth, a, a1, b)
+ *   T47 relay others  T48 paint others  T49 nameplate others  T50 remarks
+ *
+ * FORMCHECKBOX C00–C67 (68):
+ *   C00 HWVIII  C01 HWVI  C02 HWDKIII  C03 HWDKI
+ *   C04 CMA7  C05 SHM-D
+ *   C06 HMC-3C  C07 ET-SZ6  C08 SHM-K  — no HMC-3W box; leftover controller → T50
+ *   C09 Power  C10 Capacity  C11 Furnace  C12 Rectifier  C13 Generator  C14 Others
+ *   C15 Separated  C16 Auto  C17 Booster
+ *   C18 3-ph  C19 1-ph  C20 Phases others
+ *   C21 50Hz  C22 60Hz  C23 Freq others
+ *   C24 Amb -25+40  C25 -40+40  C26 Amb others
+ *   C27 Capacity constant  C28 decreasing
+ *   C29 Overload IEC  C30 Overload >
+ *   C31 CFVV  C32 VFVV  C33 Combined
+ *   C34–C41 tap winding
+ *   C42 Ust constant  C43 Ust variable  C44 recovery
+ *   C45 Potential without  C46 tie-in  C47 check by Huaming
+ *   C48 9-pos/Linear  C49 17-pos  C50 Linear  C51 33-pos/Reversing  C52 Reversing
+ *   C53 QJ4-25  C54 QJ4G-25  C55 QJ6-25  C56 Relay others
+ *   C57 Rupture  C58 Rupture+PRV  C59 PRV no signal  C60 PRV one C/O  C61 PRV two C/O
+ *   C62 Paint RAL7040  C63 Paint others
+ *   C64 Nameplate English  C65 Nameplate others
+ *   C66 Weld  C67 Bolts
+ *
+ * No designer / project / corrosive FORMTEXT. Those leftover keys go to T50.
+ * Printed non-standard-tank list (oil gauge, breather, RPRR) has no boxes.
  */
 export function hwvFormValues(values: OrderValues): {
   texts: Array<string | undefined>;
@@ -326,6 +366,12 @@ export function hwvFormValues(values: OrderValues): {
 
   const extra: string[] = [];
   if (!hwdk && s(values.mdu_model) === "SHM-X") extra.push("SHM-X");
+  if (s(values.project)) extra.push(s(values.project));
+  const cor = s(values.corrosive_class);
+  if (cor && cor !== "none") extra.push(cor);
+  if (ctrl && ctrl !== "none" && ctrl !== "HMC-3C" && ctrl !== "ET-SZ6" && ctrl !== "SHM-K") {
+    extra.push(ctrl);
+  }
   const note = s(values.notes);
   if (note) extra.push(note);
   setT(50, extra.join("\n"));
