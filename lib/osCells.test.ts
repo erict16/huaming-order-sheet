@@ -169,6 +169,27 @@ describe("oltcCells", () => {
     expect(v.H25).toBeUndefined();
   });
 
+  it("writes official H18 frequency and Z18 ambient ku strings", () => {
+    expect(oltcCells({ ...oltc, frequency_hz: "50" }).H18).toBe("50Hz");
+    expect(oltcCells({ ...oltc, frequency_hz: "60" }).H18).toBe("60Hz");
+    expect(oltcCells({ ...oltc, frequency_hz: "other" }).H18).toBeUndefined();
+    expect(oltcCells({ ...oltc }).Z18).toBeUndefined();
+    expect(oltcCells({ ...oltc, ambient_band: "-25~50" }).Z18).toBe("-25~+55°C");
+    expect(oltcCells({ ...oltc, ambient_band: "-45~50" }).Z18).toBe("-45~+55°C");
+    expect(oltcCells({ ...oltc, ambient_band: "-60~50" }).Z18).toBe("-60~+55°C");
+    expect(
+      oltcCells({ ...oltc, ambient_band: "other", ambient_min: "0", ambient_max: "55" }).Z18,
+    ).toBe("0~+55°C");
+    expect(
+      oltcCells({ ...oltc, ambient_band: "other", ambient_min: "25", ambient_max: "55" }).Z18,
+    ).toBe("-25~+55°C");
+    expect(
+      oltcCells({ ...oltc, ambient_band: "other", ambient_min: "40", ambient_max: "40" }).Z18,
+    ).toBeUndefined();
+    expect(oltcCells({ ...oltc, ambient_temp: "Max +45 °C" }).Z18).toBeUndefined();
+    expect(oltcCells({ ...oltc, ambient_temp: "-45~+55°C" }).Z18).toBe("-45~+55°C");
+  });
+
   it("does not invent overload / flux / tap winding / temp sensor / rain cover when unset", () => {
     expect(cells.H22).toBeUndefined();
     expect(cells.H26).toBeUndefined();

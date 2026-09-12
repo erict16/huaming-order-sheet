@@ -279,6 +279,32 @@ function freqOs(v: string): string | undefined {
   return undefined;
 }
 
+/** Sheet1 Z18. Official ku A80–A83. Wizard −25/45/60～+50 maps onto Excel +55. */
+function ambientOs(values: OrderValues): string | undefined {
+  const band = s(values.ambient_band);
+  if (band === "-25~50") return "-25~+55°C";
+  if (band === "-45~50") return "-45~+55°C";
+  if (band === "-60~50") return "-60~+55°C";
+  if (band === "-25~+55°C" || band === "-45~+55°C" || band === "-60~+55°C" || band === "0~+55°C") {
+    return band;
+  }
+  const temp = s(values.ambient_temp);
+  if (temp === "-25~+55°C" || temp === "-45~+55°C" || temp === "-60~+55°C" || temp === "0~+55°C") {
+    return temp;
+  }
+  const min = n(values.ambient_min);
+  const max = n(values.ambient_max);
+  if (min == null || max == null) return undefined;
+  const lo = Math.abs(min);
+  const hi = Math.abs(max);
+  if (lo === 0 && hi === 55) return "0~+55°C";
+  if (hi !== 55) return undefined;
+  if (lo === 25) return "-25~+55°C";
+  if (lo === 45) return "-45~+55°C";
+  if (lo === 60) return "-60~+55°C";
+  return undefined;
+}
+
 function fluidOs(v: string): string | undefined {
   if (v === "mineral") return "1. Mineral oil";
   if (v === "natural_ester") return "2. Natural ester oil";
@@ -515,7 +541,7 @@ export function oltcCells(values: OrderValues): CellWrites {
   set(out, "H17", txKindOs(s(values.tx_kind)));
   set(out, "H18", freqOs(s(values.frequency_hz)));
   set(out, "H19", fluidOs(s(values.insulating_fluid)));
-  set(out, "Z18", s(values.ambient_temp));
+  set(out, "Z18", ambientOs(values));
   set(out, "H22", overloadOs(values));
   set(out, "H26", fluxOs(s(values.flux)));
   set(out, "H27", tapWindingOs(s(values.tap_winding)));
