@@ -232,6 +232,41 @@ describe("oltcSdtValues", () => {
     expect(boxes[39]).toBe(false);
   });
 
+  it("puts leftover destination_port into remarks, not an invented SDT", () => {
+    expect(oltcSdtValues({ destination_port: "" })[95]).toBeUndefined();
+    expect(oltcSdtValues({ destination_port: "  " })[95]).toBeUndefined();
+    expect(oltcSdtValues({})[95]).toBeUndefined();
+
+    const two = oltcSdtValues({ destination_port: "Hai Phong", notes: "indoor" });
+    expect(two[53]).toBeUndefined();
+    expect(two[95]).toBe("Hai Phong\nindoor");
+    expect(two.filter((t) => t === "Hai Phong" || t?.includes("Hai Phong"))).toEqual(["Hai Phong\nindoor"]);
+
+    const same = oltcSdtValues({ destination_port: "Hai Phong", notes: "Hai Phong" });
+    expect(same[95]).toBe("Hai Phong");
+
+    const withFilter = oltcSdtValues({
+      destination_port: "Hai Phong",
+      oil_filter: "ZXJY-I",
+      notes: "indoor",
+    });
+    expect(withFilter[95]).toBe("ZXJY-I\nHai Phong\nindoor");
+
+    const three = oltcSdtValues({
+      hv_kv: "115",
+      mv_kv: "22",
+      lv_kv: "10.5",
+      destination_port: "Hai Phong",
+    });
+    expect(three[53]).toContain("MV 22 kV");
+    expect(three[53]).toContain("LV 10.5 kV");
+    expect(three[53]).toContain("Hai Phong");
+    expect(three[95]).toBeUndefined();
+    expect(three[4]).not.toBe("Hai Phong");
+    expect(three[5]).not.toBe("Hai Phong");
+    expect(three[7]).not.toBe("Hai Phong");
+  });
+
   it("keeps HV in SDT 19 and puts OLTC on LV in remarks (no side SDT)", () => {
     const lv = oltcSdtValues({ hv_kv: "66", lv_kv: "11", oltc_side: "lv" });
     expect(lv[19]).toBe("66");
@@ -487,6 +522,18 @@ describe("fillDocx", () => {
     expect(boxes[13]).toBe(false);
     expect(boxes[38]).toBe(false);
     expect(boxes[39]).toBe(false);
+  });
+
+  it("writes leftover destination_port into official Word remarks", async () => {
+    const filled = await fillDocx(
+      readFileSync(template),
+      oltcSdtValues({ destination_port: "Hai Phong" }),
+    );
+    const xml = await (await JSZip.loadAsync(filled)).file("word/document.xml")!.async("string");
+    const texts = readSdtTexts(xml);
+    expect(texts[95]).toBe("Hai Phong");
+    expect(texts[53]).not.toBe("Hai Phong");
+    expect(texts.filter((t) => t.includes("Hai Phong"))).toEqual(["Hai Phong"]);
   });
 
   it("writes OLTC on LV into official Word remarks and leaves HV in SDT 19", async () => {
