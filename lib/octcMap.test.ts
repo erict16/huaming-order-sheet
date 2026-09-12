@@ -207,6 +207,96 @@ describe("octcFormValues", () => {
     expect(texts[13]).toBe("2");
     expect(texts[42]).toBe("2");
   });
+
+  it("puts leftover schema keys into remarks, not invented boxes", () => {
+    const { texts, checks } = octcFormValues({
+      ...meeWsl(),
+      end_user: "EVN NPC",
+      project: "Tiên Yên 40M",
+      transformer_type: "SFZ-40000/38.5",
+      vector_group: "YNd11",
+      flux: "cfvv",
+      corrosive_class: "C4-M",
+      support_flange: "with",
+      top_gear: "left",
+      v4: "800",
+      motor_voltage: "380_3",
+      control_voltage: "220_ac",
+      mdu_ip: "IP65",
+      heater: "yes",
+    });
+    expect(texts[5]).toBe("EVN NPC");
+    expect(texts[63]).toContain("Tiên Yên 40M");
+    expect(texts[63]).toContain("SFZ-40000/38.5");
+    expect(texts[63]).toContain("YNd11");
+    expect(texts[63]).toContain("CFVV");
+    expect(texts[63]).toContain("C4-M");
+    expect(texts[63]).toContain("Supporting flange: with");
+    expect(texts[63]).toContain("Top gear left output");
+    expect(texts[63]).toContain("V4 800 mm");
+    expect(texts[63]).toContain("Motor 380 V 3-ph");
+    expect(texts[63]).toContain("Control AC 220 V");
+    expect(texts[63]).toContain("IP65");
+    expect(texts[63]).toContain("Heater");
+    expect(texts[63]).toContain("钟罩");
+    expect(texts[33]).toBeUndefined();
+    expect(texts[34]).toBeUndefined();
+    expect(texts[2]).toBeUndefined();
+    expect(texts[3]).toBeUndefined();
+    expect(texts[48]).toBeUndefined();
+    expect(texts[52]).toBeUndefined();
+    expect(checks[38]).toBe(false);
+    expect(checks[39]).toBe(false);
+    expect(checks[53]).toBe(false);
+    expect(checks[54]).toBe(false);
+    expect(checks[55]).toBe(false);
+    expect(checks[56]).toBe(false);
+    expect(checks[60]).toBe(false);
+    expect(checks[61]).toBe(false);
+    expect(checks[62]).toBe(false);
+    expect(checks[63]).toBe(false);
+    expect(octcFormValues({ ...meeWsl(), corrosive_class: "none" }).texts[63]).toBe(
+      "钟罩、手轮；变压器侧 ±2×2.5%，档位 1 / 3 / 5。",
+    );
+  });
+
+  it("does not invent CMA9 or HMC-3W ticks unless the value is literally that", () => {
+    const cage = octcFormValues({
+      ...meeWsl(),
+      octc_drive: "CMA7",
+      controller: "HMC-3C",
+    });
+    expect(cage.checks[52]).toBe(false);
+    expect(cage.checks[54]).toBe(false);
+    expect(cage.checks[55]).toBe(false);
+    expect(cage.checks[56]).toBe(false);
+    expect(cage.checks[59]).toBe(false);
+    expect(cage.checks[61]).toBe(false);
+    expect(cage.checks[63]).toBe(false);
+    expect(cage.checks[64]).toBe(false);
+    expect(cage.checks[65]).toBe(false);
+    expect(cage.texts[63]).toMatch(/CMA7/);
+    expect(cage.texts[63]).toContain("HMC-3C");
+
+    const literal = octcFormValues({
+      ...meeWsl(),
+      octc_drive: "CMA9",
+      controller: "HMC-3W",
+    });
+    expect(literal.checks[55]).toBe(true);
+    expect(literal.checks[56]).toBe(true);
+    expect(literal.checks[51]).toBe(false);
+    expect(literal.checks[52]).toBe(false);
+    expect(literal.checks[64]).toBe(false);
+    expect(literal.checks[65]).toBe(false);
+    expect(literal.texts[63]).not.toContain("HMC-3W");
+  });
+
+  it("keeps project on transformer user when end_user is empty", () => {
+    const { texts } = octcFormValues(meeWsl());
+    expect(texts[5]).toBe("EVN NPC");
+    expect(texts[63]).not.toContain("EVN NPC");
+  });
 });
 
 describe("OCTC Word fill", () => {

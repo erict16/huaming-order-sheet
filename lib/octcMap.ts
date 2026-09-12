@@ -83,6 +83,84 @@ function contactToken(values: OrderValues): string {
   return s(values.octc_positions);
 }
 
+function fluxWord(v: string): string {
+  if (v === "cfvv") return "CFVV";
+  if (v === "vfvv") return "VFVV";
+  if (v === "combined") return "Combined";
+  return v;
+}
+
+function motorVoltWord(v: string): string {
+  const m: Record<string, string> = {
+    "380_3": "380 V 3-ph",
+    "400_3": "400 V 3-ph",
+    "415_3": "415 V 3-ph",
+    "440_3": "440 V 3-ph",
+    "220_3": "220 V 3-ph",
+    "220_240": "220-240 V",
+    "220_1": "220 V 1-ph",
+    "230_1": "230 V 1-ph",
+    "240_1": "240 V 1-ph",
+    "110_1": "110 V 1-ph",
+  };
+  return m[v] || v;
+}
+
+function ctrlVoltWord(v: string): string {
+  const m: Record<string, string> = {
+    "220_ac": "AC 220 V",
+    "230_ac": "AC 230 V",
+    "240_ac": "AC 240 V",
+    "110_ac": "AC 110 V",
+    "220_dc": "DC 220 V",
+    "125_dc": "DC 125 V",
+    "110_dc": "DC 110 V",
+    "24_dc": "DC 24 V",
+    same: "same as motor",
+  };
+  return m[v] || v;
+}
+
+/** Schema keys with no FORMTEXT/CHECKBOX. T63 is the leftover slot. */
+function leftoverRemarks(values: OrderValues): string[] {
+  const lines: string[] = [];
+  const endUser = s(values.end_user);
+  const project = s(values.project);
+  if (project && endUser && project !== endUser) lines.push(project);
+  if (s(values.transformer_type)) lines.push(s(values.transformer_type));
+  const vg = s(values.vector_group);
+  if (vg === "other") {
+    if (s(values.vector_group_other)) lines.push(s(values.vector_group_other));
+  } else if (vg) {
+    lines.push(vg);
+  }
+  const flux = s(values.flux);
+  if (flux) lines.push(fluxWord(flux));
+  const cor = s(values.corrosive_class);
+  if (cor && cor !== "none") lines.push(cor);
+  const support = s(values.support_flange);
+  if (support && support !== "without") lines.push(`Supporting flange: ${support}`);
+  const gear = s(values.top_gear);
+  if (gear === "left") lines.push("Top gear left output");
+  else if (gear === "right") lines.push("Top gear right output");
+  if (s(values.v4)) lines.push(`V4 ${s(values.v4)} mm`);
+  const fluid = s(values.insulating_fluid);
+  if (fluid && fluid !== "mineral") lines.push(fluid);
+  const std = s(values.standard);
+  if (std && std !== "IEC 60214") lines.push(std);
+  const side = s(values.oltc_side);
+  if (side === "lv") lines.push("OCTC on LV");
+  else if (side === "mv") lines.push("OCTC on MV");
+  const mv = s(values.motor_voltage);
+  if (mv) lines.push(`Motor ${motorVoltWord(mv)}`);
+  const cv = s(values.control_voltage);
+  if (cv && cv !== "same") lines.push(`Control ${ctrlVoltWord(cv)}`);
+  const ip = s(values.mdu_ip);
+  if (ip && ip !== "IP54") lines.push(ip);
+  if (s(values.heater) === "yes") lines.push("Heater");
+  return lines;
+}
+
 function octcPositions(values: OrderValues): { max: string; mid: string; min: string } {
   if (s(values.pos_max) || s(values.pos_mid) || s(values.pos_min)) {
     return { max: s(values.pos_max), mid: s(values.pos_mid), min: s(values.pos_min) };
@@ -116,7 +194,11 @@ function octcPositions(values: OrderValues): { max: string; mid: string; min: st
  *   T49 max position  T50 mid  T51 min
  *   T52 WSL cable m  T53 WSL-D cable m  T54 WDG cable m
  *   T55–T58 H1–H4  T59–T61 V1–V3
- *   T62 paint others  T63 special application / remarks
+ *   T62 paint others  T63 special application / remarks ← leftover schema keys
+ *
+ * T02 email / T03 fax: contact wizard is name/tel only — no keys.
+ * T33–T40 insulation: no PF/BIL keys; do not stamp catalog Um.
+ * T48 contact diameter / T52–T54 cable: no wizard keys.
  *
  * FORMCHECKBOX C00–C68 (69):
  *   C00 Power  C01 Capacity  C02 Furnace  C03 Rectifier  C04 Generator  C05 Others
@@ -135,18 +217,20 @@ function octcPositions(values: OrderValues): { max: string; mid: string; min: st
  *   C46 size A  C47 size B
  *   C48 lead A  C49 lead B  C50 lead C
  *   C51 Hand wheel  C52 HMC-3W
- *   C53 Manual drive box  C54 HMC-3W  — no wizard key
- *   C55 CMA9  C56 HMC-3W  — octc_drive is handwheel/CMA7/SHM-D; cage CMA7 → remarks
+ *   C53 Manual drive box  C54 HMC-3W  — no wizard key; leave off
+ *   C55 CMA9  C56 HMC-3W  — tick only when octc_drive / controller are literally CMA9 / HMC-3W
  *   C57 WSL-D motor top
  *   C58 Top manual  C59 HMC-3W
- *   C60 Side manual top trans  C61 HMC-3W  — no wizard key
- *   C62 Side manual bottom  C63 HMC-3W  — no wizard key
+ *   C60 Side manual top trans  C61 HMC-3W  — no wizard key; leave off
+ *   C62 Side manual bottom  C63 HMC-3W  — no wizard key; leave off
  *   C64 CMA7  C65 HMC-3W
  *   C66 protective cover ← rain_cover
  *   C67 Paint RAL7040  C68 Paint others
  *
- * Wizard controller is HMC-3C/ET-SZ6/SHM-K… (not HMC-3W). Only tick C52/C59/C65 when
- * controller is exactly HMC-3W. Other controller values go to T63 remarks.
+ * octc_drive is handwheel/CMA7/SHM-D. Cage CMA7 → T63, not C55. Wizard controller is
+ * HMC-3C/ET-SZ6/SHM-K… — tick C52/C59/C65 only when controller is exactly HMC-3W.
+ * Project (if not used as T05), transformer type, vector, flux, corrosive, supporting
+ * flange, top gear, V4, motor/heater leftovers → T63. No invented Word homes.
  */
 export function octcFormValues(values: OrderValues): {
   texts: Array<string | undefined>;
@@ -395,6 +479,7 @@ export function octcFormValues(values: OrderValues): {
     remarks.push(`MV ${mv} kV`);
     if (s(values.lv_kv)) remarks.push(`LV ${s(values.lv_kv)} kV`);
   }
+  remarks.push(...leftoverRemarks(values));
   const note = s(values.notes);
   if (note) remarks.push(note);
   setT(63, remarks.join("\n"));
