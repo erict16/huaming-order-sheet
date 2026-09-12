@@ -19,7 +19,7 @@ export default function PresetPicker({
   if (!presets.length) return null;
 
   return (
-    <details className="mb-8 rounded-2xl border border-slate-200 bg-white">
+    <details className="mb-4 rounded-lg border border-slate-200 bg-white">
       <summary className="cursor-pointer list-none px-5 py-3 text-sm font-semibold text-navy marker:content-none [&::-webkit-details-marker]:hidden">
         <span className="flex items-center justify-between gap-3">
           <span>{chromeText("presets", lang)}</span>

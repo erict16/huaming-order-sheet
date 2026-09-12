@@ -20,12 +20,10 @@ export default function TypePlate({ compact, spaced }: { compact: string; spaced
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-xl bg-navy/[0.04] px-4 py-3 ring-1 ring-navy/10">
+    <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 pb-3">
       <div className="min-w-0 flex-1">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-muted">
-          {chromeText("typePlate", lang)}
-        </p>
-        <p className="mt-0.5 break-all font-mono text-base font-semibold tracking-tight text-navy">{compact}</p>
+        <p className="text-xs text-ink-muted">{chromeText("typePlate", lang)}</p>
+        <p className="mt-0.5 break-all font-mono text-[15px] font-semibold tracking-tight text-navy">{compact}</p>
         {spaced && spaced !== compact ? (
           <p className="mt-0.5 font-mono text-xs text-ink-muted">{spaced}</p>
         ) : null}
