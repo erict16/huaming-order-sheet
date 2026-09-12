@@ -228,8 +228,23 @@ describe("fillWorkbook official templates", () => {
     expect(existsSync(file), file).toBe(true);
     const buf = readFileSync(file);
     expect(hasVbaProject(buf)).toBe(true);
-    const out = fillWorkbook(buf, shmDCells({ shm_model: "SHM-D", quantity: "1" }));
+    const blank = XLSX.read(buf, { type: "array", bookVBA: true }).Sheets.Sheet1;
+    expect(blank.A63?.v).toBe("Language of documentation");
+    expect(blank.Z53?.f).toMatch(/CEILING\(H53/);
+    const out = fillWorkbook(
+      buf,
+      shmDCells({
+        shm_model: "SHM-D",
+        quantity: "1",
+        nameplate_language: "pt",
+        fiber_length_m: "80",
+      }),
+    );
+    expect(hasVbaProject(out)).toBe(true);
     const ws = XLSX.read(out, { type: "array", bookVBA: true }).Sheets.Sheet1;
     expect(ws.H16?.v).toBe("SHM-D");
+    expect(ws.H63?.v).toBe("Portuguese");
+    expect(ws.H53?.v).toBe(80);
+    expect(ws.Z53?.f).toMatch(/CEILING\(H53/);
   });
 });

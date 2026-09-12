@@ -521,4 +521,29 @@ describe("shmDCells", () => {
     expect(cells.H37).toBeUndefined();
     expect(cells.H38).toBeUndefined();
   });
+
+  it("writes docs language onto H63 from nameplate or leftover HMI, using official 资料 strings", () => {
+    expect(shmDCells({ shm_model: "SHM-D", nameplate_language: "en" }).H63).toBe("English");
+    expect(shmDCells({ shm_model: "SHM-D", nameplate_language: "en" }).H65).toBe("English");
+    expect(shmDCells({ shm_model: "SHM-D", nameplate_language: "pt" }).H63).toBe("Portuguese");
+    expect(shmDCells({ shm_model: "SHM-D", nameplate_language: "zh" }).H63).toBe("中文");
+    expect(shmDCells({ shm_model: "SHM-D", nameplate_language: "zh" }).H65).toBe("Chinese");
+    expect(shmDCells({ shm_model: "SHM-D", hmi_language: "ru" }).H63).toBe("Russian");
+    expect(shmDCells({ shm_model: "SHM-D", hmi_language: "ru" }).H65).toBeUndefined();
+    expect(shmDCells({ shm_model: "SHM-D", nameplate_language: "vi" }).H63).toBeUndefined();
+  });
+
+  it("writes fiber metres onto H53, not the Z53 supply formula", () => {
+    const cells = shmDCells({ shm_model: "SHM-D", fiber_length_m: "80" });
+    expect(cells.H53).toBe(80);
+    expect(cells.Z53).toBeUndefined();
+  });
+
+  it("writes padlock and official corrosive ku strings; does not invent glands", () => {
+    expect(shmDCells({ shm_model: "SHM-D", padlock: "yes" }).H59).toBe("With");
+    expect(shmDCells({ shm_model: "SHM-D", padlock: "no" }).H59).toBe("Without-std.");
+    expect(shmDCells({ shm_model: "SHM-D", corrosive_class: "C5-M" }).H62).toBe("C5-M-std.");
+    expect(shmDCells({ shm_model: "SHM-D", corrosive_class: "none" }).H62).toBeUndefined();
+    expect(shmDCells({ shm_model: "SHM-D" }).H57).toBeUndefined();
+  });
 });

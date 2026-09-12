@@ -138,6 +138,15 @@ function nameplateOs(v: string): string | undefined {
   return undefined;
 }
 
+/** Sheet1 H63. Official ku 资料 A191–A196; Data Source B27–B31 has no Chinese. */
+function shmDDocsLang(v: string): string | undefined {
+  if (v === "zh") return "中文";
+  if (v === "en") return "English";
+  if (v === "ru") return "Russian";
+  if (v === "pt") return "Portuguese";
+  return undefined;
+}
+
 function paintOs(values: OrderValues): string | undefined {
   const paint = s(values.paint);
   if (paint === "other") return s(values.paint_other) || undefined;
@@ -955,6 +964,11 @@ export function shmDCells(values: OrderValues): CellWrites {
   set(out, "H61", paintOsStd(values));
   set(out, "H62", corrosiveOsStd(s(values.corrosive_class)));
   set(out, "H64", quantityValue(values));
+  set(
+    out,
+    "H63",
+    shmDDocsLang(s(values.nameplate_language)) || shmDDocsLang(s(values.hmi_language)),
+  );
   set(out, "H65", nameplateOs(s(values.nameplate_language)));
   const notes = [s(values.notes), s(values.matching_oltc) ? `OLTC: ${s(values.matching_oltc)}` : ""]
     .filter(Boolean)
