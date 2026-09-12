@@ -254,11 +254,81 @@ describe("oltcSdtValues", () => {
       capacity_mode: "constant",
     });
     expect(c).toHaveLength(40);
+    expect(c[0]).toBe(true);
+    expect(c[1]).toBe(false);
     expect(c[7]).toBe(true);
     expect(c[8]).toBe(false);
     expect(c[9]).toBe(true);
     expect(c[21]).toBe(true);
     expect(c[22]).toBe(false);
+    expect(c[36]).toBe(true);
+    expect(c[37]).toBe(false);
+    expect(c[34]).toBe(true);
+    expect(c[35]).toBe(false);
+  });
+
+  it("ticks >IEC overload, delta-end winding, flange With, temp With", () => {
+    const c = oltcCheckValues({
+      family: "CM2",
+      overload_mode: "above",
+      tap_winding: "delta_end",
+      support_flange: "with",
+      temp_sensor: "with",
+      top_gear: "left",
+      pressure_relief: "prv_50",
+    });
+    expect(c[1]).toBe(true);
+    expect(c[0]).toBe(false);
+    expect(c[12]).toBe(true);
+    expect(c[9]).toBe(false);
+    expect(c[22]).toBe(true);
+    expect(c[21]).toBe(false);
+    expect(c[37]).toBe(true);
+    expect(c[36]).toBe(false);
+    expect(c[35]).toBe(true);
+    expect(c[34]).toBe(false);
+    expect(c[25]).toBe(true);
+    expect(c[24]).toBe(false);
+  });
+
+  it("ticks each tap-winding diagram from the official Word labels", () => {
+    const idx: Record<string, number> = {
+      star_neutral: 9,
+      star_middle: 10,
+      star_end: 11,
+      delta_end: 12,
+      delta_middle: 14,
+      "1plus2": 15,
+      linear_end: 16,
+      linear_middle: 17,
+    };
+    for (const [key, i] of Object.entries(idx)) {
+      const c = oltcCheckValues({ tap_winding: key });
+      expect(c[i], key).toBe(true);
+      for (const j of Object.values(idx)) {
+        if (j !== i) expect(c[j], `${key} must not tick ${j}`).toBe(false);
+      }
+      expect(c[13]).toBe(false);
+    }
+    expect(oltcCheckValues({ support_flange: "special" })[23]).toBe(true);
+    expect(oltcCheckValues({ family: "CV2", top_gear: "right" })[24]).toBe(true);
+  });
+
+  it("writes flux / oltc_side as SDTs, not checkboxes", () => {
+    const cfvv = oltcSdtValues({ flux: "cfvv", oltc_side: "lv", hv_kv: "66", lv_kv: "11" });
+    expect(cfvv[14]).toBe("Constant");
+    expect(cfvv[20]).toBe("11");
+    expect(oltcSdtValues({ flux: "vfvv" })[14]).toBe("Variable");
+    expect(oltcSdtValues({ flux: "combined" })[14]).toBeUndefined();
+    expect(oltcSdtValues({ oltc_side: "hv", hv_kv: "66", lv_kv: "11" })[20]).toBe("66");
+    expect(oltcSdtValues({ oltc_side: "mv", hv_kv: "115", mv_kv: "22" })[20]).toBe("22");
+    expect(oltcSdtValues({ temp_sensor: "with" })[77]).toBe("PT100 (WZP-441type)");
+    const boxes = oltcCheckValues({ flux: "cfvv", oltc_side: "lv" });
+    expect(boxes.some(Boolean)).toBe(true);
+    expect(boxes[13]).toBe(false);
+    expect(boxes[26]).toBe(false);
+    expect(boxes[38]).toBe(false);
+    expect(boxes[39]).toBe(false);
   });
 });
 
@@ -300,7 +370,46 @@ describe("fillDocx", () => {
     expect(boxes).toHaveLength(40);
     expect(boxes[7]).toBe(true);
     expect(boxes[9]).toBe(true);
+    expect(boxes[32]).toBe(true);
     expect(xml).toContain('w:checked w:val="1"');
+  });
+
+  it("ticks overload / winding / flange / temp sensor on the official Word OS", async () => {
+    const values = {
+      family: "CV2",
+      overload_mode: "above",
+      flux: "cfvv",
+      tap_winding: "delta_end",
+      support_flange: "with",
+      temp_sensor: "with",
+      temp_sensor_type: "PT100",
+      oltc_side: "lv",
+      hv_kv: "66",
+      lv_kv: "11",
+      top_gear: "left",
+      pressure_relief: "prv_50",
+    };
+    const filled = await fillDocx(readFileSync(template), oltcSdtValues(values), oltcCheckValues(values));
+    const xml = await (await JSZip.loadAsync(filled)).file("word/document.xml")!.async("string");
+    const boxes = readLegacyCheckboxes(xml);
+    const texts = readSdtTexts(xml);
+    expect(boxes).toHaveLength(40);
+    expect(boxes[1]).toBe(true);
+    expect(boxes[0]).toBe(false);
+    expect(boxes[12]).toBe(true);
+    expect(boxes[9]).toBe(false);
+    expect(boxes[22]).toBe(true);
+    expect(boxes[21]).toBe(false);
+    expect(boxes[25]).toBe(true);
+    expect(boxes[37]).toBe(true);
+    expect(boxes[36]).toBe(false);
+    expect(boxes[35]).toBe(true);
+    expect(boxes[34]).toBe(false);
+    expect(boxes[13]).toBe(false);
+    expect(boxes[38]).toBe(false);
+    expect(texts[14]).toBe("Constant");
+    expect(texts[20]).toBe("11");
+    expect(texts[77]).toBe("PT100 (WZP-441type)");
   });
 
   it("does not stamp empty designer / buyer over the official Word OS", async () => {

@@ -119,7 +119,6 @@ function txKindWord(v: string): string | undefined {
 function fluxWord(v: string): string | undefined {
   if (v === "cfvv") return "Constant";
   if (v === "vfvv") return "Variable";
-  if (v === "combined") return "Combined";
   return undefined;
 }
 
@@ -176,7 +175,11 @@ const OLTC_CHECKBOX_COUNT = 40;
 
 /**
  * Legacy FORMCHECKBOX order in oltc-order-sheet.docx (40 boxes).
- * Word shows a tick only when `w:checked/@w:val="1"`.
+ * Indices from nearby labels in word/document.xml. Tick only when
+ * `w:checked/@w:val="1"`. Flux / oltc_side are SDTs, not boxes.
+ *
+ * Leftover (no wizard key): 13 special regulation; 26–28 CM/CM2 head
+ * diagrams; 29–31 CMD/SHZV head diagrams; 38 shaft standard / 39 sketch.
  */
 export function oltcCheckValues(values: OrderValues): boolean[] {
   const on = new Array<boolean>(OLTC_CHECKBOX_COUNT).fill(false);
@@ -204,7 +207,6 @@ export function oltcCheckValues(values: OrderValues): boolean[] {
     star_middle: 10,
     star_end: 11,
     delta_end: 12,
-    special: 13,
     delta_middle: 14,
     "1plus2": 15,
     linear_end: 16,
@@ -222,31 +224,24 @@ export function oltcCheckValues(values: OrderValues): boolean[] {
   const support = s(values.support_flange);
   if (support === "with") tick(22);
   else if (support === "special") tick(23);
-  else if (s(values.flange_type) === "bell" || support === "without") tick(21);
+  else tick(21);
 
   const fam = s(values.family);
-  const amp = n(values.oltc_current_a) ?? 0;
-  if (fam === "CMD" || fam === "SHZV" || fam === "SHZVG") {
-    tick(28);
-    if (amp > 600) tick(31);
-    else tick(29);
-  } else if (fam === "CM" || fam === "CM2") {
-    tick(24);
-    tick(25);
-  } else if (fam === "CV" || fam === "SV" || fam === "CV2") {
-    tick(24);
+  const gear = s(values.top_gear);
+  if (fam === "CV" || fam === "SV" || fam === "CV2" || fam === "CM" || fam === "CM2") {
+    if (gear === "right") tick(24);
+    else if (gear === "left") tick(25);
   }
 
-  if (s(values.pressure_relief) === "none" || s(values.pressure_relief) === "burst" || !s(values.pressure_relief)) {
-    tick(33);
-  } else {
-    tick(34);
-  }
+  if (s(values.protective_relay)) tick(32);
 
-  if (s(values.temp_sensor) === "with") tick(36);
-  else tick(35);
+  const prv = s(values.pressure_relief);
+  if (prv === "prv_50" || prv === "prv_130") tick(35);
+  else tick(34);
 
-  tick(38);
+  if (s(values.temp_sensor) === "with") tick(37);
+  else tick(36);
+
   return on;
 }
 
@@ -379,7 +374,11 @@ export function oltcSdtValues(values: OrderValues): Array<string | undefined> {
   set(89, langWord(s(values.nameplate_language)));
   set(91, langWord(s(values.nameplate_language)));
   set(92, s(values.quantity));
-  if (s(values.temp_sensor) === "with") set(77, s(values.temp_sensor_type) || "PT100");
+  if (s(values.temp_sensor) === "with") {
+    const kind = s(values.temp_sensor_type);
+    if (kind === "PT100" || !kind) set(77, "PT100 (WZP-441type)");
+    else set(77, kind);
+  }
 
   return out;
 }
