@@ -9,7 +9,7 @@ import { allFields } from "./schema";
 import { t } from "./copy";
 import { typeFromValues } from "./typeString";
 import type { Lang, OrderValues, SheetDef } from "./types";
-import { cma7SdtValues, oltcSdtValues, WORD_TEMPLATE } from "./wordMap";
+import { cma7SdtValues, oltcCheckValues, oltcSdtValues, WORD_TEMPLATE } from "./wordMap";
 
 export const APP_VERSION = "1.2.2";
 export const SCHEMA_VERSION = "3";
@@ -137,7 +137,7 @@ export async function exportOrderSheet(
   if (plan.kind === "word") {
     const template = await fetchTemplate(plan.file);
     if (sheet.id === "oltc") {
-      const filled = await fillDocx(template, oltcSdtValues(values));
+      const filled = await fillDocx(template, oltcSdtValues(values), oltcCheckValues(values));
       downloadBuf(filled, `HM-OS_${safe}.docx`, plan.mime);
       return;
     }

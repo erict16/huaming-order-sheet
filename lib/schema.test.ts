@@ -3,7 +3,6 @@ import {
   APP_OPTS,
   CONN_OPTS,
   CORROSIVE_OPTS,
-  COUNTRY_CODE_OPTS,
   CTRL_OPTS,
   CTRL_VOLT_OPTS,
   DELIVERY_DATE_OPTS,
@@ -18,27 +17,40 @@ import {
 import { SHEETS, allFields, getSheet } from "./schema";
 
 describe("orderFields", () => {
-  it("exposes 报价单号 and country-code phone on every sheet", () => {
+  it("keeps 报价单号 on the order step and contact at the last step before review", () => {
     for (const sheet of SHEETS) {
       const keys = allFields(sheet, {}).map(({ field }) => field.key);
       expect(keys, sheet.id).toContain("order_no");
-      expect(keys, sheet.id).toContain("designer_phone_cc");
+      expect(keys, sheet.id).toContain("designer_name");
       expect(keys, sheet.id).toContain("designer_phone");
+      expect(keys, sheet.id).toContain("designer_email");
+      expect(keys, sheet.id).not.toContain("designer_phone_cc");
       const orderNo = allFields(sheet, {}).find(({ field }) => field.key === "order_no")!.field;
       expect(orderNo.label.zh).toBe("报价单号");
       expect(orderNo.label.en).toBe("Quotation No.");
-      const cc = allFields(sheet, {}).find(({ field }) => field.key === "designer_phone_cc")!.field;
-      expect(cc.label.zh).toBe("国家区号");
-      expect(cc.label.en).toBe("Country code");
-      expect(cc.type).toBe("combobox");
-      expect(cc.options?.map((o) => o.value)).toEqual(COUNTRY_CODE_OPTS.map((o) => o.value));
-      expect(cc.options?.map((o) => o.value)).toEqual(expect.arrayContaining(["+86", "+90", "+62", "+91", "+7", "+61", "+84", "+998", "+60", "+66", "+55", "+39", "+49", "+1", "other"]));
       const delivery = allFields(sheet, {}).find(({ field }) => field.key === "delivery_date")!.field;
       expect(delivery.type).toBe("select");
       expect(delivery.options?.map((o) => o.value)).toEqual(DELIVERY_DATE_OPTS.map((o) => o.value));
       expect(allFields(sheet, { delivery_date: "custom" }).map(({ field }) => field.key)).toContain("delivery_date_custom");
-      expect(allFields(sheet, { designer_phone_cc: "other" }).map(({ field }) => field.key)).toContain("designer_phone_cc_other");
+      const contact = sheet.steps.find((st) => st.id === "contact");
+      expect(contact, sheet.id).toBeTruthy();
+      const reviewIdx = sheet.steps.findIndex((st) => st.kind === "review");
+      const contactIdx = sheet.steps.findIndex((st) => st.id === "contact");
+      expect(contactIdx, sheet.id).toBe(reviewIdx - 1);
     }
+  });
+
+  it("exposes winding data, supporting flange and regulation location on the OLTC sheet", () => {
+    const oltc = getSheet("oltc")!;
+    const keys = allFields(oltc, { flange_type: "bell", ust_mode: "constant" }).map(({ field }) => field.key);
+    expect(keys).toContain("tap_winding");
+    expect(keys).toContain("support_flange");
+    expect(keys).toContain("wind_r1_mm");
+    expect(keys).toContain("wind_cw_pf");
+    expect(keys).toContain("ins_a_pf_kv");
+    expect(keys).toContain("temp_sensor");
+    expect(keys).toContain("ust_mode");
+    expect(allFields(oltc, { flange_type: "tank_top" }).map(({ field }) => field.key)).not.toContain("support_flange");
   });
 
   it("keeps 买方 / 变压器厂 on half the 2-col grid", () => {
