@@ -109,6 +109,126 @@ function designation(values: OrderValues) {
   return operatingDesignation(pos, mid);
 }
 
+function txKindWord(v: string): string | undefined {
+  if (v === "separated") return "Separate winding transformer";
+  if (v === "auto") return "Auto-transformer";
+  if (v === "booster") return "Booster transformer";
+  return undefined;
+}
+
+function fluxWord(v: string): string | undefined {
+  if (v === "cfvv") return "Constant";
+  if (v === "vfvv") return "Variable";
+  if (v === "combined") return "Combined";
+  return undefined;
+}
+
+function kvaOf(values: OrderValues): string | undefined {
+  const mva = n(values.rated_power_mva);
+  if (mva == null) return undefined;
+  return String(mva >= 20 ? mva * 1000 : Math.round(mva * 1000));
+}
+
+function rangeLeft(values: OrderValues): string | undefined {
+  const minus = s(values.range_minus);
+  if (minus) return `-${minus}`;
+  const raw = s(values.tap_range_pct);
+  const m = raw.match(/−\s*([\d.]+)|-\s*([\d.]+)/);
+  if (m) return `-${m[1] || m[2]}`;
+  const pm = n(values.plus_minus);
+  if (pm) return `-${pm}`;
+  return undefined;
+}
+
+function rangeRight(values: OrderValues): string | undefined {
+  const plus = s(values.range_plus);
+  if (plus) return `+${plus}`;
+  const raw = s(values.tap_range_pct);
+  const m = raw.match(/\+\s*([\d.]+)/);
+  if (m) return `+${m[1]}`;
+  const pm = n(values.plus_minus);
+  if (pm) return `+${pm}`;
+  return undefined;
+}
+
+export const OLTC_CHECKBOX_COUNT = 40;
+
+/**
+ * Legacy FORMCHECKBOX order in oltc-order-sheet.docx (40 boxes).
+ * Word shows a tick only when `w:checked/@w:val="1"`.
+ */
+export function oltcCheckValues(values: OrderValues): boolean[] {
+  const on = new Array<boolean>(OLTC_CHECKBOX_COUNT).fill(false);
+  const tick = (i: number) => {
+    on[i] = true;
+  };
+
+  const overload = s(values.overload_mode) || "iec";
+  if (overload === "above") tick(1);
+  else tick(0);
+
+  const amb = s(values.ambient_band) || s(values.ambient_temp);
+  if (amb.includes("-60") || amb.includes("−60")) tick(4);
+  else if (amb.includes("-45") || amb.includes("−45")) tick(3);
+  else tick(2);
+
+  if (s(values.capacity_mode) === "decreasing") tick(6);
+  else tick(5);
+
+  if (s(values.ust_mode) === "variable") tick(8);
+  else tick(7);
+
+  const loc: Record<string, number> = {
+    star_neutral: 9,
+    star_middle: 10,
+    star_end: 11,
+    delta_end: 12,
+    special: 13,
+    delta_middle: 14,
+    "1plus2": 15,
+    linear_end: 16,
+    linear_middle: 17,
+  };
+  const locKey = s(values.tap_winding) || (s(values.oltc_connection) === "D" ? "delta_end" : "star_neutral");
+  if (loc[locKey] != null) tick(loc[locKey]);
+
+  const ins = s(values.ins_fill);
+  if (ins === "provided") tick(19);
+  else tick(18);
+
+  if (s(values.special_winding) === "yes") tick(20);
+
+  const support = s(values.support_flange);
+  if (support === "with") tick(22);
+  else if (support === "special") tick(23);
+  else if (s(values.flange_type) === "bell" || support === "without") tick(21);
+
+  const fam = s(values.family);
+  const amp = n(values.oltc_current_a) ?? 0;
+  if (fam === "CMD" || fam === "SHZV" || fam === "SHZVG") {
+    tick(28);
+    if (amp > 600) tick(31);
+    else tick(29);
+  } else if (fam === "CM" || fam === "CM2") {
+    tick(24);
+    tick(25);
+  } else if (fam === "CV" || fam === "SV" || fam === "CV2") {
+    tick(24);
+  }
+
+  if (s(values.pressure_relief) === "none" || s(values.pressure_relief) === "burst" || !s(values.pressure_relief)) {
+    tick(33);
+  } else {
+    tick(34);
+  }
+
+  if (s(values.temp_sensor) === "with") tick(36);
+  else tick(35);
+
+  tick(38);
+  return on;
+}
+
 /** Content-control values in document order for OLTC order sheet.docx (96 SDTs). */
 export function oltcSdtValues(values: OrderValues): Array<string | undefined> {
   const out: Array<string | undefined> = new Array(96);
@@ -127,18 +247,56 @@ export function oltcSdtValues(values: OrderValues): Array<string | undefined> {
   set(8, s(values.mdu_model) === "none" ? undefined : s(values.mdu_model));
   set(9, applicationWord(values));
   set(10, vectorGroupWord(values));
+  set(11, txKindWord(s(values.tx_kind)));
   set(12, phasesWord(s(values.phases)));
   set(13, freqWord(s(values.frequency_hz)));
-  const mva = n(values.rated_power_mva);
-  if (mva != null) set(16, String(mva * 1000));
+  set(14, fluxWord(s(values.flux)));
+  const kva = kvaOf(values);
+  if (s(values.capacity_mode) === "decreasing") {
+    set(17, kva);
+    set(18, s(values.capacity_from_pos));
+  } else {
+    set(16, kva);
+  }
   set(19, s(values.hv_kv));
-  const pm = n(values.plus_minus);
-  if (pm) set(21, String(pm));
-  set(22, s(values.tap_range_pct));
+  set(20, s(values.oltc_on_kv) || s(values.hv_kv));
+  const steps = n(values.oltc_tap_positions);
+  if (steps) set(21, String(steps));
+  set(22, rangeLeft(values));
+  set(23, rangeRight(values));
+  set(24, s(values.step_percent));
   const thru = n(values.through_current_a) ?? n(values.oltc_current_a);
   if (thru != null) set(25, String(thru));
-  const ust = n(values.step_voltage_v);
-  if (ust != null) set(27, String(ust));
+  const imax = n(values.imax_a);
+  if (imax != null) set(26, String(imax));
+  if (s(values.ust_mode) === "variable") {
+    set(28, s(values.ust_max_v));
+    set(29, s(values.ust_min_v));
+  } else {
+    set(27, s(values.step_voltage_v));
+  }
+  set(30, s(values.ins_earth_pf_kv));
+  set(31, s(values.ins_earth_li_kv));
+  set(32, s(values.ins_a_pf_kv));
+  set(33, s(values.ins_a_li_kv));
+  set(34, s(values.ins_a1_pf_kv));
+  set(35, s(values.ins_a1_li_kv));
+  set(36, s(values.ins_b_pf_kv));
+  set(37, s(values.ins_b_li_kv));
+  set(38, s(values.ins_c1_pf_kv));
+  set(39, s(values.ins_c1_li_kv));
+  set(40, s(values.ins_c2_pf_kv));
+  set(41, s(values.ins_c2_li_kv));
+  set(42, s(values.ins_d_pf_kv));
+  set(43, s(values.ins_d_li_kv));
+  set(44, s(values.wind_r1_mm));
+  set(45, s(values.wind_r2_mm));
+  set(46, s(values.wind_r3_mm));
+  set(47, s(values.wind_r4_mm));
+  set(48, s(values.wind_h1_mm));
+  set(49, s(values.wind_h2_mm));
+  set(50, s(values.wind_cw_pf));
+  set(51, s(values.wind_ca_pf));
   set(52, s(values.recovery_voltage_kv));
   set(53, s(values.notes));
 
@@ -185,9 +343,11 @@ export function oltcSdtValues(values: OrderValues): Array<string | undefined> {
   if (v) set(82, v);
 
   set(87, paintWord(values));
+  set(88, s(values.corrosive_class));
   set(89, langWord(s(values.nameplate_language)));
   set(91, langWord(s(values.nameplate_language)));
   set(92, s(values.quantity) || "1");
+  if (s(values.temp_sensor) === "with") set(77, s(values.temp_sensor_type) || "PT100");
   if (!out[53]) set(95, s(values.notes));
 
   return out;

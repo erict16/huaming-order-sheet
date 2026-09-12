@@ -622,6 +622,29 @@ export const FLANGE_OPTS = [
   opt("bell", "钟罩式", "Bell-type (钟罩)", "Колокольный бак", "Kiểu chuông"),
 ];
 
+export const SUPPORT_FLANGE_OPTS = [
+  opt("without", "不要支撑法兰", "Without supporting flange", "Без опорного фланца", "Không mặt bích đỡ"),
+  opt("with", "要支撑法兰", "With supporting flange", "С опорным фланцем", "Có mặt bích đỡ"),
+  opt("special", "特殊（附图）", "Special (attach drawing)", "Спец. (чертёж)", "Đặc biệt (kèm bản vẽ)"),
+];
+
+export const OLTC_AMBIENT_OPTS = [
+  opt("-25~50", "−25～+50 ℃"),
+  opt("-45~50", "−45～+50 ℃"),
+  opt("-60~50", "−60～+50 ℃"),
+  opt("other", "其他", "Other", "Другое", "Khác"),
+];
+
+export const INS_FILL_OPTS = [
+  opt("catalog", "按技术数据 / 目录值", "In accordance with technical data", "По техническим данным", "Theo số liệu kỹ thuật"),
+  opt("provided", "下面另填", "Provided as below", "Указать ниже", "Điền bên dưới"),
+];
+
+export const TEMP_SENSOR_OPTS = [
+  opt("without", "不配（常规）", "Without (standard)", "Нет (стандарт)", "Không (tiêu chuẩn)"),
+  opt("with", "配温度传感器", "With temperature sensor", "С датчиком", "Có cảm biến"),
+];
+
 export const PRV_OPTS = [
   opt("burst", "防爆盖（不要压力释放阀）", "Rupture disc only", "Только разрывной диск", "Nắp chống nổ, không van"),
   opt("prv_50", "压力释放阀 50 mm，不要防爆盖", "PRD 50 mm, no rupture disc", "ПРД 50 мм", "Van 50 mm, không nắp"),

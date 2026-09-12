@@ -1,6 +1,5 @@
 import {
   APP_OPTS,
-  COUNTRY_CODE_OPTS,
   CONN_OPTS,
   DELIVERY_DATE_OPTS,
   CTRL_OPTS,
@@ -41,6 +40,10 @@ import {
   HWV_TAP_WINDING_OPTS,
   HWV_TX_OPTS,
   HWV_UST_OPTS,
+  INS_FILL_OPTS,
+  OLTC_AMBIENT_OPTS,
+  SUPPORT_FLANGE_OPTS,
+  TEMP_SENSOR_OPTS,
   PAINT_OPTS,
   PHASE_OPTS,
   VECTOR_GROUP_OPTS,
@@ -86,23 +89,6 @@ function orderFields(): FieldDef[] {
     { key: "country", label: L("国家 / 地区", "Country / region", "Страна / регион", "Quốc gia / khu vực"), type: "text", required: true },
     { key: "project", label: L("工程名称", "Project", "Объект", "Công trình"), type: "text" },
     { key: "quantity", label: L("数量", "Quantity", "Количество", "Số lượng"), type: "number", unit: "pcs", required: true },
-    { key: "designer_name", label: L("设计人", "Designer", "Проектировщик", "Người thiết kế"), type: "text" },
-    { key: "designer_email", label: L("邮箱", "Email", "Эл. почта", "Email"), type: "text" },
-    {
-      key: "designer_phone_cc",
-      label: L("国家区号", "Country code", "Код страны", "Mã quốc gia"),
-      type: "combobox",
-      options: COUNTRY_CODE_OPTS,
-      placeholder: L("选择区号", "Select code", "Код", "Chọn mã"),
-    },
-    {
-      key: "designer_phone_cc_other",
-      label: L("自定义区号", "Custom country code", "Свой код страны", "Mã quốc gia khác"),
-      type: "text",
-      placeholder: L("+353", "+353", "+353", "+353"),
-      applies: (v) => v.designer_phone_cc === "other",
-    },
-    { key: "designer_phone", label: L("电话", "Phone", "Телефон", "Điện thoại"), type: "text" },
     {
       key: "delivery_date",
       label: L("要货期", "Delivery date", "Срок поставки", "Ngày giao"),
@@ -116,6 +102,23 @@ function orderFields(): FieldDef[] {
       applies: (v) => v.delivery_date === "custom",
     },
   ];
+}
+
+function contactFields(): FieldDef[] {
+  return [
+    { key: "designer_name", label: L("设计人", "Designer", "Проектировщик", "Người thiết kế"), type: "text" },
+    { key: "designer_phone", label: L("电话", "Phone", "Телефон", "Điện thoại"), type: "text", placeholder: L("+86 138…", "+86 138…", "+86 138…", "+86 138…") },
+    { key: "designer_email", label: L("邮箱", "Email", "Эл. почта", "Email"), type: "text" },
+  ];
+}
+
+function contactStep(): StepDef {
+  return {
+    id: "contact",
+    title: L("联系人", "Contact", "Контакт", "Liên hệ"),
+    blurb: L("导出前填设计人。可空。", "Designer contact before export. Optional.", "Контакт проектировщика. Необязательно.", "Người thiết kế trước khi xuất. Có thể trống."),
+    sections: [{ id: "contact", title: L("联系人", "Contact", "Контакт", "Liên hệ"), fields: contactFields() }],
+  };
 }
 
 function transformerFields(opts?: { fluid?: boolean; txKind?: boolean }): FieldDef[] {
@@ -152,8 +155,31 @@ function transformerFields(opts?: { fluid?: boolean; txKind?: boolean }): FieldD
     },
     { key: "frequency_hz", label: L("频率", "Frequency", "Частота", "Tần số"), type: "radio", options: FREQ_OPTS, required: true },
     { key: "phases", label: L("相数", "Phases", "Число фаз", "Số pha"), type: "radio", options: PHASE_OPTS, required: true },
+    { key: "flux", label: L("磁通 / 感应", "Flux / induction", "Поток / индукция", "Từ thông"), type: "radio", options: HWV_FLUX_OPTS, span: 2 },
+    { key: "overload_mode", label: L("过载", "Overload", "Перегрузка", "Quá tải"), type: "radio", options: HWV_OVERLOAD_OPTS },
+    {
+      key: "overload_pct",
+      label: L("过载倍数", "Overload", "Перегрузка", "Quá tải"),
+      type: "number",
+      unit: "%",
+      applies: (v) => v.overload_mode === "above",
+    },
+    { key: "capacity_mode", label: L("容量", "Capacity", "Мощность", "Công suất"), type: "radio", options: HWV_CAPACITY_OPTS },
+    {
+      key: "capacity_from_pos",
+      label: L("从哪一档开始递减", "Decreasing from position", "Убывание с положения", "Giảm từ vị trí"),
+      type: "text",
+      applies: (v) => v.capacity_mode === "decreasing",
+    },
+    { key: "oltc_on_kv", label: L("开关装在哪一侧电压", "OLTC on this kV side", "РПН на стороне, кВ", "OLTC lắp phía kV"), type: "number", unit: "kV" },
+    { key: "ambient_band", label: L("环境温度", "Ambient temperature", "Температура среды", "Nhiệt độ môi trường"), type: "radio", options: OLTC_AMBIENT_OPTS, span: 2 },
+    {
+      key: "ambient_temp",
+      label: L("其他环境温度", "Other ambient", "Другая температура", "Nhiệt độ khác"),
+      type: "text",
+      applies: (v) => v.ambient_band === "other",
+    },
     { key: "standard", label: L("标准", "Standard", "Стандарт", "Tiêu chuẩn"), type: "select", options: STD_OPTS },
-    { key: "ambient_temp", label: L("环境温度", "Ambient temperature", "Температура среды", "Nhiệt độ môi trường"), type: "text", placeholder: L("−25 / +40 °C", "-25 / +40 °C", "−25 / +40 °C", "−25 / +40 °C") },
   );
   if (opts?.fluid !== false) {
     fields.push({
@@ -269,7 +295,24 @@ function oltcRatingFields(): FieldDef[] {
       placeholder: L("例如 10193W", "e.g. 10193W", "напр. 10193W", "vd. 10193W"),
       hint: L("10 节距 · 19 位置 · 3 中间 · W 正反。由上面参数自动生成，必要时可改。", "pitch·positions·mid·W/G. Auto-filled; override if engineering requires.", "шаг·положения·середина·W/G. Заполняется само.", "bước·vị trí·giữa·W/G. Tự điền."),
     },
-    { key: "step_voltage_v", label: L("级电压 Ust", "Step voltage Ust", "Ступенчатое напряжение Ust", "Điện áp nấc Ust"), type: "number", unit: "V" },
+    { key: "tap_winding", label: L("调压位置", "Regulation location", "Место регулирования", "Vị trí điều áp"), type: "select", options: HWV_TAP_WINDING_OPTS, span: 2, hint: L("对应 Word 表上那 8 个绕组示意图。", "Matches the 8 winding diagrams on the Word OS.", "Соответствует 8 схемам на бланке Word.", "Khớp 8 sơ đồ trên phiếu Word.") },
+    { key: "ust_mode", label: L("级电压", "Step voltage", "Ступенчатое напряжение", "Điện áp nấc"), type: "radio", options: HWV_UST_OPTS },
+    { key: "step_voltage_v", label: L("级电压 Ust", "Step voltage Ust", "Ступенчатое напряжение Ust", "Điện áp nấc Ust"), type: "number", unit: "V", applies: (v) => v.ust_mode !== "variable" },
+    {
+      key: "ust_max_v",
+      label: L("Ust 最大", "Ust max", "Ust макс.", "Ust max"),
+      type: "number",
+      unit: "V",
+      applies: (v) => v.ust_mode === "variable",
+    },
+    {
+      key: "ust_min_v",
+      label: L("Ust 最小", "Ust min", "Ust мин.", "Ust min"),
+      type: "number",
+      unit: "V",
+      applies: (v) => v.ust_mode === "variable",
+    },
+    { key: "step_percent", label: L("每级百分数", "% per step", "% на ступень", "% mỗi nấc"), type: "number", unit: "%" },
     {
       key: "through_current_a",
       label: L("变压器额定电流 I", "Transformer rated current I", "Ном. ток ТР I", "Dòng MBA I"),
@@ -305,6 +348,15 @@ function positionFields(): FieldDef[] {
 function mechanicalFields(): FieldDef[] {
   return [
     { key: "flange_type", label: L("安装法兰", "Mounting flange", "Монтажный фланец", "Mặt bích lắp"), type: "radio", options: FLANGE_OPTS },
+    {
+      key: "support_flange",
+      label: L("钟罩支撑法兰", "Supporting flange (bell-type tank)", "Опорный фланец (колокол)", "Mặt bích đỡ (kiểu chuông)"),
+      type: "radio",
+      options: SUPPORT_FLANGE_OPTS,
+      span: 2,
+      applies: (v) => v.flange_type === "bell",
+      hint: L("Word 表 Supporting flange for bell-type tank。箱盖安装不用填。", "Word OS: supporting flange for bell-type tank. Skip for tank-top.", "Только для колокольного бака.", "Chỉ khi kiểu chuông."),
+    },
     { key: "top_gear", label: L("出轴方向", "Top gear output", "Выход верхнего редуктора", "Hướng trục ra"), type: "radio", options: TOP_GEAR_OPTS, hint: L("齿轮盒出轴，不是机构装在哪一侧。", "Shaft output of the top gear, not which side the MDU hangs.", "Выход вала, не сторона привода.", "Trục ra hộp bánh, không phải bên cơ cấu.") },
     { key: "drive_shaft_horizontal_mm", label: L("水平传动轴长度", "Horizontal drive shaft", "Горизонтальный вал", "Trục ngang"), type: "select", unit: "mm", options: SHAFT_LEN_OPTS },
     { key: "drive_shaft_vertical_mm", label: L("垂直传动轴长度", "Vertical drive shaft", "Вертикальный вал", "Trục đứng"), type: "select", unit: "mm", options: SHAFT_LEN_OPTS },
@@ -313,11 +365,31 @@ function mechanicalFields(): FieldDef[] {
 
 function insulationFields(): FieldDef[] {
   return [
-    { key: "ins_earth_pf_kv", label: L("对地工频耐受", "Earth power-frequency withstand", "Испыт. напряжение пром. частоты", "Chịu tần số công nghiệp đối đất"), type: "number", unit: "kV", hint: L("随 Um 自动填目录值，可改。", "Filled from Um table; override if specified.", "Из таблицы Um; можно изменить.", "Theo bảng Um; có thể sửa.") },
-    { key: "ins_earth_li_kv", label: L("对地雷电冲击", "Earth lightning impulse (BIL)", "Грозовой импульс на землю", "Xung sét đối đất (BIL)"), type: "number", unit: "kV" },
-    { key: "across_bil_kv", label: L("级间雷电冲击", "Across-tap BIL", "Импульс между ответвлениями", "BIL giữa nấc"), type: "number", unit: "kV" },
-    { key: "across_pf_kv", label: L("级间工频", "Across-tap power frequency", "Пром. частота между ответвлениями", "Tần số công nghiệp giữa nấc"), type: "number", unit: "kV" },
-    { key: "ins_distance_note", label: L("内部绝缘距离 a / a1 / b / c1 / c2 / d", "Internal distances a / a1 / b / c1 / c2 / d", "Внутр. расстояния a / a1 / b / c1 / c2 / d", "Khoảng cách trong a / a1 / b / c1 / c2 / d"), type: "text", span: 2 },
+    { key: "ins_fill", label: L("绝缘水平", "Insulation levels", "Уровни изоляции", "Cấp cách điện"), type: "radio", options: INS_FILL_OPTS, span: 2 },
+    { key: "ins_earth_pf_kv", label: L("对地工频", "To earth, PF", "На землю, пром. частота", "Đối đất tần số"), type: "number", unit: "kV", hint: L("随 Um 自动填目录值，可改。", "Filled from Um table; override if specified.", "Из таблицы Um; можно изменить.", "Theo bảng Um; có thể sửa.") },
+    { key: "ins_earth_li_kv", label: L("对地雷电冲击", "To earth, LI", "На землю, импульс", "Đối đất xung sét"), type: "number", unit: "kV" },
+    { key: "ins_a_pf_kv", label: L("同相调压绕组 (a) 工频", "Across winding (a), PF", "Обмотка (a), ПЧ", "Cuộn (a) tần số"), type: "number", unit: "kV" },
+    { key: "ins_a_li_kv", label: L("同相调压绕组 (a) 冲击", "Across winding (a), LI", "Обмотка (a), импульс", "Cuộn (a) xung"), type: "number", unit: "kV" },
+    { key: "ins_a1_pf_kv", label: L("相邻分接 (a1) 工频", "Between taps (a1), PF", "Между ответвл. (a1)", "Giữa nấc (a1)"), type: "number", unit: "kV" },
+    { key: "ins_a1_li_kv", label: L("相邻分接 (a1) 冲击", "Between taps (a1), LI", "Между ответвл. (a1), импульс", "Giữa nấc (a1) xung"), type: "number", unit: "kV" },
+    { key: "ins_b_pf_kv", label: L("相间 (b) 工频", "Between phases (b), PF", "Между фазами (b)", "Giữa pha (b)"), type: "number", unit: "kV" },
+    { key: "ins_b_li_kv", label: L("相间 (b) 冲击", "Between phases (b), LI", "Между фазами (b), импульс", "Giữa pha (b) xung"), type: "number", unit: "kV" },
+    { key: "ins_c1_pf_kv", label: L("粗细调 (c1) 工频", "Coarse–fine (c1), PF", "Грубо-точный (c1)", "Thô–tinh (c1)"), type: "number", unit: "kV" },
+    { key: "ins_c1_li_kv", label: L("粗细调 (c1) 冲击", "Coarse–fine (c1), LI", "Грубо-точный (c1), импульс", "Thô–tinh (c1) xung"), type: "number", unit: "kV" },
+    { key: "ins_c2_pf_kv", label: L("粗调相间 (c2) 工频", "Coarse phases (c2), PF", "Грубые фазы (c2)", "Thô giữa pha (c2)"), type: "number", unit: "kV" },
+    { key: "ins_c2_li_kv", label: L("粗调相间 (c2) 冲击", "Coarse phases (c2), LI", "Грубые фазы (c2), импульс", "Thô giữa pha (c2) xung"), type: "number", unit: "kV" },
+    { key: "ins_d_pf_kv", label: L("粗调绕组 (d) 工频", "Coarse winding (d), PF", "Грубая обмотка (d)", "Cuộn thô (d)"), type: "number", unit: "kV" },
+    { key: "ins_d_li_kv", label: L("粗调绕组 (d) 冲击", "Coarse winding (d), LI", "Грубая обмотка (d), импульс", "Cuộn thô (d) xung"), type: "number", unit: "kV" },
+    { key: "wind_r1_mm", label: L("绕组 R1", "Winding R1", "Обмотка R1", "Cuộn R1"), type: "number", unit: "mm" },
+    { key: "wind_r2_mm", label: L("绕组 R2", "Winding R2", "Обмотка R2", "Cuộn R2"), type: "number", unit: "mm" },
+    { key: "wind_r3_mm", label: L("绕组 R3", "Winding R3", "Обмотка R3", "Cuộn R3"), type: "number", unit: "mm" },
+    { key: "wind_r4_mm", label: L("绕组 R4", "Winding R4", "Обмотка R4", "Cuộn R4"), type: "number", unit: "mm" },
+    { key: "wind_h1_mm", label: L("绕组 H1", "Winding H1", "Обмотка H1", "Cuộn H1"), type: "number", unit: "mm" },
+    { key: "wind_h2_mm", label: L("绕组 H2", "Winding H2", "Обмотка H2", "Cuộn H2"), type: "number", unit: "mm" },
+    { key: "wind_cw_pf", label: L("Cw", "Cw", "Cw", "Cw"), type: "number", unit: "pF" },
+    { key: "wind_ca_pf", label: L("Ca", "Ca", "Ca", "Ca"), type: "number", unit: "pF" },
+    { key: "recovery_voltage_kv", label: L("恢复电压", "Recovery voltage", "Напряжение восстановления", "Điện áp phục hồi"), type: "number", unit: "kV" },
+    { key: "special_winding", label: L("特殊绕组布置", "Special winding arrangement", "Особая схема обмотки", "Bố trí cuộn đặc biệt"), type: "radio", options: YES_NO },
   ];
 }
 
@@ -364,6 +436,14 @@ function accessoryFields(opts?: { oil?: boolean }): FieldDef[] {
       { key: "potential_connection", label: L("电位电阻", "Potential / tie-in resistor", "Потенциальный резистор", "Điện trở thế"), type: "select", options: POTENTIAL_OPTS, hint: L("复合式恢复电压 >15 kV、组合式 >35 kV 通常要带，并附绕组图。", "Usually required when recovery voltage >15 kV (compound) or >35 kV (combined). Attach winding layout.", "Нужен при высоком напряжении восстановления. Приложите схему.", "Thường cần khi điện áp phục hồi cao. Kèm sơ đồ quấn.") },
       { key: "tie_in_mounting", label: L("电位电阻安装", "Tie-in mounting", "Крепление резистора", "Cách lắp điện trở"), type: "select", options: TIE_IN_OPTS, applies: (v) => v.potential_connection === "with" || v.potential_connection === "check" },
       { key: "oil_filter", label: L("在线滤油机", "Online oil filter", "Фильтр масла", "Lọc dầu online"), type: "select", options: FILTER_OPTS },
+      { key: "temp_sensor", label: L("温度传感器", "Temperature sensor", "Датчик температуры", "Cảm biến nhiệt"), type: "radio", options: TEMP_SENSOR_OPTS },
+      {
+        key: "temp_sensor_type",
+        label: L("传感器型号", "Sensor type", "Тип датчика", "Kiểu cảm biến"),
+        type: "text",
+        placeholder: L("PT100 / BWTY", "PT100 / BWTY", "PT100 / BWTY", "PT100 / BWTY"),
+        applies: (v) => v.temp_sensor === "with",
+      },
     );
   }
   f.push(
@@ -411,7 +491,7 @@ const oltcSheet: SheetDef = {
       title: L("订单与变压器", "Order & transformer", "Заказ и трансформатор", "Đơn và MBA"),
       blurb: L(" ", " ", " ", " "),
       sections: [
-        { id: "order", title: L("订单 / 联系人", "Order / contact", "Заказ / контакт", "Đơn / liên hệ"), fields: orderFields() },
+        { id: "order", title: L("订单", "Order", "Заказ", "Đơn"), fields: orderFields() },
         { id: "transformer", title: L("变压器数据", "Transformer data", "Данные трансформатора", "Dữ liệu MBA"), fields: transformerFields() },
       ],
     },
@@ -444,6 +524,7 @@ const oltcSheet: SheetDef = {
         { id: "notes", title: L("备注", "Notes", "Примечания", "Ghi chú"), fields: [notesField] },
       ],
     },
+    contactStep(),
     {
       id: "review",
       kind: "review",
@@ -483,7 +564,7 @@ const octcSheet: SheetDef = {
       title: L("订单与变压器", "Order & transformer", "Заказ и трансформатор", "Đơn và MBA"),
       blurb: L("无励磁必须在变压器断电后才能调档。", "The transformer must be de-energized before tapping.", "Переключение только при отключенном ТР.", "Chỉ đổi nấc khi MBA đã cắt điện."),
       sections: [
-        { id: "order", title: L("订单 / 联系人", "Order / contact", "Заказ / контакт", "Đơn / liên hệ"), fields: orderFields() },
+        { id: "order", title: L("订单", "Order", "Заказ", "Đơn"), fields: orderFields() },
         { id: "transformer", title: L("变压器数据", "Transformer data", "Данные трансформатора", "Dữ liệu MBA"), fields: transformerFields() },
       ],
     },
@@ -525,6 +606,7 @@ const octcSheet: SheetDef = {
         { id: "notes", title: L("备注", "Notes", "Примечания", "Ghi chú"), fields: [notesField] },
       ],
     },
+    contactStep(),
     { id: "review", kind: "review", title: L("核对导出", "Review & export", "Проверка и экспорт", "Kiểm tra và xuất"), blurb: L("核对后选 Word 或 Excel 下载。", "Then download Word or Excel.", "Затем Word или Excel.", "Sau đó tải Word hoặc Excel."), sections: [] },
   ],
 };
@@ -551,7 +633,7 @@ const drySheet: SheetDef = {
       title: L("订单与变压器", "Order & transformer", "Заказ и трансформатор", "Đơn và MBA"),
       blurb: L("干变、室内、真空切换。默认三相订 3 台单相 CZ。", "Dry, indoor, vacuum switching. Default 3 single-phase CZ for three-phase.", "Сухой, внутри, вакуум. По умолчанию 3 однофазных CZ.", "Khô, trong nhà, chân không. Mặc định 3 CZ một pha."),
       sections: [
-        { id: "order", title: L("订单 / 联系人", "Order / contact", "Заказ / контакт", "Đơn / liên hệ"), fields: orderFields() },
+        { id: "order", title: L("订单", "Order", "Заказ", "Đơn"), fields: orderFields() },
         { id: "transformer", title: L("干式变压器", "Dry-type transformer", "Сухой трансформатор", "MBA khô"), fields: transformerFields({ fluid: false, txKind: false }) },
       ],
     },
@@ -596,6 +678,7 @@ const drySheet: SheetDef = {
         { id: "notes", title: L("备注", "Notes", "Примечания", "Ghi chú"), fields: [notesField] },
       ],
     },
+    contactStep(),
     { id: "review", kind: "review", title: L("核对导出", "Review & export", "Проверка и экспорт", "Kiểm tra và xuất"), blurb: L("核对后选 Word 或 Excel 下载。", "Then download Word or Excel.", "Затем Word или Excel.", "Sau đó tải Word hoặc Excel."), sections: [] },
   ],
 };
@@ -633,7 +716,7 @@ const cma7Sheet: SheetDef = {
       title: L("订单与所配开关", "Order & matching switch", "Заказ и РПН", "Đơn và máy đi kèm"),
       blurb: L("单独订机构时一定要写原开关型号和档位数。", "For MDU-only orders, the original type and positions are mandatory.", "Для заказа только привода обязательны тип и положения.", "Đặt riêng cơ cấu thì bắt buộc ghi kiểu và số vị trí."),
       sections: [
-        { id: "order", title: L("订单 / 联系人", "Order / contact", "Заказ / контакт", "Đơn / liên hệ"), fields: orderFields() },
+        { id: "order", title: L("订单", "Order", "Заказ", "Đơn"), fields: orderFields() },
         {
           id: "match",
           title: L("所配开关", "Matching tap changer", "Сопряжённый РПН", "Máy đi kèm"),
@@ -684,6 +767,7 @@ const cma7Sheet: SheetDef = {
         { id: "notes", title: L("备注", "Notes", "Примечания", "Ghi chú"), fields: [notesField] },
       ],
     },
+    contactStep(),
     { id: "review", kind: "review", title: L("核对导出", "Review & export", "Проверка и экспорт", "Kiểm tra và xuất"), blurb: L("核对后选 Word 或 Excel 下载。", "Then download Word or Excel.", "Затем Word или Excel.", "Sau đó tải Word hoặc Excel."), sections: [] },
   ],
 };
@@ -709,7 +793,7 @@ const shmSheet: SheetDef = {
       title: L("订单与所配开关", "Order & matching switch", "Заказ и РПН", "Đơn và máy đi kèm"),
       blurb: L("数字机构同样必须对上档位数和开关型号。", "The digital drive must still match type and positions.", "Цифровой привод тоже должен совпадать по типу и положениям.", "Bộ số vẫn phải khớp kiểu và số vị trí."),
       sections: [
-        { id: "order", title: L("订单 / 联系人", "Order / contact", "Заказ / контакт", "Đơn / liên hệ"), fields: orderFields() },
+        { id: "order", title: L("订单", "Order", "Заказ", "Đơn"), fields: orderFields() },
         {
           id: "match",
           title: L("所配开关与型号", "Matching switch & model", "РПН и модель", "Máy và model"),
@@ -761,6 +845,7 @@ const shmSheet: SheetDef = {
         { id: "notes", title: L("备注", "Notes", "Примечания", "Ghi chú"), fields: [notesField] },
       ],
     },
+    contactStep(),
     { id: "review", kind: "review", title: L("核对导出", "Review & export", "Проверка и экспорт", "Kiểm tra và xuất"), blurb: L("核对后选 Word 或 Excel 下载。", "Then download Word or Excel.", "Затем Word или Excel.", "Sau đó tải Word hoặc Excel."), sections: [] },
   ],
 };
@@ -803,7 +888,7 @@ const hwvSheet: SheetDef = {
       sections: [
         {
           id: "order",
-          title: L("订单 / 联系人", "Order / contact", "Заказ / контакт", "Đơn / liên hệ"),
+          title: L("订单", "Order", "Заказ", "Đơn"),
           fields: [
             ...orderFields(),
             { key: "destination_port", label: L("目的港", "Destination port", "Порт назначения", "Cảng đến"), type: "text" },
@@ -1106,6 +1191,7 @@ const hwvSheet: SheetDef = {
         { id: "notes", title: L("备注", "Notes", "Примечания", "Ghi chú"), fields: [notesField] },
       ],
     },
+    contactStep(),
     {
       id: "review",
       kind: "review",

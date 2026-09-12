@@ -2,8 +2,8 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import JSZip from "jszip";
-import { fillDocx, readSdtTexts } from "./fillDocx";
-import { cma7SdtValues, oltcSdtValues } from "./wordMap";
+import { fillDocx, readLegacyCheckboxes, readSdtTexts } from "./fillDocx";
+import { cma7SdtValues, oltcCheckValues, oltcSdtValues } from "./wordMap";
 
 const template = path.join(process.cwd(), "public/templates/oltc-order-sheet.docx");
 
@@ -103,34 +103,57 @@ describe("oltcSdtValues", () => {
     expect(v[15]).toBeUndefined();
     expect(v[16]).toBe("25000");
     expect(v[19]).toBe("66");
-    expect(v[21]).toBe("8");
+    expect(v[21]).toBe("19");
+    expect(v[22]).toBe("-8");
+    expect(v[23]).toBe("+8");
     expect(v[25]).toBe("500");
     expect(v[27]).toBe("1250");
+  });
+
+  it("ticks Constant step voltage, In-neutral, supporting flange Without", () => {
+    const c = oltcCheckValues({
+      family: "CV",
+      oltc_connection: "Y",
+      tap_winding: "star_neutral",
+      ust_mode: "constant",
+      step_voltage_v: "202",
+      flange_type: "bell",
+      support_flange: "without",
+      overload_mode: "iec",
+      capacity_mode: "constant",
+    });
+    expect(c).toHaveLength(40);
+    expect(c[7]).toBe(true);
+    expect(c[8]).toBe(false);
+    expect(c[9]).toBe(true);
+    expect(c[21]).toBe(true);
+    expect(c[22]).toBe(false);
   });
 });
 
 describe("fillDocx", () => {
   it("writes SDT text into the official Word OS", async () => {
     const buf = readFileSync(template);
-    const filled = await fillDocx(
-      buf,
-      oltcSdtValues({
-        family: "CV2",
-        phases: "III",
-        buyer: "Trafoindo",
-        rated_power_mva: "25",
-        oltc_current_a: "350",
-        oltc_um_kv: "72.5",
-        oltc_connection: "Y",
-        tap_code: "10193W",
-        oltc_tap_positions: "19",
-        oltc_tap_mid: "3",
-        regulation: "reversing",
-        pipe_q: "Without bleeder,flange with groove*",
-        pipe_q_height: "181",
-        protective_relay: "QJ4G-25,flange without groove,one N/O contact (oil flow)",
-      }),
-    );
+    const values = {
+      family: "CV2",
+      phases: "III",
+      buyer: "Trafoindo",
+      rated_power_mva: "25",
+      oltc_current_a: "350",
+      oltc_um_kv: "72.5",
+      oltc_connection: "Y",
+      tap_code: "10193W",
+      oltc_tap_positions: "19",
+      oltc_tap_mid: "3",
+      regulation: "reversing",
+      tap_winding: "star_neutral",
+      ust_mode: "constant",
+      step_voltage_v: "202",
+      pipe_q: "Without bleeder,flange with groove*",
+      pipe_q_height: "181",
+      protective_relay: "QJ4G-25,flange without groove,one N/O contact (oil flow)",
+    };
+    const filled = await fillDocx(buf, oltcSdtValues(values), oltcCheckValues(values));
     const zip = await JSZip.loadAsync(filled);
     const xml = await zip.file("word/document.xml")!.async("string");
     const texts = readSdtTexts(xml);
@@ -138,9 +161,15 @@ describe("fillDocx", () => {
     expect(texts[3]).toBe("Trafoindo");
     expect(texts[16]).toBe("25000");
     expect(texts[25]).toBe("350");
+    expect(texts[27]).toBe("202");
     expect(texts[66]).toContain("Without bleeder");
     expect(texts[74]).toContain("QJ4G-25");
     expect(xml).toContain("w:sdt");
+    const boxes = readLegacyCheckboxes(xml);
+    expect(boxes).toHaveLength(40);
+    expect(boxes[7]).toBe(true);
+    expect(boxes[9]).toBe(true);
+    expect(xml).toContain('w:checked w:val="1"');
   });
 });
 

@@ -13,7 +13,14 @@ export const SHEET_DEFAULTS: Record<SheetId, OrderValues> = {
     insulating_fluid: "mineral",
     nameplate_language: "en",
     tx_kind: "separated",
-    designer_phone_cc: "+86",
+    capacity_mode: "constant",
+    overload_mode: "iec",
+    flux: "cfvv",
+    tap_winding: "star_neutral",
+    ust_mode: "constant",
+    ins_fill: "catalog",
+    temp_sensor: "without",
+    ambient_band: "-25~50",
   },
   octc: {
     frequency_hz: "50",
@@ -23,7 +30,6 @@ export const SHEET_DEFAULTS: Record<SheetId, OrderValues> = {
     connection: "Y",
     octc_series: "IV",
     tx_kind: "separated",
-    designer_phone_cc: "+86",
   },
   dry: {
     family: "CZ",
@@ -35,7 +41,6 @@ export const SHEET_DEFAULTS: Record<SheetId, OrderValues> = {
     dry_positions: "9",
     oltc_current_a: "500",
     oltc_um_kv: "40.5",
-    designer_phone_cc: "+86",
   },
   cma7: {
     frequency_hz: "50",
@@ -44,7 +49,6 @@ export const SHEET_DEFAULTS: Record<SheetId, OrderValues> = {
     control_voltage: "220_ac",
     heater: "yes",
     mdu_ip: "IP54",
-    designer_phone_cc: "+86",
   },
   "shm-d": {
     frequency_hz: "50",
@@ -52,7 +56,6 @@ export const SHEET_DEFAULTS: Record<SheetId, OrderValues> = {
     shm_model: "SHM-D",
     heater: "yes",
     mdu_ip: "IP54",
-    designer_phone_cc: "+86",
   },
   hwv: {
     frequency_hz: "50",
@@ -74,6 +77,5 @@ export const SHEET_DEFAULTS: Record<SheetId, OrderValues> = {
     paint: "RAL7040",
     nameplate_language: "en",
     ambient_temp: "-25~+40",
-    designer_phone_cc: "+86",
   },
 };

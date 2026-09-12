@@ -61,11 +61,61 @@ export function setSdtTexts(xml: string, values: Array<string | undefined>): str
   return new XMLSerializer().serializeToString(doc);
 }
 
-export async function fillDocx(template: ArrayBuffer | Uint8Array, values: Array<string | undefined>): Promise<ArrayBuffer> {
+function collectCheckBoxes(root: XmlEl): XmlEl[] {
+  const out: XmlEl[] = [];
+  function walk(el: XmlEl) {
+    if (localName(el) === "checkBox") out.push(el);
+    for (const c of childElements(el)) walk(c);
+  }
+  walk(root);
+  return out;
+}
+
+function setBoxVal(box: XmlEl, name: string, on: boolean) {
+  const el = findChild(box, name);
+  if (!el) return;
+  el.setAttribute("w:val", on ? "1" : "0");
+}
+
+/** Official OLTC Word OS uses 40 legacy FORMCHECKBOX fields (`w:checked`). */
+export function countLegacyCheckboxes(xml: string): number {
+  const doc = new DOMParser().parseFromString(xml, "application/xml");
+  const root = doc.documentElement;
+  if (!root) return 0;
+  return collectCheckBoxes(root).length;
+}
+
+export function setLegacyCheckboxes(xml: string, checks: Array<boolean | undefined | null>): string {
+  const doc = new DOMParser().parseFromString(xml, "application/xml");
+  const root = doc.documentElement;
+  if (!root) return xml;
+  const boxes = collectCheckBoxes(root);
+  for (let i = 0; i < boxes.length && i < checks.length; i++) {
+    const on = !!checks[i];
+    setBoxVal(boxes[i], "checked", on);
+    setBoxVal(boxes[i], "default", on);
+  }
+  return new XMLSerializer().serializeToString(doc);
+}
+
+export function readLegacyCheckboxes(xml: string): boolean[] {
+  const doc = new DOMParser().parseFromString(xml, "application/xml");
+  const root = doc.documentElement;
+  if (!root) return [];
+  return collectCheckBoxes(root).map((box) => findChild(box, "checked")?.getAttribute("w:val") === "1");
+}
+
+export async function fillDocx(
+  template: ArrayBuffer | Uint8Array,
+  values: Array<string | undefined>,
+  checks?: Array<boolean | undefined | null>,
+): Promise<ArrayBuffer> {
   const zip = await JSZip.loadAsync(template);
   const path = "word/document.xml";
-  const xml = await zip.file(path)!.async("string");
-  zip.file(path, setSdtTexts(xml, values));
+  let xml = await zip.file(path)!.async("string");
+  xml = setSdtTexts(xml, values);
+  if (checks) xml = setLegacyCheckboxes(xml, checks);
+  zip.file(path, xml);
   return zip.generateAsync({ type: "arraybuffer", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
 }
 
