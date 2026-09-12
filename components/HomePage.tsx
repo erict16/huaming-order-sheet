@@ -16,15 +16,15 @@ export default function HomePage() {
         {chromeText("appName", lang)}
       </h1>
       <p className="mt-2 text-sm text-ink-soft">{chromeText("heroLead", lang)}</p>
-      <h2 className="mt-8 text-xs font-semibold uppercase tracking-[0.16em] text-ink-muted">
+      <h2 className="mt-8 text-sm font-medium text-ink-soft">
         {chromeText("pickSheet", lang)}
       </h2>
-      <ul className="mt-3 divide-y divide-slate-200 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+      <ul className="card mt-3 divide-y divide-slate-100 overflow-hidden">
         {SHEETS.map((sheet) => (
           <li key={sheet.id}>
             <Link
               href={`/sheet/${sheet.id}/`}
-              className="flex items-center justify-between gap-4 px-5 py-4 transition hover:bg-slate-50 active:scale-[0.99]"
+              className="flex items-center justify-between gap-4 px-5 py-4 transition duration-150 hover:bg-navy-50 active:translate-y-px"
             >
               <div>
                 <p className="font-semibold text-navy">{t(sheet.meta.title, lang)}</p>
