@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type HTMLAttributes } from "react";
 import { Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions } from "@headlessui/react";
 import { CheckIcon, ChevronDownIcon } from "@heroicons/react/20/solid";
 import { t } from "@/lib/copy";
@@ -16,6 +16,9 @@ export default function SearchableCombobox({
   allowCustom = false,
   id,
   describedBy,
+  required,
+  autoComplete = "off",
+  inputMode,
 }: {
   options: FieldOption[];
   value: string;
@@ -25,6 +28,9 @@ export default function SearchableCombobox({
   allowCustom?: boolean;
   id?: string;
   describedBy?: string;
+  required?: boolean;
+  autoComplete?: string;
+  inputMode?: HTMLAttributes<HTMLInputElement>["inputMode"];
 }) {
   const [query, setQuery] = useState("");
   const selected = options.find((o) => o.value === value);
@@ -62,7 +68,9 @@ export default function SearchableCombobox({
         <ComboboxInput
           id={id}
           aria-describedby={describedBy}
-          autoComplete="off"
+          aria-required={required || undefined}
+          autoComplete={autoComplete}
+          inputMode={inputMode}
           className="field-control pr-10"
           displayValue={(v: string | null) => {
             if (query) return query;

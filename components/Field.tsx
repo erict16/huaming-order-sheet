@@ -1,13 +1,17 @@
 "use client";
 
-import { Radio, RadioGroup } from "@headlessui/react";
+import { Description, Field as HeadlessField, Label, Radio, RadioGroup } from "@headlessui/react";
 import { CalendarDaysIcon } from "@heroicons/react/24/outline";
+import type { HTMLAttributes } from "react";
 import { t } from "@/lib/copy";
 import { chromeText } from "@/lib/i18n";
 import { useLang } from "@/lib/useLang";
 import type { FieldDef, Lang } from "@/lib/types";
 import Combobox from "./Combobox";
 import SelectListbox from "./SelectListbox";
+
+const radioChipClass =
+  "inline-flex min-h-10 min-w-10 cursor-pointer items-center justify-center rounded-lg bg-white px-3.5 py-2.5 text-[15px] text-ink-soft shadow-sm ring-1 ring-inset ring-slate-300 transition-[color,background-color,box-shadow,transform] duration-150 active:translate-y-px focus:outline-none data-[checked]:bg-navy data-[checked]:text-white data-[checked]:ring-navy data-[focus]:outline-2 data-[focus]:outline-offset-2 data-[focus]:outline-steel [@media(hover:hover)]:data-[hover]:ring-slate-400";
 
 export default function Field({
   field,
@@ -24,17 +28,38 @@ export default function Field({
   const ph = field.placeholder ? t(field.placeholder, lang) : "";
   const span = field.span === 2 ? "sm:col-span-2" : "";
   const controlId = field.key;
-  const labelId = `${controlId}-label`;
   const hintId = hint ? `${controlId}-hint` : undefined;
+  const autoComplete = fieldAutoComplete(field.key);
+  const inputMode = fieldInputMode(field);
+
+  if (field.type === "radio" && field.options) {
+    return (
+      <RadioGroup
+        as="fieldset"
+        value={value}
+        onChange={onChange}
+        aria-required={field.required || undefined}
+        className={`field-set ${span}`}
+      >
+        <Label as="legend" className="field-label">
+          <FieldCaption field={field} label={label} lang={lang} />
+        </Label>
+        <div className="flex flex-wrap gap-2">
+          {field.options.map((opt) => (
+            <Radio key={opt.value} value={opt.value} className={radioChipClass}>
+              {t(opt.label, lang)}
+            </Radio>
+          ))}
+        </div>
+        {hint && hintId ? <FieldHint id={hintId}>{hint}</FieldHint> : null}
+      </RadioGroup>
+    );
+  }
 
   return (
-    <div className={`block ${span}`}>
-      <label id={labelId} htmlFor={controlId} className="field-label">
-        {label}
-        {field.unit ? <span className="ml-1 font-normal text-ink-muted">({field.unit})</span> : null}
-        {field.required ? (
-          <span className="ml-1 text-xs font-semibold text-rose-600">{chromeText("required", lang)}</span>
-        ) : null}
+    <HeadlessField className={`block min-w-0 ${span}`}>
+      <label htmlFor={controlId} className="field-label">
+        <FieldCaption field={field} label={label} lang={lang} />
       </label>
       <Control
         field={field}
@@ -43,15 +68,33 @@ export default function Field({
         placeholder={ph}
         lang={lang}
         id={controlId}
-        labelledBy={labelId}
         describedBy={hintId}
+        required={field.required}
+        autoComplete={autoComplete}
+        inputMode={inputMode}
       />
-      {hint ? (
-        <span id={hintId} className="mt-1.5 block text-xs leading-relaxed text-ink-muted">
-          {hint}
-        </span>
+      {hint && hintId ? <FieldHint id={hintId}>{hint}</FieldHint> : null}
+    </HeadlessField>
+  );
+}
+
+function FieldCaption({ field, label, lang }: { field: FieldDef; label: string; lang: Lang }) {
+  return (
+    <>
+      {label}
+      {field.unit ? <span className="ml-1 font-normal text-ink-muted">({field.unit})</span> : null}
+      {field.required ? (
+        <span className="ml-1 text-xs font-semibold text-rose-600">{chromeText("required", lang)}</span>
       ) : null}
-    </div>
+    </>
+  );
+}
+
+function FieldHint({ id, children }: { id: string; children: string }) {
+  return (
+    <Description id={id} className="mt-1.5 block text-xs leading-relaxed text-ink-muted">
+      {children}
+    </Description>
   );
 }
 
@@ -62,8 +105,10 @@ function Control({
   placeholder,
   lang,
   id,
-  labelledBy,
   describedBy,
+  required,
+  autoComplete,
+  inputMode,
 }: {
   field: FieldDef;
   value: string;
@@ -71,38 +116,19 @@ function Control({
   placeholder: string;
   lang: Lang;
   id: string;
-  labelledBy: string;
   describedBy?: string;
+  required?: boolean;
+  autoComplete: string;
+  inputMode?: HTMLAttributes<HTMLInputElement>["inputMode"];
 }) {
-  if (field.type === "radio" && field.options) {
-    return (
-      <RadioGroup
-        value={value}
-        onChange={onChange}
-        aria-labelledby={labelledBy}
-        aria-describedby={describedBy}
-        aria-required={field.required || undefined}
-        className="flex flex-wrap gap-2"
-      >
-        {field.options.map((opt, i) => (
-          <Radio
-            key={opt.value}
-            id={i === 0 ? id : undefined}
-            value={opt.value}
-            className="inline-flex min-h-10 min-w-10 cursor-pointer items-center justify-center rounded-lg bg-white px-3.5 py-2.5 text-[15px] text-ink-soft shadow-sm ring-1 ring-inset ring-slate-300 transition-[color,background-color,box-shadow,transform] duration-150 active:translate-y-px focus:outline-none data-[checked]:bg-navy data-[checked]:text-white data-[checked]:ring-navy data-[focus]:outline-2 data-[focus]:outline-offset-2 data-[focus]:outline-steel [@media(hover:hover)]:data-[hover]:ring-slate-400"
-          >
-            {t(opt.label, lang)}
-          </Radio>
-        ))}
-      </RadioGroup>
-    );
-  }
-
   if (field.type === "combobox") {
     return (
       <Combobox
         id={id}
         describedBy={describedBy}
+        required={required}
+        autoComplete={autoComplete}
+        inputMode={inputMode}
         options={field.options ?? []}
         value={value}
         onChange={onChange}
@@ -118,6 +144,7 @@ function Control({
       <SelectListbox
         id={id}
         describedBy={describedBy}
+        required={required}
         options={field.options ?? []}
         value={value}
         onChange={onChange}
@@ -132,8 +159,8 @@ function Control({
         id={id}
         name={field.key}
         aria-describedby={describedBy}
-        aria-required={field.required || undefined}
-        autoComplete="off"
+        aria-required={required || undefined}
+        autoComplete={autoComplete}
         className="field-control min-h-28"
         value={value}
         placeholder={placeholder}
@@ -149,8 +176,8 @@ function Control({
           id={id}
           name={field.key}
           aria-describedby={describedBy}
-          aria-required={field.required || undefined}
-          autoComplete="off"
+          aria-required={required || undefined}
+          autoComplete={autoComplete}
           className="field-control pr-10"
           type="date"
           value={value}
@@ -168,16 +195,18 @@ function Control({
     );
   }
 
+  const tel = field.key === "designer_phone" || field.key === "designer_phone_cc_other";
   const input = (
     <input
       id={id}
       name={field.key}
       aria-describedby={describedBy}
-      aria-required={field.required || undefined}
-      autoComplete="off"
+      aria-required={required || undefined}
+      autoComplete={autoComplete}
+      inputMode={inputMode}
+      spellCheck={tel || field.type === "number" ? false : undefined}
       className={`field-control ${field.prefix ? "pl-8" : ""}`}
-      type={field.type === "number" ? "number" : "text"}
-      inputMode={field.type === "number" ? "decimal" : undefined}
+      type={tel ? "tel" : field.type === "number" ? "number" : "text"}
       value={value}
       placeholder={placeholder}
       onChange={(e) => onChange(e.target.value)}
@@ -192,4 +221,31 @@ function Control({
       {input}
     </div>
   );
+}
+
+function fieldAutoComplete(key: string): string {
+  switch (key) {
+    case "designer_name":
+      return "name";
+    case "designer_phone":
+      return "tel-national";
+    case "designer_phone_cc":
+    case "designer_phone_cc_other":
+      return "tel-country-code";
+    case "country":
+      return "country-name";
+    case "buyer":
+    case "end_user":
+      return "organization";
+    default:
+      return "off";
+  }
+}
+
+function fieldInputMode(field: FieldDef): HTMLAttributes<HTMLInputElement>["inputMode"] {
+  if (field.key === "designer_phone" || field.key === "designer_phone_cc" || field.key === "designer_phone_cc_other") {
+    return "tel";
+  }
+  if (field.type === "number") return "decimal";
+  return undefined;
 }

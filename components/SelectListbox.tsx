@@ -13,6 +13,7 @@ export default function SelectListbox({
   allowEmpty = true,
   id,
   describedBy,
+  required,
 }: {
   options: FieldOption[];
   value: string;
@@ -21,6 +22,7 @@ export default function SelectListbox({
   allowEmpty?: boolean;
   id?: string;
   describedBy?: string;
+  required?: boolean;
 }) {
   const selected = options.find((o) => o.value === value);
   const items = allowEmpty
@@ -30,7 +32,12 @@ export default function SelectListbox({
   return (
     <Listbox value={value} onChange={onChange}>
       <div className="relative">
-        <ListboxButton id={id} aria-describedby={describedBy} className="plus-trigger">
+        <ListboxButton
+          id={id}
+          aria-describedby={describedBy}
+          aria-required={required || undefined}
+          className="plus-trigger"
+        >
           <span className={`block min-w-0 truncate ${selected ? "text-ink" : "text-slate-400"}`}>
             {selected ? t(selected.label, lang) : "—"}
           </span>

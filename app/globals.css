@@ -21,6 +21,16 @@
     @apply mb-1.5 block text-sm font-medium text-ink-soft;
   }
 
+  .field-set {
+    @apply m-0 min-w-0 border-0 p-0;
+  }
+
+  .field-set > legend {
+    float: none;
+    width: 100%;
+    padding-inline: 0;
+  }
+
   .field-control {
     @apply w-full min-h-10 touch-manipulation rounded-lg bg-white px-3.5 py-3 text-base text-ink shadow-sm
       outline outline-1 -outline-offset-1 outline-slate-300
@@ -82,4 +92,13 @@
   .no-print { display: none !important; }
   body { background: #fff; }
   header, footer { display: none !important; }
+}
+
+#main-content,
+:focus-visible {
+  scroll-margin-top: 6.5rem;
+}
+
+:focus-visible {
+  scroll-margin-bottom: 6.5rem;
 }
