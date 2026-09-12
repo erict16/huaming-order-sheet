@@ -276,6 +276,12 @@ describe("oltcCells", () => {
     expect(oltcCells({ delivery_date: "2026-06-15" }).H14).toBe("2026-06-15");
   });
 
+  it("writes destination_port to S14 交货地点", () => {
+    expect(oltcCells({ destination_port: "Hai Phong" }).S14).toBe("Hai Phong");
+    expect(oltcCells({}).S14).toBeUndefined();
+    expect(oltcCells({ destination_port: "  " }).S14).toBeUndefined();
+  });
+
   it("writes HV/MV/LV into Excel H23 for a three-winding transformer", () => {
     const cells = oltcCells({ ...oltc, hv_kv: "115", mv_kv: "22", lv_kv: "10.5", vector_group: "YNd11yn12" });
     expect(cells.H23).toBe("HV(115) kV\nMV(22) kV\nLV(10.5) kV");

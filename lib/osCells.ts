@@ -529,6 +529,8 @@ function relayCells(values: OrderValues, out: CellWrites) {
 export function oltcCells(values: OrderValues): CellWrites {
   const out: CellWrites = {};
   commonHeader(values, out);
+  // Sheet1 S14 交货地点.
+  set(out, "S14", s(values.destination_port));
 
   const { compact } = typeFromValues("oltc", values);
   set(out, "H16", s(values.family));
