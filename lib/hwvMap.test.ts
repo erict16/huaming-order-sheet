@@ -104,6 +104,26 @@ describe("hwvFormValues", () => {
     expect(texts[24]).toBe("149.4");
   });
 
+  it("writes commercial lead-time onto T02 via resolveDeliveryDate", () => {
+    const { texts } = hwvFormValues(
+      deriveValues(SHEET_DEFAULTS.hwv, {
+        family: "HWV",
+        delivery_date: "90 days after PO",
+        destination_port: "Hai Phong",
+      }),
+    );
+    expect(texts[2]).toBe("90 days after PO / Hai Phong");
+    expect(hwvFormValues({ delivery_date: "custom", delivery_date_custom: "2026-12-01" }).texts[2]).toBe(
+      "2026-12-01",
+    );
+  });
+
+  it("leaves transformer user / purchaser empty when the preset has no buyer", () => {
+    const { texts } = hwvFormValues({ family: "HWV", phases: "III" });
+    expect(texts[0]).toBeUndefined();
+    expect(texts[5]).toBeUndefined();
+  });
+
   it("maps Network onto the Power checkbox", () => {
     const v = deriveValues(SHEET_DEFAULTS.hwv, { family: "HWV", application: "network" });
     const { checks } = hwvFormValues(v);

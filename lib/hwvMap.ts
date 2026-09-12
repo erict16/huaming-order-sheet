@@ -1,5 +1,6 @@
 import { EARTH_INSULATION } from "./catalog";
 import { operatingDesignation } from "./positions";
+import { resolveDeliveryDate } from "./osCells";
 import { typeFromValues } from "./typeString";
 import type { OrderValues } from "./types";
 
@@ -21,10 +22,7 @@ function stripPm(v: string): string {
 }
 
 function deliveryWord(values: OrderValues): string {
-  const d = s(values.delivery_date);
-  if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
-  if (d === "custom") return s(values.delivery_date_custom);
-  return s(values.delivery_lead) || d;
+  return resolveDeliveryDate(values);
 }
 
 function paintWord(values: OrderValues): string {

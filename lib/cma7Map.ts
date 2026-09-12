@@ -243,7 +243,7 @@ export function cma7SdtValues(values: OrderValues): Array<string | undefined> {
   set(22, s(values.corrosive_class));
   set(23, langWord(s(values.nameplate_language)));
   set(25, langWord(s(values.nameplate_language)));
-  set(26, s(values.quantity) || "1");
+  set(26, s(values.quantity));
   const remarks = [s(values.matching_oltc) ? `OLTC: ${s(values.matching_oltc)}` : "", s(values.notes)]
     .filter(Boolean)
     .join("\n");

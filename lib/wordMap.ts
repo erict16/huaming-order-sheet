@@ -299,17 +299,23 @@ export function oltcSdtValues(values: OrderValues): Array<string | undefined> {
   set(51, s(values.wind_ca_pf));
   set(52, s(values.recovery_voltage_kv));
   {
-    const wind = [
-      s(values.mv_kv) ? `MV ${s(values.mv_kv)} kV` : "",
-      s(values.lv_kv) ? `LV ${s(values.lv_kv)} kV` : "",
-      s(values.notes),
-    ]
-      .filter(Boolean)
-      .join("\n");
-    set(53, wind || undefined);
+    const mv = s(values.mv_kv);
+    if (mv) {
+      set(
+        53,
+        [
+          `MV ${mv} kV`,
+          s(values.lv_kv) ? `LV ${s(values.lv_kv)} kV` : "",
+          s(values.notes),
+        ]
+          .filter(Boolean)
+          .join("\n"),
+      );
+    }
   }
 
-  set(54, s(values.phases) === "I" ? "1x" : "3x");
+  if (s(values.phases) === "I") set(54, "1x");
+  else if (s(values.phases)) set(54, "3x");
   set(55, FAMILY_ROW[s(values.family)]);
   set(56, s(values.phases));
   set(57, s(values.oltc_current_a));
@@ -355,7 +361,7 @@ export function oltcSdtValues(values: OrderValues): Array<string | undefined> {
   set(88, s(values.corrosive_class));
   set(89, langWord(s(values.nameplate_language)));
   set(91, langWord(s(values.nameplate_language)));
-  set(92, s(values.quantity) || "1");
+  set(92, s(values.quantity));
   if (s(values.temp_sensor) === "with") set(77, s(values.temp_sensor_type) || "PT100");
   if (!out[53]) set(95, s(values.notes));
 

@@ -47,6 +47,7 @@ describe("fillWorkbook official templates", () => {
     expect(ws.AB134?.v).toBe("one NO contact");
     expect(ws.Z5?.v).toBe("+86 13800138000");
     expect(ws.H14?.v).toBe("90 days after PO");
+    expect(ws.A172?.v).toBe("Remark");
   });
 
   it("fills CMA7 Order Specification V1.2", () => {
@@ -86,6 +87,24 @@ describe("fillWorkbook official templates", () => {
     expect(ws.H50?.v).toBe(1);
     expect(String(ws.P17?.v)).toContain("17A,17B,17C");
     expect(ws.H17?.v).toBe("Max. effective number of turns at position ( 1 )");
+    expect(ws.AB17?.v).toBe("Min. effective number of turns at position ( 33 )");
+    expect(ws.H61?.v).toBe("Without");
+    expect(String(ws.D83?.v)).toContain("CM2III-500Y/72.5B-18353W");
+    expect(ws.A83?.v).toBe("Remark");
+  });
+
+  it("does not stamp empty designer/buyer onto the official CMA7 xlsm", () => {
+    const file = templatePath(TEMPLATE_FILE.cma7);
+    const buf = readFileSync(file);
+    const out = fillWorkbook(buf, cma7Cells({ matching_oltc: "CVIII-350D/40.5", quantity: "3" }));
+    const ws = XLSX.read(out, { type: "array", bookVBA: true }).Sheets.Sheet1;
+    expect(ws.H5?.v).toBeUndefined();
+    expect(ws.H6?.v).toBeUndefined();
+    expect(ws.Z5?.v).toBeUndefined();
+    expect(ws.H8?.v).toBeUndefined();
+    expect(ws.H12?.v).toBe(3);
+    expect(ws.H78?.v).toBe(3);
+    expect(ws.H78?.t).toBe("n");
   });
 
   it("fills SHM-D Order Specification V1.2", () => {

@@ -69,6 +69,13 @@ describe("octcFormValues", () => {
     expect(texts[63]).toContain("钟罩");
   });
 
+  it("maps Network onto the Power checkbox", () => {
+    const { checks } = octcFormValues({ ...meeWsl(), application: "network" });
+    expect(checks[0]).toBe(true);
+    expect(checks[1]).toBe(false);
+    expect(checks[5]).toBe(false);
+  });
+
   it("fills designer T00–T02 when values are present", () => {
     const { texts } = octcFormValues({
       ...meeWsl(),

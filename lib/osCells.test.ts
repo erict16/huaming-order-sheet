@@ -74,6 +74,44 @@ describe("oltcCells", () => {
     expect(cells.Z158).toBe(1);
   });
 
+  it("parses official Word pipe strings onto Excel Q/S/R/E2 dropdowns", () => {
+    const cells = oltcCells({
+      pipe_q: "With bleeder, flange with groove",
+      pipe_s: "With bleeder, flange with groove*",
+      pipe_r: "Without bleeder,flange without groove*",
+      pipe_e2: "Blind flange on OLTC head*",
+      pipe_q_height: "181",
+    });
+    expect(cells.H149).toBe("1. With(std.)");
+    expect(cells.O149).toBe("2. With");
+    expect(cells.V149).toBe("1. With groove(std.)");
+    expect(cells.AC149).toBeUndefined();
+    expect(cells.H150).toBe("1. With(std.)");
+    expect(cells.O150).toBe("1. With(std.)");
+    expect(cells.H151).toBe("1. With(std.)");
+    expect(cells.O151).toBe("1. Without(std.)");
+    expect(cells.V151).toBe("1. Without groove(std.)");
+    expect(cells.H152).toBe("1. Without（std.）");
+  });
+
+  it("writes quantity as a number and skips empty designer/buyer cells", () => {
+    expect(cells.H12).toBe(1);
+    expect(cells.H170).toBe(1);
+    expect(typeof cells.H12).toBe("number");
+    const empty = oltcCells({ family: "CV" });
+    expect(empty.H5).toBeUndefined();
+    expect(empty.H6).toBeUndefined();
+    expect(empty.Z5).toBeUndefined();
+    expect(empty.H8).toBeUndefined();
+    expect(empty.H12).toBeUndefined();
+  });
+
+  it("writes compact type into the Remark body A173, not the Remark label", () => {
+    expect(String(cells.A173)).toContain("Type:");
+    expect(cells.H172).toBeUndefined();
+    expect(cells.A172).toBeUndefined();
+  });
+
   it("writes 档位 1 / 9a9b9c", () => {
     expect(String(cells.H80)).toContain("( 1 )");
     expect(String(cells.Q80)).toContain("9a9b9c");
@@ -168,12 +206,58 @@ describe("cma7Cells", () => {
     expect(cells.H21).toBe("1. frequency_50");
     expect(cells.H22).toBe(415);
     expect(cells.Z16).toBe(19);
-    expect(String(cells.A83)).toContain("CM2III-500Y/72.5B-10193W");
+    expect(String(cells.AB17)).toContain("( 17 )");
+    expect(String(cells.D83)).toContain("CM2III-500Y/72.5B-10193W");
+    expect(cells.A83).toBeUndefined();
   });
 
-  it("writes custom paint without inventing -std.", () => {
-    expect(cma7Cells({ paint: "RAL7035" }).H75).toBe("RAL7035-std.");
+  it("writes custom paint without inventing -std. except RAL7040", () => {
+    expect(cma7Cells({ paint: "RAL7035" }).H75).toBe("RAL7035");
+    expect(cma7Cells({ paint: "RAL7040" }).H75).toBe("RAL7040-std.");
     expect(cma7Cells({ paint: "other", paint_other: "C5" }).H75).toBe("C5");
+  });
+
+  it("writes min position, quantity number, 4-20mA qty, controller, N/O and resistor onto official cells", () => {
+    const cells = cma7Cells({
+      quantity: "2",
+      pos_max: "1",
+      pos_mid: "17A,17B,17C",
+      pos_min: "33",
+      ma_qty: "1",
+      avr_model: "hmc3c_term",
+      pos_no_type: "1bbm",
+      resistor_sig: "1",
+      resistor_ohm: "10",
+      control_from: "separate",
+      control_voltage: "230_ac",
+      heat_protect: "2pole",
+      corrosive_class: "C4-H",
+      socket_x10: "universal",
+    });
+    expect(cells.AB17).toBe("Min. effective number of turns at position ( 33 )");
+    expect(cells.H12).toBe(2);
+    expect(cells.H78).toBe(2);
+    expect(cells.H51).toBe(1);
+    expect(cells.H61).toBe("HMC-3C(Terminal Type)");
+    expect(cells.H52).toBe("2. With");
+    expect(cells.H53).toBe(1);
+    expect(cells.H55).toBe("2. With(same resistance)");
+    expect(cells.H56).toBe("10Ω");
+    expect(cells.V56).toBe(1);
+    expect(cells.H26).toBe("230V AC");
+    expect(cells.H36).toBe("3. 2-pole miniature circuit breaker");
+    expect(cells.H76).toBe("C4-H");
+    expect(cells.H47).toContain("With");
+    expect(cells.H48).toBe("Universal");
+  });
+
+  it("leaves designer/buyer empty when the preset did not fill them", () => {
+    const cells = cma7Cells({ matching_oltc: "CVIII-350D/40.5-10193W", quantity: "1" });
+    expect(cells.H5).toBeUndefined();
+    expect(cells.H6).toBeUndefined();
+    expect(cells.Z5).toBeUndefined();
+    expect(cells.H8).toBeUndefined();
+    expect(cells.H12).toBe(1);
   });
 });
 
@@ -182,9 +266,28 @@ describe("shmDCells", () => {
     const cells = shmDCells({ shm_model: "SHM-D", quantity: "1" });
     expect(cells.H16).toBe("SHM-D");
     expect(cells.H20).toBeUndefined();
+    expect(cells.H12).toBe(1);
+    expect(cells.H64).toBe(1);
+    expect(cells.H5).toBeUndefined();
+    expect(cells.H8).toBeUndefined();
   });
 
   it("writes paint_other when paint is 其他", () => {
     expect(shmDCells({ shm_model: "SHM-D", paint: "other", paint_other: "RAL 5017" }).H61).toBe("RAL 5017");
+    expect(shmDCells({ shm_model: "SHM-D", paint: "RAL7035" }).H61).toBe("RAL7035");
+  });
+
+  it("writes min position into AB17 and remarks into E67", () => {
+    const cells = shmDCells({
+      shm_model: "SHM-D",
+      mdu_positions: "19",
+      oltc_tap_positions: "19",
+      oltc_tap_mid: "3",
+      regulation: "reversing",
+      matching_oltc: "CVIII-350D/40.5-10193W",
+    });
+    expect(String(cells.AB17)).toContain("( 17 )");
+    expect(String(cells.E67)).toContain("CVIII-350D/40.5-10193W");
+    expect(cells.A67).toBeUndefined();
   });
 });

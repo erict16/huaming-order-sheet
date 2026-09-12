@@ -123,6 +123,20 @@ describe("oltcSdtValues", () => {
     expect(v[53]).toContain("LV 10.5 kV");
   });
 
+  it("keeps LV out of Word remarks on a two-winding transformer", () => {
+    const v = oltcSdtValues({ hv_kv: "66", lv_kv: "11" });
+    expect(v[19]).toBe("66");
+    expect(v[53]).toBeUndefined();
+  });
+
+  it("does not invent 3x / quantity / designer when those keys are empty", () => {
+    const v = oltcSdtValues({ family: "CV" });
+    expect(v[0]).toBeUndefined();
+    expect(v[3]).toBeUndefined();
+    expect(v[54]).toBeUndefined();
+    expect(v[92]).toBeUndefined();
+  });
+
   it("ticks Constant step voltage, In-neutral, supporting flange Without", () => {
     const c = oltcCheckValues({
       family: "CV",
@@ -204,5 +218,12 @@ describe("cma7SdtValues", () => {
   it("writes custom CMA7 paint", () => {
     expect(cma7SdtValues({ paint: "RAL9002" })[21]).toBe("RAL 9002");
     expect(cma7SdtValues({ paint: "other", paint_other: "C5" })[21]).toBe("C5");
+  });
+
+  it("does not invent quantity or designer when those keys are empty", () => {
+    const v = cma7SdtValues({ matching_oltc: "CVIII-350D/40.5" });
+    expect(v[0]).toBeUndefined();
+    expect(v[3]).toBeUndefined();
+    expect(v[26]).toBeUndefined();
   });
 });

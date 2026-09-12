@@ -152,7 +152,7 @@ export function octcFormValues(values: OrderValues): {
   setT(11, [s(values.order_no), s(values.order_date)].filter(Boolean).join(" / "));
 
   const app = s(values.application);
-  if (app === "power") on(0);
+  if (app === "power" || app === "network") on(0);
   else if (app === "capacity") on(1);
   else if (app === "furnace") on(2);
   else if (app === "rectifier") on(3);
