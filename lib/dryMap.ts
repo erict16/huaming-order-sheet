@@ -70,6 +70,7 @@ function paintWord(values: OrderValues): string | undefined {
   return paint.replace("RAL", "RAL ");
 }
 
+/** Official CZ nameplate list: English / Turkish / Russian / Portuguese / Italian / French / Spanish / Romanian. */
 function nameplateWord(v: string): string | undefined {
   if (v === "en") return "English";
   if (v === "ru") return "Russian";
@@ -78,10 +79,50 @@ function nameplateWord(v: string): string | undefined {
   return undefined;
 }
 
+/** Official CZ docs list: English / Russian / Portuguese / French / Spanish. Schema has no fr/es keys. */
 function docsLangWord(v: string): string | undefined {
   if (v === "en") return "English";
   if (v === "ru") return "Russian";
   if (v === "pt") return "Portuguese";
+  return undefined;
+}
+
+/** Official SDT 11 list. No wizard keys for Series / Parallel reactor. */
+function txKindWord(v: string): string | undefined {
+  if (v === "separated") return "Separate winding transformer";
+  if (v === "auto") return "Auto-transformer";
+  if (v === "booster") return "Booster transformer";
+  return undefined;
+}
+
+function rangePm(raw: string): string | undefined {
+  const m = raw.match(/±\s*([\d.]+)/);
+  return m?.[1];
+}
+
+function rangeLeft(values: OrderValues): string | undefined {
+  const minus = s(values.range_minus);
+  if (minus) return `-${minus}`;
+  const raw = s(values.tap_range_pct);
+  const pm = rangePm(raw);
+  if (pm) return `-${pm}`;
+  const m = raw.match(/−\s*([\d.]+)|-\s*([\d.]+)/);
+  if (m) return `-${m[1] || m[2]}`;
+  const nPm = n(values.plus_minus);
+  if (nPm) return `-${nPm}`;
+  return undefined;
+}
+
+function rangeRight(values: OrderValues): string | undefined {
+  const plus = s(values.range_plus);
+  if (plus) return `+${plus}`;
+  const raw = s(values.tap_range_pct);
+  const pm = rangePm(raw);
+  if (pm) return `+${pm}`;
+  const m = raw.match(/\+\s*([\d.]+)/);
+  if (m) return `+${m[1]}`;
+  const nPm = n(values.plus_minus);
+  if (nPm) return `+${nPm}`;
   return undefined;
 }
 
@@ -107,6 +148,25 @@ function regulatedKv(values: OrderValues): string | undefined {
 
 function remarksWord(values: OrderValues): string | undefined {
   const lines: string[] = [];
+  if (s(values.transformer_type)) lines.push(s(values.transformer_type));
+  if (s(values.order_no)) lines.push(s(values.order_no));
+  if (s(values.destination_port)) lines.push(s(values.destination_port));
+  if (s(values.overload_mode) === "above") {
+    const bits = ["> IEC 60354"];
+    if (s(values.overload_pct)) bits.push(`${s(values.overload_pct)}%`);
+    if (s(values.overload_hours)) bits.push(`${s(values.overload_hours)} h`);
+    lines.push(bits.join(" "));
+  }
+  const std = s(values.standard);
+  if (std && std !== "IEC 60214") lines.push(std);
+  const ctrl = s(values.controller);
+  if (ctrl && ctrl !== "none") lines.push(ctrl);
+  if (s(values.mdu_ip)) lines.push(s(values.mdu_ip));
+  const lang = s(values.nameplate_language);
+  if (lang && !nameplateWord(lang)) {
+    const extra: Record<string, string> = { zh: "Chinese", vi: "Vietnamese", id: "Indonesian" };
+    if (extra[lang]) lines.push(`Nameplate: ${extra[lang]}`);
+  }
   const mv = s(values.mv_kv);
   if (mv) {
     lines.push(`MV ${mv} kV`);
@@ -179,8 +239,9 @@ export function dryCheckValues(values: OrderValues): boolean[] {
 
 /**
  * 73 SDTs on dry-order-sheet.docx (CZ + CVT). CZ ratings are 53–72.
- * SDT 1 is Revision "00". SDT 49 / 69 are documentation copy counts, not OLTC qty.
- * CVT block 36–52 is left blank for family CZ.
+ * SDT 1 is Revision "00". SDT 49 / 69 / 71 are documentation copy counts, not OLTC qty.
+ * Leftover transformer SDTs: 11 Type, 20–21 range %, 22 % per step, 23 I, 24 Imax.
+ * CVT block 36–52 is left blank. 63 frame colour / 67+70 2nd language have no keys.
  */
 export function drySdtValues(values: OrderValues): Array<string | undefined> {
   const out: Array<string | undefined> = new Array(DRY_SDT_COUNT);
@@ -201,6 +262,7 @@ export function drySdtValues(values: OrderValues): Array<string | undefined> {
 
   set(9, applicationWord(values));
   set(10, vectorGroupWord(values));
+  set(11, txKindWord(s(values.tx_kind)));
   set(12, phasesWord(values));
   set(13, freqWord(s(values.frequency_hz)));
   set(14, fluxWord(s(values.flux)));
@@ -214,6 +276,11 @@ export function drySdtValues(values: OrderValues): Array<string | undefined> {
   }
   set(18, regulatedKv(values));
   set(19, s(values.dry_positions));
+  set(20, rangeLeft(values));
+  set(21, rangeRight(values));
+  set(22, s(values.step_percent));
+  set(23, s(values.through_current_a));
+  set(24, s(values.imax_a));
   if (s(values.ust_mode) === "variable") {
     set(26, s(values.ust_max_v));
     set(27, s(values.ust_min_v));

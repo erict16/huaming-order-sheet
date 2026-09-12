@@ -179,6 +179,73 @@ describe("drySdtValues", () => {
     expect(v[27]).toBe("800");
     expect(v[25]).toBeUndefined();
   });
+
+  it("maps leftover Type / range / current onto remaining transformer SDTs", () => {
+    const v = drySdtValues({
+      tx_kind: "separated",
+      plus_minus: "8",
+      step_percent: "1.25",
+      through_current_a: "200",
+      imax_a: "240",
+    });
+    expect(v[11]).toBe("Separate winding transformer");
+    expect(v[20]).toBe("-8");
+    expect(v[21]).toBe("+8");
+    expect(v[22]).toBe("1.25");
+    expect(v[23]).toBe("200");
+    expect(v[24]).toBe("240");
+    expect(v[36]).toBeUndefined();
+    expect(v[54]).toBeUndefined();
+    expect(drySdtValues({ tx_kind: "auto" })[11]).toBe("Auto-transformer");
+    expect(drySdtValues({ tx_kind: "booster" })[11]).toBe("Booster transformer");
+    expect(drySdtValues({ oltc_current_a: "500" })[23]).toBeUndefined();
+    expect(drySdtValues({ oltc_current_a: "500" })[54]).toBe("500");
+  });
+
+  it("writes regulating range from tap_range_pct or asymmetric plus/minus", () => {
+    const sym = drySdtValues({ tap_range_pct: "±8×1.25%" });
+    expect(sym[20]).toBe("-8");
+    expect(sym[21]).toBe("+8");
+    const asym = drySdtValues({ range_minus: "6", range_plus: "10" });
+    expect(asym[20]).toBe("-6");
+    expect(asym[21]).toBe("+10");
+  });
+
+  it("puts leftover schema keys into remarks, not invented SDTs or CVT", () => {
+    const v = drySdtValues({
+      transformer_type: "DTTH-25000/33",
+      order_no: "HM-Q-2026-001",
+      destination_port: "Surabaya",
+      standard: "IEEE C57.131",
+      overload_mode: "above",
+      overload_pct: "150",
+      overload_hours: "2",
+      controller: "HMC-3C",
+      mdu_ip: "IP65",
+      nameplate_language: "zh",
+      notes: "indoor",
+    });
+    expect(v[1]).toBeUndefined();
+    expect(v[49]).toBeUndefined();
+    expect(v[52]).toBeUndefined();
+    expect(v[63]).toBeUndefined();
+    expect(v[66]).toBeUndefined();
+    expect(v[67]).toBeUndefined();
+    expect(v[69]).toBeUndefined();
+    expect(v[70]).toBeUndefined();
+    expect(v[72]).toContain("DTTH-25000/33");
+    expect(v[72]).toContain("HM-Q-2026-001");
+    expect(v[72]).toContain("Surabaya");
+    expect(v[72]).toContain("IEEE C57.131");
+    expect(v[72]).toContain("> IEC 60354 150% 2 h");
+    expect(v[72]).toContain("HMC-3C");
+    expect(v[72]).toContain("IP65");
+    expect(v[72]).toContain("Nameplate: Chinese");
+    expect(v[72]).toContain("indoor");
+    expect(drySdtValues({ standard: "IEC 60214", controller: "none" })[72]).toBeUndefined();
+    expect(drySdtValues({ nameplate_language: "vi" })[72]).toContain("Nameplate: Vietnamese");
+    expect(drySdtValues({ nameplate_language: "id" })[72]).toContain("Nameplate: Indonesian");
+  });
 });
 
 describe("dryCheckValues", () => {
@@ -279,6 +346,22 @@ describe("dryCheckValues", () => {
     expect(c[24]).toBe(false);
     expect(c[27]).toBe(false);
     expect(c[29]).toBe(false);
+  });
+
+  it("does not invent altitude or CVT ticks for leftover keys", () => {
+    const c = dryCheckValues({
+      family: "CZ",
+      controller: "HMC-3C",
+      tx_kind: "separated",
+      overload_mode: "above",
+    });
+    expect(c[3]).toBe(false);
+    expect(c[4]).toBe(false);
+    expect(c[13]).toBe(false);
+    expect(c[20]).toBe(false);
+    expect(c[23]).toBe(false);
+    expect(c[31]).toBe(false);
+    expect(c[38]).toBe(false);
   });
 });
 
