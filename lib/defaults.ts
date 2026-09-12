@@ -78,6 +78,8 @@ export const SHEET_DEFAULTS: Record<SheetId, OrderValues> = {
     frequency_hz: "50",
     quantity: "1",
     shm_model: "SHM-D",
+    motor_voltage: "220_240",
+    control_from: "motor",
     heater: "yes",
     mdu_ip: "IP54",
   },

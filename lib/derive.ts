@@ -135,6 +135,11 @@ export function deriveValues(prev: OrderValues, patch: OrderValues): OrderValues
   }
   if (next.delivery_date === "custom" && next.delivery_date_custom) {
     next.delivery_date = next.delivery_date_custom;
+  } else if ("delivery_date_custom" in patch) {
+    const custom = String(next.delivery_date_custom ?? "").trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(custom) && (!next.delivery_date || next.delivery_date === "custom")) {
+      next.delivery_date = custom;
+    }
   }
 
   if ("range_plus" in patch || "range_minus" in patch) {

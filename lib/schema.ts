@@ -20,6 +20,7 @@ import {
   OCTC_CONTACT_OPTS,
   OCTC_DRIVE_OPTS,
   OCTC_FAMILIES,
+  OCTC_LEAD_OPTS,
   OCTC_SERIES_OPTS,
   OCTC_SIZE_OPTS,
   OLTC_FAMILIES,
@@ -117,6 +118,13 @@ function orderFields(): FieldDef[] {
       span: 2,
       hint: L("点输入框出日历。不选日期就按合同后天数。", "Click the field for a calendar. Skip the date to use days-after-PO.", "Календарь в поле. Без даты — срок после PO.", "Bấm ô để mở lịch. Không chọn ngày thì theo số ngày sau PO."),
     },
+    {
+      key: "delivery_date_custom",
+      label: L("其他要货期", "Other delivery date", "Другой срок", "Ngày giao khác"),
+      type: "date",
+      applies: (v) => v.delivery_date === "custom",
+      hint: L("旧单 delivery_date=custom 时才出现。新单用上面的日历或合同后天数。", "Only for old sheets with delivery_date=custom. New sheets use the calendar or days-after-PO.", "Только для старых бланков custom. Новые — календарь или срок после PO.", "Chỉ phiếu cũ delivery_date=custom. Phiếu mới dùng lịch hoặc số ngày sau PO."),
+    },
   ];
 }
 
@@ -129,6 +137,13 @@ function contactFields(): FieldDef[] {
       type: "combobox",
       options: COUNTRY_CODE_OPTS,
       placeholder: L("选或填 +84", "Pick or type +84", "Выберите или введите +84", "Chọn hoặc gõ +84"),
+    },
+    {
+      key: "designer_phone_cc_other",
+      label: L("其他区号", "Other country code", "Другой код", "Mã vùng khác"),
+      type: "text",
+      placeholder: L("+998", "+998", "+998", "+998"),
+      applies: (v) => v.designer_phone_cc === "other",
     },
     {
       key: "designer_phone",
@@ -191,6 +206,13 @@ function transformerFields(opts?: { fluid?: boolean; txKind?: boolean }): FieldD
       label: L("过载倍数", "Overload", "Перегрузка", "Quá tải"),
       type: "number",
       unit: "%",
+      applies: (v) => v.overload_mode === "above",
+    },
+    {
+      key: "overload_hours",
+      label: L("过载小时", "Overload hours", "Часы перегрузки", "Giờ quá tải"),
+      type: "number",
+      unit: "h",
       applies: (v) => v.overload_mode === "above",
     },
     { key: "capacity_mode", label: L("容量", "Capacity", "Мощность", "Công suất"), type: "radio", options: HWV_CAPACITY_OPTS },
@@ -422,6 +444,45 @@ function mechanicalFields(): FieldDef[] {
     { key: "top_gear", label: L("出轴方向", "Top gear output", "Выход верхнего редуктора", "Hướng trục ra"), type: "radio", options: TOP_GEAR_OPTS, hint: L("齿轮盒出轴，不是机构装在哪一侧。", "Shaft output of the top gear, not which side the MDU hangs.", "Выход вала, не сторона привода.", "Trục ra hộp bánh, không phải bên cơ cấu.") },
     { key: "drive_shaft_horizontal_mm", label: L("水平传动轴长度", "Horizontal drive shaft", "Горизонтальный вал", "Trục ngang"), type: "select", unit: "mm", options: SHAFT_LEN_OPTS },
     { key: "drive_shaft_vertical_mm", label: L("垂直传动轴长度", "Vertical drive shaft", "Вертикальный вал", "Trục đứng"), type: "select", unit: "mm", options: SHAFT_LEN_OPTS },
+    ...shaftSegmentFields(),
+  ];
+}
+
+function shaftSegmentApplies(v: OrderValues): boolean {
+  return v.shaft_multi === "yes";
+}
+
+/** Word OLTC SDT 78–85 H1–H4 / V1–V4; OCTC T55–T61 H1–H4 / V1–V3. Keys match octcMap. */
+function shaftSegmentFields(): FieldDef[] {
+  const seg = (key: string, zh: string, en: string, ru: string, vi: string): FieldDef => ({
+    key,
+    label: L(zh, en, ru, vi),
+    type: "number",
+    unit: "mm",
+    applies: shaftSegmentApplies,
+  });
+  return [
+    {
+      key: "shaft_multi",
+      label: L("多段传动轴", "Multi-segment drive shafts", "Составные валы", "Trục nhiều đoạn"),
+      type: "radio",
+      options: YES_NO,
+      span: 2,
+      hint: L(
+        "官方表水平 H1–H4、垂直 V1–V4。单根长度仍用上面两格，预设不会被改掉。",
+        "Official OS: horizontal H1–H4, vertical V1–V4. Keep the two lengths above for a single piece.",
+        "В бланке: H1–H4 / V1–V4. Одиночная длина — поля выше.",
+        "Phiếu: H1–H4 ngang, V1–V4 đứng. Một đoạn vẫn dùng hai ô trên.",
+      ),
+    },
+    seg("h1", "水平 H1", "Horizontal H1", "Гориз. H1", "Ngang H1"),
+    seg("h2", "水平 H2", "Horizontal H2", "Гориз. H2", "Ngang H2"),
+    seg("h3", "水平 H3", "Horizontal H3", "Гориз. H3", "Ngang H3"),
+    seg("h4", "水平 H4", "Horizontal H4", "Гориз. H4", "Ngang H4"),
+    seg("v1", "垂直 V1", "Vertical V1", "Верт. V1", "Đứng V1"),
+    seg("v2", "垂直 V2", "Vertical V2", "Верт. V2", "Đứng V2"),
+    seg("v3", "垂直 V3", "Vertical V3", "Верт. V3", "Đứng V3"),
+    seg("v4", "垂直 V4", "Vertical V4", "Верт. V4", "Đứng V4"),
   ];
 }
 
@@ -664,7 +725,16 @@ const octcSheet: SheetDef = {
       title: L("订单与变压器", "Order & transformer", "Заказ и трансформатор", "Đơn và MBA"),
       blurb: L("无励磁必须在变压器断电后才能调档。", "The transformer must be de-energized before tapping.", "Переключение только при отключенном ТР.", "Chỉ đổi nấc khi MBA đã cắt điện."),
       sections: [
-        { id: "order", title: L("订单", "Order", "Заказ", "Đơn"), fields: orderFields() },
+        {
+          id: "order",
+          title: L("订单", "Order", "Заказ", "Đơn"),
+          fields: [
+            ...orderFields(),
+            { key: "destination_port", label: L("目的港", "Destination port", "Порт назначения", "Cảng đến"), type: "text" },
+            { key: "transformer_sn", label: L("变压器序号", "Transformer series No.", "Заводской № ТР", "Số series MBA"), type: "text" },
+            { key: "huaming_sn", label: L("华明序号", "Huaming series No.", "№ Huaming", "Số series Huaming"), type: "text" },
+          ],
+        },
         { id: "transformer", title: L("变压器数据", "Transformer data", "Данные трансформатора", "Dữ liệu MBA"), fields: transformerFields() },
       ],
     },
@@ -691,6 +761,7 @@ const octcSheet: SheetDef = {
             { key: "octc_positions", label: L("分接位置数", "Number of tapping positions", "Число положений", "Số vị trí nấc"), type: "number", required: true },
             { key: "octc_contact", label: L("触头排列", "Contact arrangement", "Схема контактов", "Bố trí tiếp điểm"), type: "select", options: OCTC_CONTACT_OPTS, hint: L("由位置数映射：5→6×5，6→7×6，11→12×11，17→18×17。", "From positions: 5→6×5, 6→7×6, 11→12×11, 17→18×17.", "Из числа положений: 5→6×5…", "Từ số vị trí: 5→6×5…") },
             { key: "octc_size", label: L("规格", "Size", "Типоразмер", "Cỡ"), type: "radio", options: OCTC_SIZE_OPTS },
+            { key: "octc_lead", label: L("出线", "Lead output", "Вывод", "Đầu ra"), type: "radio", options: OCTC_LEAD_OPTS },
             { key: "octc_drive", label: L("操作机构", "Operating mechanism", "Привод", "Cơ cấu thao tác"), type: "radio", options: OCTC_DRIVE_OPTS, span: 2 },
           ],
         },
@@ -701,7 +772,7 @@ const octcSheet: SheetDef = {
       title: L("安装与备注", "Mounting & notes", "Монтаж и примечания", "Lắp đặt và ghi chú"),
       blurb: L("箱内安装为主。需要电动时选 CMA7。", "Usually in-tank. Choose CMA7 if motorized.", "Обычно в баке. CMA7 — если с двигателем.", "Thường trong thùng. CMA7 nếu có động cơ."),
       sections: [
-        { id: "mechanical", title: L("安装", "Mounting", "Монтаж", "Lắp đặt"), fields: [...mechanicalFields().filter((f) => f.key !== "flange_type"), ...paintFields()] },
+        { id: "mechanical", title: L("安装", "Mounting", "Монтаж", "Lắp đặt"), fields: [...mechanicalFields(), ...paintFields()] },
         { id: "drive", title: L("若配电动机构", "If motorized", "Если с приводом", "Nếu có động cơ"), fields: driveFields(false), hint: L("手轮方案可跳过。", "Skip if handwheel.", "Пропустите при штурвале.", "Bỏ qua nếu tay quay.") },
         { id: "notes", title: L("备注", "Notes", "Примечания", "Ghi chú"), fields: [notesField] },
       ],
@@ -816,12 +887,20 @@ const cma7Sheet: SheetDef = {
       title: L("订单与所配开关", "Order & matching switch", "Заказ и РПН", "Đơn và máy đi kèm"),
       blurb: L("单独订机构时一定要写原开关型号和档位数。", "For MDU-only orders, the original type and positions are mandatory.", "Для заказа только привода обязательны тип и положения.", "Đặt riêng cơ cấu thì bắt buộc ghi kiểu và số vị trí."),
       sections: [
-        { id: "order", title: L("订单", "Order", "Заказ", "Đơn"), fields: orderFields() },
+        {
+          id: "order",
+          title: L("订单", "Order", "Заказ", "Đơn"),
+          fields: [
+            ...orderFields(),
+            { key: "destination_port", label: L("交货地点", "Place of delivery", "Место поставки", "Nơi giao"), type: "text" },
+          ],
+        },
         {
           id: "match",
           title: L("所配开关", "Matching tap changer", "Сопряжённый РПН", "Máy đi kèm"),
           fields: [
             matchingOltcField(),
+            { key: "drawing_no", label: L("图纸号", "Drawing no.", "№ чертежа", "Số bản vẽ"), type: "text" },
             { key: "mdu_positions", label: L("操作位置数", "Operating positions", "Число положений", "Số vị trí thao tác"), type: "number", required: true },
             { key: "pos_max", label: L("最高档位号", "Max position no.", "Макс. положение", "Vị trí max"), type: "text" },
             { key: "pos_mid", label: L("中间档位号", "Mid position", "Среднее положение", "Vị trí giữa"), type: "text", hint: L("例如 17A,17B,17C 或 9a9b9c。", "e.g. 17A,17B,17C or 9a9b9c.", "напр. 17A,17B,17C.", "vd. 17A,17B,17C.") },
@@ -889,11 +968,32 @@ const cma7Sheet: SheetDef = {
             { key: "ma_qty", label: L("4–20 mA", "4–20 mA", "4–20 мА", "4–20 mA"), type: "radio", options: CMA7_COUNT_OPTS },
             { key: "resistor_sig", label: L("电阻位置信号", "Resistor signal", "Резисторный сигнал", "Tín hiệu điện trở"), type: "radio", options: CMA7_COUNT_OPTS },
             {
+              key: "resistor_zero_first",
+              label: L("第 1 档 0 Ω", "0 Ω at first position", "0 Ом на 1-й позиции", "0 Ω ở nấc 1"),
+              type: "radio",
+              options: YES_NO,
+              applies: (v) => v.resistor_sig === "1" || v.resistor_sig === "2" || v.resistor_sig === "3",
+            },
+            {
               key: "resistor_ohm",
               label: L("Ω / 档（第 1 路）", "Ω / pos (1st)", "Ом/положение (1)", "Ω / nấc (1)"),
               type: "number",
               unit: "Ω",
               applies: (v) => v.resistor_sig === "1" || v.resistor_sig === "2" || v.resistor_sig === "3",
+            },
+            {
+              key: "resistor_ohm_2",
+              label: L("Ω / 档（第 2 路）", "Ω / pos (2nd)", "Ом/положение (2)", "Ω / nấc (2)"),
+              type: "number",
+              unit: "Ω",
+              applies: (v) => v.resistor_sig === "2" || v.resistor_sig === "3",
+            },
+            {
+              key: "resistor_ohm_3",
+              label: L("Ω / 档（第 3 路）", "Ω / pos (3rd)", "Ом/положение (3)", "Ω / nấc (3)"),
+              type: "number",
+              unit: "Ω",
+              applies: (v) => v.resistor_sig === "3",
             },
             { key: "parallel", label: L("并列运行", "Parallel operation", "Параллельная работа", "Chạy song song"), type: "radio", options: YES_NO },
           ],
@@ -904,6 +1004,12 @@ const cma7Sheet: SheetDef = {
           fields: [
             { key: "door_hinge", label: L("柜门铰链", "Door hinges", "Петли двери", "Bản lề cửa"), type: "radio", options: CMA7_HINGE_OPTS },
             { key: "bottom_plate", label: L("底板开孔", "Bottom plate", "Днище", "Đáy tủ"), type: "select", options: CMA7_BOTTOM_OPTS, span: 2 },
+            {
+              key: "bottom_plate_other",
+              label: L("其他底板", "Other bottom plate", "Другое днище", "Đáy khác"),
+              type: "text",
+              applies: (v) => v.bottom_plate === "other",
+            },
             { key: "padlock", label: L("挂锁", "Pad lock", "Навесной замок", "Ổ khóa"), type: "radio", options: YES_NO },
             { key: "mdu_side", label: L("安装位置", "Mounting side", "Сторона установки", "Bên lắp"), type: "radio", options: SIDE_OPTS },
             { key: "nameplate_language", label: L("铭牌语言", "Nameplate language", "Язык таблички", "Ngôn ngữ nhãn"), type: "select", options: NAMEPLATE_OPTS },
@@ -954,7 +1060,14 @@ const shmSheet: SheetDef = {
       title: L("订单与所配开关", "Order & matching switch", "Заказ и РПН", "Đơn và máy đi kèm"),
       blurb: L("数字机构同样必须对上档位数和开关型号。", "The digital drive must still match type and positions.", "Цифровой привод тоже должен совпадать по типу и положениям.", "Bộ số vẫn phải khớp kiểu và số vị trí."),
       sections: [
-        { id: "order", title: L("订单", "Order", "Заказ", "Đơn"), fields: orderFields() },
+        {
+          id: "order",
+          title: L("订单", "Order", "Заказ", "Đơn"),
+          fields: [
+            ...orderFields(),
+            { key: "destination_port", label: L("交货地点", "Place of delivery", "Место поставки", "Nơi giao"), type: "text" },
+          ],
+        },
         {
           id: "match",
           title: L("所配开关与型号", "Matching switch & model", "РПН и модель", "Máy và model"),
@@ -962,6 +1075,9 @@ const shmSheet: SheetDef = {
             matchingOltcField(),
             { key: "shm_model", label: L("机构型号", "Drive model", "Модель привода", "Model bộ truyền"), type: "radio", options: SHM_MODEL_OPTS, required: true, span: 2 },
             { key: "mdu_positions", label: L("操作位置数", "Operating positions", "Число положений", "Số vị trí"), type: "number", required: true },
+            { key: "pos_max", label: L("最高档位号", "Max position no.", "Макс. положение", "Vị trí max"), type: "text" },
+            { key: "pos_mid", label: L("中间档位号", "Mid position", "Среднее положение", "Vị trí giữa"), type: "text" },
+            { key: "pos_min", label: L("最低档位号", "Min position no.", "Мин. положение", "Vị trí min"), type: "text" },
           ],
         },
       ],
@@ -977,8 +1093,20 @@ const shmSheet: SheetDef = {
           fields: [
             { key: "frequency_hz", label: L("频率", "Frequency", "Частота", "Tần số"), type: "radio", options: FREQ_OPTS, required: true },
             { key: "motor_voltage", label: L("电机电源", "Motor supply", "Питание двигателя", "Nguồn động cơ"), type: "select", options: MOTOR_VOLT_OPTS, required: true },
+            { key: "control_from", label: L("控制回路电源", "Control-circuit supply", "Питание цепи управления", "Nguồn mạch điều khiển"), type: "radio", options: CMA7_FROM_OPTS, span: 2 },
             { key: "control_voltage", label: L("控制电压", "Control voltage", "Напряжение управления", "Điện áp điều khiển"), type: "select", options: CTRL_VOLT_OPTS, required: true },
+            { key: "control_protect", label: L("控制回路保护", "Control-circuit protection", "Защита цепи управления", "Bảo vệ mạch điều khiển"), type: "select", options: CMA7_PROTECT_OPTS },
+            { key: "heat_from", label: L("加热回路电源", "Heating-circuit supply", "Питание обогрева", "Nguồn mạch sưởi"), type: "radio", options: CMA7_FROM_OPTS, span: 2 },
+            { key: "heat_protect", label: L("加热回路保护", "Heating-circuit protection", "Защита обогрева", "Bảo vệ mạch sưởi"), type: "select", options: CMA7_PROTECT_OPTS },
             { key: "heater", label: L("加热器", "Heater", "Обогреватель", "Sưởi"), type: "radio", options: YES_NO },
+            { key: "hand_lamp", label: L("照明灯 H4", "Hand lamp (H4)", "Лампа H4", "Đèn H4"), type: "radio", options: YES_NO },
+            { key: "socket_x10", label: L("插座 X10", "Plug socket X10", "Розетка X10", "Ổ X10"), type: "radio", options: CMA7_SOCKET_OPTS, span: 2 },
+            {
+              key: "socket_country",
+              label: L("插座国家标准", "Socket country", "Стандарт розетки", "Tiêu chuẩn ổ"),
+              type: "text",
+              applies: (v) => v.socket_x10 === "other",
+            },
             { key: "mdu_ip", label: L("防护等级", "Ingress protection", "Степень защиты", "Cấp bảo vệ"), type: "select", options: IP_OPTS },
             { key: "ambient_band", label: L("环境温度", "Ambient temperature", "Температура среды", "Nhiệt độ môi trường"), type: "radio", options: OLTC_AMBIENT_OPTS, span: 2 },
             {
@@ -1014,7 +1142,31 @@ const shmSheet: SheetDef = {
             { key: "hmi_language", label: L("界面语言", "HMI language", "Язык интерфейса", "Ngôn ngữ giao diện"), type: "select", options: NAMEPLATE_OPTS },
             { key: "communication", label: L("通信", "Communication", "Связь", "Truyền thông"), type: "select", options: COMM_OPTS },
             { key: "position_tx", label: L("模拟位置输出", "Analogue position output", "Аналоговый выход положения", "Ngõ ra vị trí analog"), type: "select", options: POS_TX_OPTS },
+            { key: "bcd_qty", label: L("BCD 模块", "BCD module", "Модуль BCD", "Module BCD"), type: "radio", options: CMA7_COUNT_OPTS.filter((o) => o.value !== "3") },
+            { key: "ma_qty", label: L("4–20 mA", "4–20 mA", "4–20 мА", "4–20 mA"), type: "radio", options: CMA7_COUNT_OPTS },
+            { key: "resistor_sig", label: L("电阻位置信号", "Resistor signal", "Резисторный сигнал", "Tín hiệu điện trở"), type: "radio", options: CMA7_COUNT_OPTS },
+            {
+              key: "resistor_ohm",
+              label: L("Ω / 档（第 1 路）", "Ω / pos (1st)", "Ом/положение (1)", "Ω / nấc (1)"),
+              type: "number",
+              unit: "Ω",
+              applies: (v) => v.resistor_sig === "1" || v.resistor_sig === "2" || v.resistor_sig === "3",
+            },
             { key: "parallel", label: L("并列运行", "Parallel operation", "Параллельная работа", "Chạy song song"), type: "radio", options: YES_NO },
+            {
+              key: "emergency_stop",
+              label: L("急停按钮", "Emergency stop", "Аварийный стоп", "Nút dừng khẩn"),
+              type: "radio",
+              options: YES_NO,
+            },
+            {
+              key: "fiber_length_m",
+              label: L("4 芯多模光纤", "4-core multimode fibre", "4-жил. многомодовое волокно", "Cáp quang 4 sợi"),
+              type: "number",
+              unit: "m",
+            },
+            { key: "door_hinge", label: L("柜门铰链", "Door hinges", "Петли двери", "Bản lề cửa"), type: "radio", options: CMA7_HINGE_OPTS },
+            { key: "padlock", label: L("挂锁", "Pad lock", "Навесной замок", "Ổ khóa"), type: "radio", options: YES_NO },
             { key: "nameplate_language", label: L("铭牌语言", "Nameplate language", "Язык таблички", "Ngôn ngữ nhãn"), type: "select", options: NAMEPLATE_OPTS },
             ...paintFields(),
           ],
