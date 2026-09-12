@@ -198,7 +198,7 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
         <p className="mt-4 text-pretty text-sm text-ink-soft">{t(current.blurb, lang)}</p>
       ) : null}
 
-      <div className="mt-6 overflow-hidden pb-[var(--wizard-footer-h,7.5rem)]">
+      <div className="mt-6 overflow-x-clip overflow-y-visible pb-[var(--wizard-footer-h,7.5rem)]">
         <AnimatePresence mode="wait">
           <motion.div
             key={current.id}
