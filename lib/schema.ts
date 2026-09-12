@@ -177,6 +177,17 @@ const notesField: FieldDef = {
 function oltcRatingFields(): FieldDef[] {
   return [
     {
+      key: "unit_count",
+      label: L("台数", "Number of units", "Число аппаратов", "Số bộ"),
+      type: "select",
+      options: [
+        { value: "1", label: L("1 台", "1 unit", "1 аппарат", "1 bộ") },
+        { value: "3", label: L("3× 单相（三相变）", "3× single-phase", "3× однофазных", "3× một pha") },
+      ],
+      applies: (v) => v.phases === "I",
+      hint: L("三相变压器订三台单相开关时选 3×，型号写成 3×SHZVI-…", "Use 3× when three single-phase units serve one three-phase transformer.", "3× — три однофазных на один трёхфазный ТР.", "Ba pha dùng 3 bộ một pha thì chọn 3×."),
+    },
+    {
       key: "oltc_current_a",
       label: L("额定通过电流 Ium", "Rated through-current Ium", "Ном. ток Ium", "Dòng định mức Ium"),
       type: "select",
