@@ -147,7 +147,7 @@ describe("cma7Cells", () => {
       frequency_hz: "60",
       motor_voltage: "230_1",
     });
-    expect(cells.H20).toBe("3. 单相电机_AC");
+    expect(cells.H20).toBe("3. Single-phase motor_AC");
     expect(cells.H21).toBe("2. frequency_60");
     expect(cells.H22).toBe(230);
   });

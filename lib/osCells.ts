@@ -385,11 +385,11 @@ export function oltcCells(values: OrderValues): CellWrites {
 function cma7Motor(values: OrderValues, out: CellWrites) {
   const mv = s(values.motor_voltage);
   const freq = s(values.frequency_hz);
-  if (mv === "220_1" || mv === "230_1" || mv === "110_1" || mv === "240_1") {
-    set(out, "H20", "3. 单相电机_AC");
-  } else if (mv) {
-    set(out, "H20", "1. Three-phase motor_3ACN");
-  }
+  const net = s(values.motor_network);
+  if (net === "3ac") set(out, "H20", "2. Three-phase motor_3AC");
+  else if (net === "ac" || mv.endsWith("_1")) set(out, "H20", "3. Single-phase motor_AC");
+  else if (net === "dc") set(out, "H20", "4. DC motor_DC");
+  else if (mv) set(out, "H20", "1. Three-phase motor_3ACN");
   if (freq === "50") set(out, "H21", "1. frequency_50");
   if (freq === "60") set(out, "H21", "2. frequency_60");
   const volt: Record<string, number> = {
@@ -405,19 +405,65 @@ function cma7Motor(values: OrderValues, out: CellWrites) {
   };
   if (mv && volt[mv] != null) set(out, "H22", volt[mv]);
 
-  if (s(values.heater) === "yes") set(out, "H38", "Continuous operation heater-std.");
-  if (s(values.heater) === "no") set(out, "H38", "Without");
+  if (s(values.control_from) === "separate") set(out, "H25", "2. Separate from motor circuit");
+  else if (s(values.control_from) === "motor" || mv) set(out, "H25", "1. Supply from motor circuit-std.");
+  const cProt = s(values.control_protect);
+  if (cProt === "1pole") set(out, "H27", "2. 1-pole miniature circuit breaker");
+  else if (cProt === "2pole") set(out, "H27", "3. 2-pole miniature circuit breaker");
+  else if (cProt === "without") set(out, "H27", "1. Without-std.");
 
-  const ctrl = s(values.controller);
-  if (ctrl === "none") set(out, "H61", "Without");
-  if (ctrl === "HMC-3C") set(out, "H61", "HMC-3C");
-  if (ctrl === "SHM-KX") set(out, "H61", "SHM_KX");
-  if (ctrl === "HMIET") set(out, "H61", "HMIET-I");
+  if (s(values.heat_from) === "separate") set(out, "H34", "2. Separate from motor circuit");
+  else if (s(values.heat_from) === "motor") set(out, "H34", "1. Supply from motor circuit-std.");
 
-  const tx = s(values.position_tx);
-  if (tx === "bcd") set(out, "H50", 1);
-  if (tx === "4_20") set(out, "H51", "4-20mA");
-  if (tx === "none") set(out, "H51", "Without-std.");
+  const hk = s(values.heater_kind) || (s(values.heater) === "no" ? "without" : s(values.heater) === "yes" ? "resistor" : "");
+  if (hk === "thermostat") set(out, "H38", "Heater with thermostat");
+  else if (hk === "hygrostat") set(out, "H38", "Heater with Temperature and Humidity controller");
+  else if (hk === "without") set(out, "H38", "Without");
+  else if (hk === "resistor") set(out, "H38", "Continuous operation heater-std.");
+
+  if (s(values.hand_lamp) === "no") set(out, "H40", "Without");
+  else if (s(values.hand_lamp) === "yes") set(out, "H40", "With-std.");
+
+  const sig = (v: string) => (v === "no" ? "1 N/O" : v === "co" ? "1 C/O" : v === "without" ? "Without-std." : "");
+  const endp = sig(s(values.end_pos_sig));
+  if (endp) set(out, "H41", endp);
+  const crank = sig(s(values.crank_sig));
+  if (crank) set(out, "H42", crank);
+  if (s(values.cam_s20) === "co") set(out, "H43", "1 C/O");
+  else if (s(values.cam_s20) === "without") set(out, "H43", "Without-std.");
+  if (s(values.incomplete_s21) === "co") set(out, "H44", "1 C/O");
+  else if (s(values.incomplete_s21) === "without") set(out, "H44", "Without-std.");
+
+  if (s(values.socket_x10) === "without") set(out, "H47", "1. Without-std.");
+  else if (s(values.socket_x10) === "universal" || s(values.socket_x10) === "other") {
+    set(out, "H47", "2. With（include residual current circuit breaker ）");
+  }
+
+  const bcd = s(values.bcd_qty) || (s(values.position_tx) === "bcd" ? "1" : "");
+  if (bcd === "without") set(out, "H50", "Without-std.");
+  else if (bcd === "1" || bcd === "2" || bcd === "3") set(out, "H50", Number(bcd));
+  const ma = s(values.ma_qty) || (s(values.position_tx) === "4_20" ? "1" : "");
+  if (ma === "without") set(out, "H51", "Without-std.");
+  else if (ma === "1" || ma === "2" || ma === "3") set(out, "H51", ma === "1" ? "4-20mA" : ma);
+
+  if (s(values.resistor_sig) === "without") set(out, "H55", "1. Without-std.");
+  else if (s(values.resistor_sig) === "1" || s(values.resistor_sig) === "2" || s(values.resistor_sig) === "3") {
+    set(out, "H55", "2. With(same resistance)");
+  }
+
+  const avr = s(values.avr_model) || s(values.controller);
+  if (avr === "none" || avr === "") set(out, "H61", "Without");
+  else if (avr.startsWith("hmc3c") || avr === "HMC-3C") set(out, "H61", "HMC-3C");
+  else if (avr.startsWith("etsz6") || avr === "ET-SZ6") set(out, "H61", "Without");
+  else if (avr === "SHM-KX") set(out, "H61", "SHM_KX");
+  else if (avr === "HMIET") set(out, "H61", "HMIET-I");
+
+  if (s(values.door_hinge) === "right") set(out, "H69", "Right-hand");
+  else if (s(values.door_hinge) === "left") set(out, "H69", "Left-hand");
+  if (s(values.bottom_plate) === "nobore") set(out, "H70", "Dummy plate");
+  else if (s(values.bottom_plate) === "holes50" || s(values.bottom_plate) === "gland") set(out, "H70", "2xΦ50 hole-std.");
+  if (s(values.padlock) === "yes" || s(values.padlock) === "with") set(out, "H73", "With");
+  else if (s(values.padlock) === "no" || s(values.padlock) === "without") set(out, "H73", "Without-std.");
 }
 
 /** CMA7 Order Specification-V1.2 Sheet1 */
@@ -426,13 +472,18 @@ export function cma7Cells(values: OrderValues): CellWrites {
   commonHeader(values, out);
   set(out, "H16", "CMA7");
   const des = designationCells(values);
-  if (des) {
+  if (s(values.pos_max)) {
+    set(out, "H17", `Max. effective number of turns at position ( ${s(values.pos_max)} )`);
+  } else if (des) {
     set(out, "H17", des.maxLine);
-    set(out, "P17", des.midLine);
-    set(out, "Z16", des.pos);
-  } else if (n(values.mdu_positions) != null) {
-    set(out, "Z16", n(values.mdu_positions)!);
   }
+  if (s(values.pos_mid)) {
+    set(out, "P17", `Mid-position(s) ( ${s(values.pos_mid)} )`);
+  } else if (des) {
+    set(out, "P17", des.midLine);
+  }
+  if (n(values.mdu_positions) != null) set(out, "Z16", n(values.mdu_positions)!);
+  else if (des) set(out, "Z16", des.pos);
   cma7Motor(values, out);
   set(out, "H75", paintOsStd(values));
   set(out, "H79", nameplateOs(s(values.nameplate_language)));
