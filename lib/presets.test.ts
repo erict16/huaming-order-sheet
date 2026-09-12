@@ -164,6 +164,37 @@ describe("ORDER_PRESETS", () => {
     expect(applied.end_user).toBe("");
   });
 
+  it("does not treat destination_port as contact; applyPreset keeps it if a starter carries one", () => {
+    expect([...PRESET_CONTACT_KEYS]).toEqual([
+      "designer_name",
+      "designer_email",
+      "designer_phone",
+      "designer_phone_cc",
+      "designer_phone_cc_other",
+      "buyer",
+      "end_user",
+    ]);
+    expect((PRESET_CONTACT_KEYS as readonly string[])).not.toContain("destination_port");
+    for (const preset of ORDER_PRESETS) {
+      expect(preset.values.destination_port, preset.id).toBeUndefined();
+    }
+    const base = getPreset("mee-tienyen-cv2")!;
+    const withPort = {
+      ...base,
+      values: {
+        ...base.values,
+        destination_port: "Hai Phong",
+        designer_name: "Alice",
+        buyer: "Old Buyer",
+      },
+    };
+    const applied = applyPreset(withPort);
+    expect(applied.destination_port).toBe("Hai Phong");
+    expect(applied.project).toBe("EVN Tiên Yên");
+    expect(applied.designer_name).toBe("");
+    expect(applied.buyer).toBe("");
+  });
+
   it("hydrates ?preset= over stored drafts and still omits contact fields", () => {
     const stored = {
       designer_name: "Old Designer",
