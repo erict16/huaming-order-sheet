@@ -645,6 +645,87 @@ export const TEMP_SENSOR_OPTS = [
   opt("with", "配温度传感器", "With temperature sensor", "С датчиком", "Có cảm biến"),
 ];
 
+export const CMA7_NET_MOTOR_OPTS = [
+  opt("3acn", "3AC/N", "3AC/N", "3AC/N", "3AC/N"),
+  opt("3ac", "3AC", "3AC", "3AC", "3AC"),
+  opt("ac", "AC", "AC", "AC", "AC"),
+  opt("dc", "DC", "DC", "DC", "DC"),
+];
+
+export const CMA7_NET_CTRL_OPTS = [
+  opt("2ac", "2AC", "2AC", "2AC", "2AC"),
+  opt("ac", "AC", "AC", "AC", "AC"),
+  opt("dc", "DC", "DC", "DC", "DC"),
+];
+
+export const CMA7_FROM_OPTS = [
+  opt("motor", "从电机回路取电（常规）", "From motor circuit (std.)", "От цепи двигателя", "Lấy từ mạch motor"),
+  opt("separate", "单独供电", "Separate supply", "Отдельное питание", "Nguồn riêng"),
+];
+
+export const CMA7_PROTECT_OPTS = [
+  opt("without", "不配保护（常规）", "Without (standard)", "Без защиты (стандарт)", "Không bảo vệ (tiêu chuẩn)"),
+  opt("1pole", "1 极自动开关", "1-pole auto-cut", "1-полюсный автомат", "Cầu dao 1 cực"),
+  opt("2pole", "2 极自动开关", "2-pole auto-cut", "2-полюсный автомат", "Cầu dao 2 cực"),
+];
+
+export const CMA7_HEATER_KIND_OPTS = [
+  opt("resistor", "电阻加热（常规）", "Resistor heater (std.)", "Резистор (стандарт)", "Sưởi điện trở (tiêu chuẩn)"),
+  opt("thermostat", "带温控", "Heater with thermostat", "С термостатом", "Có thermostat"),
+  opt("hygrostat", "温控 + 湿控", "Hygrostat and thermostat", "Гигростат + термостат", "Hygrostat và thermostat"),
+  opt("without", "不配加热", "Without heater", "Без обогрева", "Không sưởi"),
+];
+
+export const CMA7_SIG_OPTS = [
+  opt("without", "不配", "Without", "Нет", "Không"),
+  opt("no", "1 N/O", "1 N/O", "1 N/O", "1 N/O"),
+  opt("co", "1 C/O", "1 C/O", "1 C/O", "1 C/O"),
+];
+
+export const CMA7_CAM_OPTS = [
+  opt("without", "不配", "Without", "Нет", "Không"),
+  opt("co", "1 C/O", "1 C/O", "1 C/O", "1 C/O"),
+];
+
+export const CMA7_SOCKET_OPTS = [
+  opt("without", "不配", "Without", "Нет", "Không"),
+  opt("universal", "万用插座", "Universal socket", "Универсальная розетка", "Ổ đa năng"),
+  opt("other", "其他（写国家）", "Others (country)", "Другая (страна)", "Khác (quốc gia)"),
+];
+
+export const CMA7_NO_TYPE_OPTS = [
+  opt("1bbm", "1 N/O Break-Before-Make", "1 N/O Break-Before-Make", "1 N/O BBM", "1 N/O BBM"),
+  opt("1mbb", "1 N/O Make-Before-Break", "1 N/O Make-Before-Break", "1 N/O MBB", "1 N/O MBB"),
+  opt("2bbm", "2 N/O Break-Before-Make", "2 N/O Break-Before-Make", "2 N/O BBM", "2 N/O BBM"),
+  opt("2mbb", "2 N/O Make-Before-Break", "2 N/O Make-Before-Break", "2 N/O MBB", "2 N/O MBB"),
+];
+
+export const CMA7_COUNT_OPTS = [
+  opt("without", "不配", "Without", "Нет", "Không"),
+  opt("1", "1", "1", "1", "1"),
+  opt("2", "2", "2", "2", "2"),
+  opt("3", "3", "3", "3", "3"),
+];
+
+export const CMA7_HINGE_OPTS = [
+  opt("left", "左铰链", "Left", "Слева", "Trái"),
+  opt("right", "右铰链", "Right", "Справа", "Phải"),
+];
+
+export const CMA7_BOTTOM_OPTS = [
+  opt("holes50", "2×φ50 孔", "2× φ50 holes", "2× φ50", "2× φ50"),
+  opt("gland", "2×φ50 + 电缆接头", "2× φ50 and cable gland", "2× φ50 и сальник", "2× φ50 + gland"),
+  opt("nobore", "不开孔", "Without bore-hole", "Без отверстия", "Không khoét lỗ"),
+];
+
+export const CMA7_AVR_OPTS = [
+  opt("none", "不配 HMC-3C / ET-SZ6", "Without HMC-3C / ET-SZ6", "Без HMC-3C / ET-SZ6", "Không HMC-3C / ET-SZ6"),
+  opt("hmc3c_air", "HMC-3C 航空插头", "HMC-3C male aviation", "HMC-3C авиаразъём", "HMC-3C giắc hàng không"),
+  opt("hmc3c_term", "HMC-3C 端子排", "HMC-3C terminal block", "HMC-3C клеммы", "HMC-3C terminal"),
+  opt("etsz6_air", "ET-SZ6 航空插头", "ET-SZ6 male aviation", "ET-SZ6 авиаразъём", "ET-SZ6 giắc hàng không"),
+  opt("etsz6_term", "ET-SZ6 端子排", "ET-SZ6 terminal block", "ET-SZ6 клеммы", "ET-SZ6 terminal"),
+];
+
 export const PRV_OPTS = [
   opt("burst", "防爆盖（不要压力释放阀）", "Rupture disc only", "Только разрывной диск", "Nắp chống nổ, không van"),
   opt("prv_50", "压力释放阀 50 mm，不要防爆盖", "PRD 50 mm, no rupture disc", "ПРД 50 мм", "Van 50 mm, không nắp"),

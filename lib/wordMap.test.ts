@@ -110,6 +110,19 @@ describe("oltcSdtValues", () => {
     expect(v[27]).toBe("1250");
   });
 
+  it("round-trips three-winding HV/MV/LV and YNd11yn12 on the OLTC Word map", () => {
+    const v = oltcSdtValues({
+      hv_kv: "115",
+      mv_kv: "22",
+      lv_kv: "10.5",
+      vector_group: "YNd11yn12",
+    });
+    expect(v[10]).toBe("YNd11yn12");
+    expect(v[19]).toBe("115");
+    expect(v[53]).toContain("MV 22 kV");
+    expect(v[53]).toContain("LV 10.5 kV");
+  });
+
   it("ticks Constant step voltage, In-neutral, supporting flange Without", () => {
     const c = oltcCheckValues({
       family: "CV",

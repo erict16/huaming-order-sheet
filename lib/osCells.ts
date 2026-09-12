@@ -286,9 +286,10 @@ export function oltcCells(values: OrderValues): CellWrites {
   if (mva != null) set(out, "I21", mva * 1000);
 
   const hv = s(values.hv_kv);
+  const mv = s(values.mv_kv);
   const lv = s(values.lv_kv);
-  if (hv || lv) {
-    set(out, "H23", `HV(${hv || "     "}) kV\nMV(     ) kV\nLV(${lv || "     "}) kV`);
+  if (hv || mv || lv) {
+    set(out, "H23", `HV(${hv || "     "}) kV\nMV(${mv || "     "}) kV\nLV(${lv || "     "}) kV`);
   }
   set(out, "O23", vectorGroupOs(values));
 

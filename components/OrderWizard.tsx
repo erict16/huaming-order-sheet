@@ -129,6 +129,11 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
         {t(sheet.meta.tag, lang)}
       </p>
       <h1 className="mt-1 text-2xl font-bold text-navy sm:text-3xl">{t(sheet.meta.title, lang)}</h1>
+      {typeStr.compact ? (
+        <p className="mt-2 font-mono text-sm font-semibold tracking-tight text-navy">{typeStr.compact}</p>
+      ) : (
+        <p className="mt-2 text-sm text-ink-muted">{chromeText("typeHint", lang)}</p>
+      )}
       {t(current.blurb, lang).trim() ? (
         <p className="mt-2 text-sm text-ink-soft">{t(current.blurb, lang)}</p>
       ) : null}
