@@ -112,6 +112,25 @@ describe("oltcCells", () => {
     expect(cells.A172).toBeUndefined();
   });
 
+  it("appends leftover oil_filter onto Remark A173, not an invented cell", () => {
+    expect(String(oltcCells({ ...oltc, oil_filter: "none" }).A173 || "")).not.toMatch(/ZXJY|none/i);
+    expect(String(oltcCells({ ...oltc, oil_filter: "" }).A173 || "")).not.toMatch(/ZXJY/);
+    expect(oltcCells({ oil_filter: "none" }).A173).toBeUndefined();
+    expect(oltcCells({ oil_filter: "" }).A173).toBeUndefined();
+
+    const two = oltcCells({ oil_filter: "ZXJY-I", notes: "indoor" });
+    expect(two.A173).toBe("indoor\nZXJY-I");
+    expect(two.H172).toBeUndefined();
+    expect(two.A172).toBeUndefined();
+    expect(Object.entries(two).filter(([k, v]) => k !== "A173" && String(v).includes("ZXJY-I"))).toEqual([]);
+
+    const three = oltcCells({ ...oltc, oil_filter: "ZXJY-II", notes: "indoor" });
+    expect(String(three.A173)).toContain("indoor");
+    expect(String(three.A173)).toContain("ZXJY-II");
+    expect(String(three.A173)).toContain("Type:");
+    expect(three.H172).toBeUndefined();
+  });
+
   it("writes 档位 1 / 9a9b9c", () => {
     expect(String(cells.H80)).toContain("( 1 )");
     expect(String(cells.Q80)).toContain("9a9b9c");

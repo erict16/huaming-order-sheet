@@ -688,7 +688,14 @@ export function oltcCells(values: OrderValues): CellWrites {
   set(out, "H169", nameplateOs(s(values.nameplate_language)));
   set(out, "H170", quantityValue(values));
 
-  const notes = [s(values.notes), compact ? `Type: ${compact}` : "", shaftRemark(values)]
+  // Sheet1 has no oil-filter cell (ZXJY is a separate OS). Leftover goes on Remark A173.
+  const filter = s(values.oil_filter);
+  const notes = [
+    s(values.notes),
+    filter && filter !== "none" ? filter : "",
+    compact ? `Type: ${compact}` : "",
+    shaftRemark(values),
+  ]
     .filter(Boolean)
     .join("\n");
   set(out, "A173", notes);
