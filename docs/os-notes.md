@@ -8,11 +8,18 @@ Written from:
 - `public/templates/in-tank-oltc-v1.2.xlsm`
 - `public/templates/hwv-hwdk-order-spec.docx` (51 FORMTEXT + 68 FORMCHECKBOX)
 - `public/templates/octc-order-spec.docx` (64 FORMTEXT + 69 FORMCHECKBOX)
+- `public/templates/dry-order-sheet.docx` (73 SDT + 39 `w:checkBox`)
+- `public/templates/shm-d-order-specification-v1.2.xlsm`
+- `public/templates/shm-d-order-sheet.doc` (2025.3; not a fillable form)
 - Filled OS: `OS/Indonesia/Bambangdjaja/PO 26005587 PX-360/CMA7 MDU Order SpecificationsPX-360_R3.doc`
 - Filled OS: MEE EVN Tiên Yên `OLTC Order Specifications 40M` (vector **YNd11yn12**)
 - Overnight corpus `~/.grok/huaming-order-sheet-overnight/os-replay-slim.json` / `GAPS.md`
 
 **Word fill target for CMA7 checkboxes:** `cma7-order-sheet.docx` (live `w:checked` nodes). The V1.2 xlsm is the Excel path (dropdown cells, not Word ticks).
+
+**Dry Word fill target:** `dry-order-sheet.docx` (filled in-place; not a blank download).
+
+**SHM-D:** official fill is the V1.2 xlsm. Default export is Excel because the 2025.3 `.doc` is not a fillable checkbox form.
 
 ## CMA7 official groups vs wizard (before this work)
 
@@ -67,9 +74,14 @@ Cited: MEE EVN Tiên Yên `OLTC Order Specifications 40M` — vector **YNd11yn12
 
 Word export should keep HV in SDT 19, vector in SDT 10, and put `MV … kV` / `LV … kV` in the remarks SDT when MV is filled, matching how a single High Voltage box cannot hold three numbers.
 
-## Remaining wizard gaps (not this slice)
+## Mapped (no longer gaps)
+
+- **Word shafts 78–85:** OLTC SDTs 78–85 write H1–H4 / V1–V4 (`wordMap.oltcSdtValues`). Single length uses 78 / 82. Excel ticks catalogue quantities on rows 154–158 (Sheet1 has no H1–H4 length cells).
+- **Excel H22 / H26 / H27 / H97:** in-tank overload, flux, tap winding, temperature sensor (`osCells.oltcCells`). Strings match official ku lists. `linear_end` / `linear_middle` have no Excel option (skip).
+- **Dry Word:** official `dry-order-sheet.docx` is filled in-place (`fillDocx` + `dryMap`).
+- **SHM-D default:** Excel (`shm-d-order-specification-v1.2.xlsm`) because the 2025.3 `.doc` is not fillable. Choosing Word downloads the blank `.doc`.
+
+## Remaining wizard gaps
 
 - CV2-500 three-phase (catalogue III is 350/600).
 - Tap code 10181W (not in Fig 3-3).
-- SHM-D 2025.3 `.doc` is not a fillable checkbox form.
-- Multi-segment shafts H1–H4 / V1–V4 as four lengths (Excel has the cells; Word SDTs 78–85 exist).

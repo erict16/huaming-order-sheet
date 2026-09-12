@@ -3,13 +3,17 @@
 Huaming ORDER SHEET web app (Next.js static export → GitHub Pages).
 
 ## Product
-- Chinese default + English toggle. Shared OS template; family only toggles conditional fields.
+- Chinese default; English / Русский / Tiếng Việt. Shared OS template; family only toggles conditional fields.
 - Excel/Word export client-side. Public form first; no auth unless Eric asks.
+- SHM-D default export is Excel (official xlsm). The 2025.3 `.doc` is not fillable; do not treat it as a checkbox form.
+- Dry Word is filled in-place (`dry-order-sheet.docx`). Not a blank download.
 
 ## Agents
 - Type designation is inline (`TypePlate`). No floating type panel.
 - Presets prefill spec only; they strip buyer / designer contact (`PRESET_CONTACT_KEYS`).
 - Palette is navy `#00428C` / steel `#0071A9`. Do not restyle.
+- Already mapped — do not invent cells: OLTC Word SDTs 78–85 (H1–H4 / V1–V4); Excel H22 overload, H26 flux, H27 tap winding, H97 temp sensor. See `docs/os-notes.md`.
+- Skip empty cells; do not write blanks over the template.
 - Tests: `npm test && npm run typecheck`. After UI/schema changes also `npm run build`.
 - Static export: CI sets `NEXT_PUBLIC_BASE_PATH=/huaming-order-sheet`. Live: https://erict16.github.io/huaming-order-sheet/
 
