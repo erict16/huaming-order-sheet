@@ -1,6 +1,7 @@
 "use client";
 
 import { L, t } from "@/lib/copy";
+import { chromeText } from "@/lib/i18n";
 import { useLang } from "@/lib/useLang";
 import type { FamilyDef } from "@/lib/types";
 import { FAMILY_GROUP_LABEL } from "@/lib/catalog";
@@ -21,7 +22,7 @@ function Chip({
       onClick={() => onPick(f.code)}
       aria-pressed={active}
       className={`flex h-11 w-full items-center justify-center gap-1 rounded-lg font-mono text-sm font-semibold tracking-tight transition-colors duration-150 active:translate-y-px focus:outline-none focus-visible:ring-2 focus-visible:ring-steel focus-visible:ring-offset-2 ${
-        active ? "bg-navy text-white" : "bg-white text-navy ring-1 ring-slate-200 hover:ring-navy/40"
+        active ? "bg-navy text-white" : "bg-white text-navy ring-1 ring-slate-200 [@media(hover:hover)]:hover:ring-navy/40"
       }`}
     >
       {f.code}
@@ -86,8 +87,8 @@ export default function FamilyPicker({
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
         <div className="grid min-w-[36rem] grid-cols-[4.75rem_repeat(2,minmax(0,1fr))_repeat(3,minmax(0,1fr))] items-center gap-2">
           <div />
-          <div className="col-span-2 text-center text-sm font-medium text-ink-soft">{lang === "en" ? "Oil" : "油浸"}</div>
-          <div className="col-span-3 text-center text-sm font-medium text-ink-soft">{lang === "en" ? "Vacuum" : "真空"}</div>
+          <div className="col-span-2 text-center text-sm font-medium text-ink-soft">{chromeText("oil", lang)}</div>
+          <div className="col-span-3 text-center text-sm font-medium text-ink-soft">{chromeText("vacuum", lang)}</div>
           <SlotRow
             label={t(combined, lang)}
             oil={["CM", "CMD"]}

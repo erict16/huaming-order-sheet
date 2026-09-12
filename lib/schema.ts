@@ -1,6 +1,7 @@
 import {
   APP_OPTS,
   COUNTRY_CODE_OPTS,
+  COUNTRY_OPTS,
   CONN_OPTS,
   DELIVERY_DATE_OPTS,
   CTRL_OPTS,
@@ -102,7 +103,14 @@ function orderFields(): FieldDef[] {
     { key: "order_no", label: L("报价单号", "Quotation No.", "Номер котировки", "Số báo giá"), type: "text" },
     { key: "buyer", label: L("买方 / 变压器厂", "Buyer / transformer maker", "Покупатель / завод ТР", "Bên mua / nhà máy MBA"), type: "text", required: true },
     { key: "end_user", label: L("最终用户", "End user", "Конечный пользователь", "Người dùng cuối"), type: "text" },
-    { key: "country", label: L("国家 / 地区", "Country / region", "Страна / регион", "Quốc gia / khu vực"), type: "text", required: true },
+    {
+      key: "country",
+      label: L("国家 / 地区", "Country / region", "Страна / регион", "Quốc gia / khu vực"),
+      type: "combobox",
+      options: COUNTRY_OPTS,
+      required: true,
+      placeholder: L("选或填 Vietnam", "Pick or type Vietnam", "Выберите или введите Vietnam", "Chọn hoặc gõ Vietnam"),
+    },
     { key: "project", label: L("工程名称", "Project", "Объект", "Công trình"), type: "text" },
     { key: "quantity", label: L("数量", "Quantity", "Количество", "Số lượng"), type: "number", unit: "pcs", required: true },
     {
@@ -879,7 +887,7 @@ const cma7Sheet: SheetDef = {
       "Классический привод. Тип РПН, положения, питание, обогрев, датчик положения.",
       "Bộ truyền động cổ điển. Kiểu máy, số vị trí, nguồn, sưởi, tín hiệu vị trí.",
     ),
-    accent: "#1d4ed8",
+    accent: "#00428C",
   },
   steps: [
     {
@@ -1052,7 +1060,7 @@ const shmSheet: SheetDef = {
       "Цифровой SHM-D / SHM-DL, опции SHM-KX / HMC-3C и связи.",
       "Bộ số SHM-D / SHM-DL, tuỳ chọn SHM-KX / HMC-3C và truyền thông.",
     ),
-    accent: "#6d28d9",
+    accent: "#0071A9",
   },
   steps: [
     {

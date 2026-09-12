@@ -1,6 +1,7 @@
 "use client";
 
 import { PIPE_E2_OPTS, PIPE_HEIGHT_OPTS, PIPE_Q_OPTS, PIPE_R_OPTS, PIPE_S_OPTS } from "@/lib/catalog";
+import { chromeText } from "@/lib/i18n";
 import { useLang } from "@/lib/useLang";
 import type { FieldOption, OrderValues } from "@/lib/types";
 import SelectListbox from "./SelectListbox";
@@ -27,13 +28,13 @@ export default function PipeTable({
         <thead>
           <tr className="bg-slate-50 text-left text-ink-muted">
             <th scope="col" className="w-12 px-3 py-2.5 font-semibold">
-              管
+              {chromeText("pipeCol", lang)}
             </th>
             <th scope="col" className="px-3 py-2.5 font-semibold">
-              接头
+              {chromeText("pipeJoint", lang)}
             </th>
             <th scope="col" className="w-36 px-3 py-2.5 font-semibold">
-              管高 mm
+              {chromeText("pipeHeight", lang)}
             </th>
           </tr>
         </thead>

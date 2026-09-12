@@ -17,7 +17,7 @@ import {
   exportOrderSheet,
   hasWordExport,
   type ExportFormat,
-} from "@/lib/excel";
+} from "@/lib/exportClient";
 import { chromeText } from "@/lib/i18n";
 import { applyPreset, hydrateSheetValues, pendingPresetKey } from "@/lib/presets";
 import {
@@ -258,11 +258,6 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
                         </div>
                       ) : (
                         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                          {section.id === "oltc" && typeStr.compact ? (
-                            <div className="sm:col-span-2">
-                              <TypePlate compact={typeStr.compact} />
-                            </div>
-                          ) : null}
                           {fields.map((field) => {
                             if (field.key === "designer_phone") return null;
                             if (field.key === "designer_phone_cc") {
@@ -335,7 +330,7 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
               onClick={() => void handleExport()}
             >
               {exporting
-                ? "…"
+                ? chromeText("exporting", lang)
                 : exportFormat === "word"
                   ? chromeText("exportWord", lang)
                   : chromeText("exportExcel", lang)}

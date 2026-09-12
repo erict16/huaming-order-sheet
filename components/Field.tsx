@@ -108,7 +108,7 @@ function Control({
         onChange={onChange}
         placeholder={placeholder}
         lang={lang}
-        allowCustom={field.key === "designer_phone_cc"}
+        allowCustom={field.key === "designer_phone_cc" || field.key === "country"}
       />
     );
   }

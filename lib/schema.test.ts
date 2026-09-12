@@ -45,8 +45,9 @@ describe("orderFields", () => {
       const custom = allFields(sheet, { delivery_date: "custom" }).find(({ field }) => field.key === "delivery_date_custom");
       expect(custom?.field.type, sheet.id).toBe("date");
       const country = allFields(sheet, {}).find(({ field }) => field.key === "country")!.field;
-      expect(country.type, sheet.id).toBe("text");
+      expect(country.type, sheet.id).toBe("combobox");
       expect(country.required, sheet.id).toBe(true);
+      expect(country.options?.some((o) => o.value === "Vietnam"), sheet.id).toBe(true);
       const contact = sheet.steps.find((st) => st.id === "contact");
       expect(contact, sheet.id).toBeTruthy();
       const reviewIdx = sheet.steps.findIndex((st) => st.kind === "review");

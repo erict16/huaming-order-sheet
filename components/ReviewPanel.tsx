@@ -34,6 +34,9 @@ export default function ReviewPanel({
         <p className="mt-1 text-sm text-ink-soft">{chromeText("reviewLead", lang)}</p>
       </div>
       <div>
+        {rows.length === 0 ? (
+          <p className="px-4 py-6 text-sm text-ink-muted">{chromeText("reviewEmpty", lang)}</p>
+        ) : null}
         {rows.map(({ section, field }) => {
           const showHead = section.id !== last;
           last = section.id;

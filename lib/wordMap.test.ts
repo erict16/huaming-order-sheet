@@ -123,6 +123,35 @@ describe("oltcSdtValues", () => {
     expect(v[53]).toContain("LV 10.5 kV");
   });
 
+  it("writes H1–H4 / V1–V4 onto Word SDTs 78–85", () => {
+    const single = oltcSdtValues({
+      drive_shaft_horizontal_mm: "2000",
+      drive_shaft_vertical_mm: "1500",
+    });
+    expect(single[78]).toBe("2000");
+    expect(single[82]).toBe("1500");
+    const multi = oltcSdtValues({
+      drive_shaft_horizontal_mm: "2000",
+      drive_shaft_vertical_mm: "1500",
+      h1: "800",
+      h2: "1000",
+      h3: "1200",
+      h4: "1500",
+      v1: "800",
+      v2: "1000",
+      v3: "1200",
+      v4: "2000",
+    });
+    expect(multi[78]).toBe("800");
+    expect(multi[79]).toBe("1000");
+    expect(multi[80]).toBe("1200");
+    expect(multi[81]).toBe("1500");
+    expect(multi[82]).toBe("800");
+    expect(multi[83]).toBe("1000");
+    expect(multi[84]).toBe("1200");
+    expect(multi[85]).toBe("2000");
+  });
+
   it("keeps LV out of Word remarks on a two-winding transformer", () => {
     const v = oltcSdtValues({ hv_kv: "66", lv_kv: "11" });
     expect(v[19]).toBe("66");

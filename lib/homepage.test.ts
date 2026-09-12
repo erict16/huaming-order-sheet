@@ -14,6 +14,8 @@ describe("ice chrome", () => {
     expect(shell).toContain("bg-white");
     expect(shell).not.toContain("backdrop-blur");
     expect(shell).toContain('href="#main-content"');
+    expect(shell).toContain("skipToContent");
+    expect(shell).toContain("langSwitch");
     expect(picker).toContain("grid-cols-[4.75rem_repeat(2,minmax(0,1fr))_repeat(3,minmax(0,1fr))]");
     expect(picker).toContain('"CM"');
     expect(picker).toContain('"CV2"');
@@ -91,6 +93,9 @@ describe("i18n chrome", () => {
     expect(chromeText("appName", "en")).toBe("Order specifications");
     expect(chromeText("appNameShort", "en")).toBe("Order sheet");
     expect(chromeText("typePlate", "en")).toBe("Type designation");
+    expect(chromeText("skipToContent", "zh")).toMatch(/正文/);
+    expect(chromeText("oil", "ru")).toBe("Масло");
+    expect(chromeText("vacuum", "vi")).toBe("Chân không");
   });
 });
 

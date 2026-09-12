@@ -352,10 +352,16 @@ export function oltcSdtValues(values: OrderValues): Array<string | undefined> {
     set(76, "flange without valve ");
   }
 
-  const h = s(values.drive_shaft_horizontal_mm);
-  const v = s(values.drive_shaft_vertical_mm);
-  if (h) set(78, h);
-  if (v) set(82, v);
+  const h1 = s(values.h1) || s(values.drive_shaft_horizontal_mm);
+  const v1 = s(values.v1) || s(values.drive_shaft_vertical_mm);
+  if (h1) set(78, h1);
+  if (s(values.h2)) set(79, s(values.h2));
+  if (s(values.h3)) set(80, s(values.h3));
+  if (s(values.h4)) set(81, s(values.h4));
+  if (v1) set(82, v1);
+  if (s(values.v2)) set(83, s(values.v2));
+  if (s(values.v3)) set(84, s(values.v3));
+  if (s(values.v4)) set(85, s(values.v4));
 
   set(87, paintWord(values));
   set(88, s(values.corrosive_class));

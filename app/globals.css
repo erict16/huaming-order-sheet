@@ -8,7 +8,7 @@
 
 @layer base {
   body {
-    @apply bg-[#f4f6f8] text-ink antialiased;
+    @apply bg-[#f4f6f8] text-ink antialiased touch-manipulation;
   }
 
   h1, h2, h3 {

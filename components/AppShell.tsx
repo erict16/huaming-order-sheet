@@ -2,13 +2,10 @@
 
 import Link from "next/link";
 import { Radio, RadioGroup } from "@headlessui/react";
-import { L, LANGS, t } from "@/lib/copy";
+import { LANGS } from "@/lib/copy";
 import { chromeText } from "@/lib/i18n";
 import { useLang } from "@/lib/useLang";
 import type { Lang } from "@/lib/types";
-
-const SKIP_CONTENT = L("跳到正文", "Skip to content", "К содержимому", "Đến nội dung");
-const LANG_SWITCH = L("语言", "Language", "Язык", "Ngôn ngữ");
 
 export default function AppShell({
   children,
@@ -25,10 +22,10 @@ export default function AppShell({
         href="#main-content"
         className="absolute left-4 top-3 z-50 -translate-y-[160%] rounded-md bg-navy px-3 py-2 text-sm font-semibold text-white outline-none transition-transform duration-150 focus:translate-y-0 focus-visible:ring-2 focus-visible:ring-steel focus-visible:ring-offset-2"
       >
-        {t(SKIP_CONTENT, lang)}
+        {chromeText("skipToContent", lang)}
       </a>
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white text-navy">
-        <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-2 sm:px-6">
+        <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2 sm:px-6">
           <Link
             href="/"
             className="flex min-h-10 items-center gap-2.5 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-steel focus-visible:ring-offset-2"
@@ -57,7 +54,7 @@ export default function AppShell({
           <RadioGroup
             value={lang}
             onChange={(next: Lang) => setLang(next)}
-            aria-label={t(LANG_SWITCH, lang)}
+            aria-label={chromeText("langSwitch", lang)}
             className="ml-auto flex items-center gap-0.5 rounded-lg bg-slate-100 p-0.5 ring-1 ring-slate-200"
           >
             {LANGS.map((l) => (

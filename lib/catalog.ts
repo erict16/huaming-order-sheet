@@ -808,6 +808,34 @@ export const SIDE_OPTS = [
   opt("left", "机构在左侧", "MDU on the left", "Привод слева", "Cơ cấu bên trái"),
 ];
 
+/** Frequent Huaming markets. Combobox still accepts typed names. */
+export const COUNTRY_OPTS = [
+  opt("China", "中国", "China", "Китай", "Trung Quốc"),
+  opt("Vietnam", "越南", "Vietnam", "Вьетнам", "Việt Nam"),
+  opt("Indonesia", "印度尼西亚", "Indonesia", "Индонезия", "Indonesia"),
+  opt("Australia", "澳大利亚", "Australia", "Австралия", "Úc"),
+  opt("Thailand", "泰国", "Thailand", "Таиланд", "Thái Lan"),
+  opt("Cambodia", "柬埔寨", "Cambodia", "Камбоджа", "Campuchia"),
+  opt("India", "印度", "India", "Индия", "Ấn Độ"),
+  opt("Turkey", "土耳其", "Turkey", "Турция", "Thổ Nhĩ Kỳ"),
+  opt("Russia", "俄罗斯", "Russia", "Россия", "Nga"),
+  opt("Malaysia", "马来西亚", "Malaysia", "Малайзия", "Malaysia"),
+  opt("Singapore", "新加坡", "Singapore", "Сингапур", "Singapore"),
+  opt("Philippines", "菲律宾", "Philippines", "Филиппины", "Philippines"),
+  opt("Brazil", "巴西", "Brazil", "Бразилия", "Brazil"),
+  opt("UAE", "阿联酋", "UAE", "ОАЭ", "UAE"),
+  opt("Egypt", "埃及", "Egypt", "Египет", "Ai Cập"),
+  opt("South Africa", "南非", "South Africa", "ЮАР", "Nam Phi"),
+  opt("Bangladesh", "孟加拉", "Bangladesh", "Бангладеш", "Bangladesh"),
+  opt("Uzbekistan", "乌兹别克斯坦", "Uzbekistan", "Узбекистан", "Uzbekistan"),
+  opt("Kazakhstan", "哈萨克斯坦", "Kazakhstan", "Казахстан", "Kazakhstan"),
+  opt("New Zealand", "新西兰", "New Zealand", "Новая Зеландия", "New Zealand"),
+  opt("United Kingdom", "英国", "United Kingdom", "Великобритания", "Anh"),
+  opt("Germany", "德国", "Germany", "Германия", "Đức"),
+  opt("Italy", "意大利", "Italy", "Италия", "Ý"),
+  opt("USA", "美国", "USA", "США", "Mỹ"),
+];
+
 /** Frequent Huaming markets first, then other common calling codes. */
 export const COUNTRY_CODE_OPTS = [
   opt("+86", "+86"),

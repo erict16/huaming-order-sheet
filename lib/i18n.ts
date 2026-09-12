@@ -58,6 +58,13 @@ export const chrome = {
   noFamily: L("先选系列", "Pick a family first", "Сначала выберите серию", "Chọn họ máy trước"),
   oil: L("油浸", "Oil", "Масло", "Dầu"),
   vacuum: L("真空", "Vacuum", "Вакуум", "Chân không"),
+  skipToContent: L("跳到正文", "Skip to content", "К содержимому", "Đến nội dung"),
+  langSwitch: L("语言", "Language", "Язык", "Ngôn ngữ"),
+  pipeCol: L("管", "Pipe", "Труба", "Ống"),
+  pipeJoint: L("接头", "Joint", "Соединение", "Khớp"),
+  pipeHeight: L("管高 mm", "Height mm", "Высота мм", "Cao mm"),
+  notFoundTitle: L("未找到该订货单", "This order sheet was not found", "Бланк не найден", "Không tìm thấy phiếu"),
+  notFoundLead: L("链接不对，或这张单还不在网页里。", "The link is wrong, or this sheet is not in the app.", "Неверная ссылка или бланка нет в приложении.", "Sai liên kết, hoặc phiếu này chưa có trên web."),
 } satisfies Record<string, I18nText>;
 
 export type ChromeKey = keyof typeof chrome;
