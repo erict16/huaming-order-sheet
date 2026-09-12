@@ -147,6 +147,14 @@ function shmDDocsLang(v: string): string | undefined {
   return undefined;
 }
 
+/** Sheet1 H77. Official ku 资料 A224–A229 / Data Source B27–B32. No Chinese. */
+function cma7DocsLang(v: string): string | undefined {
+  if (v === "en") return "English";
+  if (v === "ru") return "Russian";
+  if (v === "pt") return "Portuguese";
+  return undefined;
+}
+
 function paintOs(values: OrderValues): string | undefined {
   const paint = s(values.paint);
   if (paint === "other") return s(values.paint_other) || undefined;
@@ -851,6 +859,7 @@ export function cma7Cells(values: OrderValues): CellWrites {
   set(out, "Z14", s(values.destination_port));
   set(out, "H75", paintOsStd(values));
   set(out, "H76", corrosiveOsStd(s(values.corrosive_class)));
+  set(out, "H77", cma7DocsLang(s(values.nameplate_language)));
   set(out, "H78", quantityValue(values));
   set(out, "H79", nameplateOs(s(values.nameplate_language)));
   const ohm3 = s(values.resistor_ohm_3);

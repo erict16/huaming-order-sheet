@@ -457,6 +457,17 @@ describe("cma7Cells", () => {
     expect(cma7Cells({ corrosive_class: "C5-M" }).H76).toBe("C5-M-std.");
     expect(cma7Cells({ corrosive_class: "none" }).H76).toBeUndefined();
   });
+
+  it("writes leftover docs language onto H77 using official 资料 strings", () => {
+    expect(cma7Cells({ nameplate_language: "en" }).H77).toBe("English");
+    expect(cma7Cells({ nameplate_language: "en" }).H79).toBe("English");
+    expect(cma7Cells({ nameplate_language: "pt" }).H77).toBe("Portuguese");
+    expect(cma7Cells({ nameplate_language: "ru" }).H77).toBe("Russian");
+    expect(cma7Cells({ nameplate_language: "zh" }).H77).toBeUndefined();
+    expect(cma7Cells({ nameplate_language: "zh" }).H79).toBe("Chinese");
+    expect(cma7Cells({ nameplate_language: "vi" }).H77).toBeUndefined();
+    expect(cma7Cells({}).H77).toBeUndefined();
+  });
 });
 
 describe("shmDCells", () => {

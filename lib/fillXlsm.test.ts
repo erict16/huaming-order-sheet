@@ -85,6 +85,8 @@ describe("fillWorkbook official templates", () => {
     expect(existsSync(file), file).toBe(true);
     const buf = readFileSync(file);
     expect(hasVbaProject(buf)).toBe(true);
+    const blank = XLSX.read(buf, { type: "array", bookVBA: true }).Sheets.Sheet1;
+    expect(blank.A77?.v).toBe("Language of documentation");
     const out = fillWorkbook(
       buf,
       cma7Cells({
@@ -105,8 +107,10 @@ describe("fillWorkbook official templates", () => {
         avr_model: "hmc3c_air",
         avr_cable_m: "50",
         padlock: "yes",
+        nameplate_language: "pt",
       }),
     );
+    expect(hasVbaProject(out)).toBe(true);
     const ws = XLSX.read(out, { type: "array", bookVBA: true }).Sheets.Sheet1;
     expect(ws.H16?.v).toBe("CMA7");
     expect(ws.H20?.v).toBe("1. Three-phase motor_3ACN");
@@ -126,6 +130,7 @@ describe("fillWorkbook official templates", () => {
     expect(ws.V67?.v).toBe(50);
     expect(ws.AB66?.f).toMatch(/CEILING\(V66/);
     expect(ws.H73?.v).toBe("With");
+    expect(ws.H77?.v).toBe("Portuguese");
     expect(String(ws.D83?.v)).toContain("CM2III-500Y/72.5B-18353W");
     expect(ws.A83?.v).toBe("Remark");
   });
