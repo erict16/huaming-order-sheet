@@ -14,7 +14,7 @@ export const EARTH_INSULATION: Record<number, { pf: number; bil: number }> = {
   363: { pf: 510, bil: 1175 },
 };
 
-export const UM_UN_HINT: Record<number, string> = {
+const UM_UN_HINT: Record<number, string> = {
   12: "10 kV",
   17.5: "15 kV",
   40.5: "33 kV",
@@ -27,18 +27,7 @@ export const UM_UN_HINT: Record<number, string> = {
   363: "330 kV",
 };
 
-export const UM_KV = [12, 17.5, 40.5, 72.5, 126, 145, 170, 252, 300, 363] as const;
-
-export const SELECTOR_SIZES_BY_UM: Record<number, string[]> = {
-  40.5: ["B", "C"],
-  72.5: ["B", "C", "D", "DE"],
-  126: ["B", "C", "D", "DE"],
-  145: ["C", "D", "DE"],
-  170: ["B", "C", "D", "DE"],
-  252: ["C", "D", "DE"],
-  300: ["DE"],
-  363: ["DE"],
-};
+const UM_KV = [12, 17.5, 40.5, 72.5, 126, 145, 170, 252, 300, 363] as const;
 
 export function defaultSelectorGrade(um: number): string {
   if (!um) return "";
@@ -468,11 +457,6 @@ export const RELAY_OPTS = [
     "QJ6-25 с канавкой",
     "QJ6-25 có rãnh",
   ),
-];
-
-export const GROOVE_OPTS = [
-  opt("with", "法兰带槽", "With groove", "С канавкой", "Có rãnh"),
-  opt("without", "法兰不带槽", "Without groove", "Без канавки", "Không rãnh"),
 ];
 
 export const POTENTIAL_OPTS = [

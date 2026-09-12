@@ -45,7 +45,7 @@ function ownTextNodes(sdt: XmlEl): XmlEl[] {
   return texts;
 }
 
-export function setSdtTexts(xml: string, values: Array<string | undefined>): string {
+function setSdtTexts(xml: string, values: Array<string | undefined>): string {
   const doc = new DOMParser().parseFromString(xml, "application/xml");
   const root = doc.documentElement;
   if (!root) return xml;
@@ -78,7 +78,7 @@ function setBoxVal(box: XmlEl, name: string, on: boolean) {
 }
 
 /** Official OLTC Word OS uses 40 legacy FORMCHECKBOX fields (`w:checked`). */
-export function setLegacyCheckboxes(xml: string, checks: Array<boolean | undefined | null>): string {
+function setLegacyCheckboxes(xml: string, checks: Array<boolean | undefined | null>): string {
   const doc = new DOMParser().parseFromString(xml, "application/xml");
   const root = doc.documentElement;
   if (!root) return xml;

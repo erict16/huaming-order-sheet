@@ -23,7 +23,7 @@ const PITCHES = [10, 12, 14, 16, 18] as const;
  * ═══════════════════════════════════════════════════════════
  */
 
-export type TapGeometry = {
+type TapGeometry = {
   plusMinus: number;
   pitch: number;
   positions: number;
@@ -76,7 +76,7 @@ function diagramsFor(regulation: Regulation): TapGeometry[] {
 }
 
 /** Preferred mid for ±N when user only picks steps (commercial default). */
-export function preferredMid(n: number, regulation: Regulation): 1 | 3 {
+function preferredMid(n: number, regulation: Regulation): 1 | 3 {
   const rows = diagramsFor(regulation).filter((d) => d.plusMinus === n);
   if (!rows.length) return n % 2 === 0 ? 3 : 1;
   // Prefer mid=3 commercial rows when both exist (±8 W has mid1 and mid3)
@@ -86,7 +86,7 @@ export function preferredMid(n: number, regulation: Regulation): 1 | 3 {
 }
 
 /** Look up brochure geometry for (±N, mid). */
-export function lookupDiagram(
+function lookupDiagram(
   n: number,
   mid: 1 | 3,
   regulation: Regulation,
@@ -104,20 +104,20 @@ export function lookupDiagram(
  *   mid1, N≤8: pitch = 2N + 2
  *   mid1, N≥9: pitch = N + 1
  */
-export function pitchFor(n: number, mid: 1 | 3): number {
+function pitchFor(n: number, mid: 1 | 3): number {
   if (mid === 3) return n + 2;
   if (n <= 8) return 2 * n + 2;
   return n + 1;
 }
 
 /** P = 2N + mid — the fundamental relation. */
-export function positionsFor(n: number, mid: 1 | 3 | 0): number {
+function positionsFor(n: number, mid: 1 | 3 | 0): number {
   if (mid === 0) return n; // linear: treat n as position count helper
   return 2 * n + mid;
 }
 
 /** Valid mid choices for a given ±N (empty if N not in brochure for that reg). */
-export function midOptionsFor(
+function midOptionsFor(
   n: number,
   regulation: Regulation,
 ): Array<1 | 3> {
@@ -140,54 +140,12 @@ export const PM_STEP_OPTIONS_G = [
   8, 9, 10, 11, 12, 13, 14, 15, 16, 17,
 ] as const;
 
-export const PM_STEP_OPTIONS = PM_STEP_OPTIONS_W;
-
-export function pmStepOptionsFor(regulation: Regulation): readonly number[] {
-  if (regulation === "coarse_fine") return PM_STEP_OPTIONS_G;
-  if (regulation === "reversing") return PM_STEP_OPTIONS_W;
-  return [];
-}
-
-/**
- * Default geometry when user only gives ±N (mid = brochure preferred).
- * Kept as PM_TAP_MAP for callers that key by N alone.
- */
-export const PM_TAP_MAP: Record<
-  number,
-  { pitch: number; positions: number; mid: 0 | 1 | 3 }
-> = Object.fromEntries(
-  PM_STEP_OPTIONS_W.map((n) => {
-    const mid = preferredMid(n, "reversing");
-    const row = lookupDiagram(n, mid, "reversing")!;
-    return [n, { pitch: row.pitch, positions: row.positions, mid: row.mid }];
-  }),
-);
-
-export function positionsFromPlusMinus(n: number, mid?: 1 | 3): number {
-  if (n <= 0) return 0;
-  const m = mid ?? preferredMid(n, "reversing");
-  const row = lookupDiagram(n, m, "reversing");
-  if (row) return row.positions;
-  return positionsFor(n, m);
-}
-
-export function midFromPlusMinus(n: number): 0 | 1 | 3 {
-  return preferredMid(n, "reversing");
-}
-
-export function pitchFromPlusMinus(n: number, mid?: 1 | 3): number {
-  const m = mid ?? preferredMid(n, "reversing");
-  const row = lookupDiagram(n, m, "reversing");
-  if (row) return row.pitch;
-  return pitchFor(n, m);
-}
-
 /**
  * Reverse: positions → preferred ±N.
  * Prefer mid=3 commercial rows when two N share the same position count
  * (e.g. 19 → ±8 / 10193 over ±9 / 10191).
  */
-export function plusMinusFromPositions(
+function plusMinusFromPositions(
   positions: number,
   regulation: Regulation,
 ): number | null {
@@ -198,7 +156,7 @@ export function plusMinusFromPositions(
   return (mid3 ?? rows[0])!.plusMinus;
 }
 
-export function defaultPitch(positions: number, regulation: Regulation): number {
+function defaultPitch(positions: number, regulation: Regulation): number {
   if (regulation === "linear") {
     if (positions <= 10) return 10;
     if (positions <= 12) return 12;
@@ -222,7 +180,7 @@ export function defaultPitch(positions: number, regulation: Regulation): number 
   return 18;
 }
 
-export function defaultMid(
+function defaultMid(
   positions: number,
   regulation: Regulation,
 ): 0 | 1 | 3 {
@@ -241,13 +199,13 @@ export function defaultMid(
   return 1;
 }
 
-export function changeOverOf(regulation: Regulation): ChangeOver {
+function changeOverOf(regulation: Regulation): ChangeOver {
   if (regulation === "linear") return "0";
   if (regulation === "reversing") return "W";
   return "G";
 }
 
-export function buildTapCode(opts: {
+function buildTapCode(opts: {
   pitch: number;
   positions: number;
   mid: 0 | 1 | 3;
@@ -365,20 +323,3 @@ export function resolveTapFields(input: {
     changeOver: changeOverOf(reg),
   };
 }
-
-/** Well-known codes for tests / quick picks */
-export const COMMON_TAP_CODES = [
-  { code: "10070", label: "7 pos linear" },
-  { code: "10091W", label: "±4 reversing mid1" },
-  { code: "18171W", label: "±8 reversing mid1" },
-  { code: "10191W", label: "±9 reversing mid1" },
-  { code: "10193W", label: "±8 reversing mid3 (most common)" },
-  { code: "12233W", label: "±10 reversing mid3" },
-  { code: "14271W", label: "±13 reversing mid1" },
-  { code: "14273W", label: "±12 reversing mid3" },
-  { code: "18353W", label: "±16 reversing mid3" },
-  { code: "10191G", label: "±9 coarse-fine mid1" },
-  { code: "10193G", label: "±8 coarse-fine mid3 (most common G)" },
-  { code: "12233G", label: "±10 coarse-fine mid3" },
-  { code: "18353G", label: "±16 coarse-fine mid3" },
-] as const;

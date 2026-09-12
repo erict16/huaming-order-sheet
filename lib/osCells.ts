@@ -2,7 +2,7 @@ import { operatingDesignation } from "./positions";
 import { typeFromValues } from "./typeString";
 import type { OrderValues } from "./types";
 
-export type CellValue = string | number;
+type CellValue = string | number;
 export type CellWrites = Record<string, CellValue>;
 
 function s(v: string | undefined): string {

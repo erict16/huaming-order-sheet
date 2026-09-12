@@ -14,11 +14,11 @@ import { dryCheckValues, drySdtValues } from "./dryMap";
 import { oltcCheckValues, oltcSdtValues, WORD_TEMPLATE } from "./wordMap";
 
 export const APP_VERSION = "1.2.2";
-export const SCHEMA_VERSION = "3";
+const SCHEMA_VERSION = "3";
 
 export type ExportFormat = "word" | "excel";
 
-export type ExportPlan =
+type ExportPlan =
   | { kind: "word"; file: string; mime: string }
   | { kind: "xlsm"; file: string }
   | { kind: "xlsx" };
@@ -34,7 +34,7 @@ function fileStem(sheet: SheetDef, values: OrderValues): string {
   return `${stem}_${ref}`.replace(/[^A-Za-z0-9._×x+-]+/g, "-");
 }
 
-export function templateUrl(file: string): string {
+function templateUrl(file: string): string {
   const base = (process.env.NEXT_PUBLIC_BASE_PATH || "").replace(/\/$/, "");
   return `${base}/templates/${file}`;
 }
@@ -57,7 +57,7 @@ export function resolveExportPlan(sheet: SheetDef, format: ExportFormat): Export
   return { kind: "xlsx" };
 }
 
-export function buildWorkbook(sheet: SheetDef, values: OrderValues): XLSX.WorkBook {
+function buildWorkbook(sheet: SheetDef, values: OrderValues): XLSX.WorkBook {
   const { spaced, compact } = typeFromValues(sheet.id, values);
 
   const readable: (string | number)[][] = [[

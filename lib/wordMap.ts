@@ -151,7 +151,7 @@ function rangeRight(values: OrderValues): string | undefined {
   return undefined;
 }
 
-export const OLTC_CHECKBOX_COUNT = 40;
+const OLTC_CHECKBOX_COUNT = 40;
 
 /**
  * Legacy FORMCHECKBOX order in oltc-order-sheet.docx (40 boxes).
