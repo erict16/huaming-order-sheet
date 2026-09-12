@@ -1,9 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { LANGS } from "@/lib/copy";
+import { Radio, RadioGroup } from "@headlessui/react";
+import { L, LANGS, t } from "@/lib/copy";
 import { chromeText } from "@/lib/i18n";
 import { useLang } from "@/lib/useLang";
+import type { Lang } from "@/lib/types";
+
+const SKIP_CONTENT = L("跳到正文", "Skip to content", "К содержимому", "Đến nội dung");
+const LANG_SWITCH = L("语言", "Language", "Язык", "Ngôn ngữ");
 
 export default function AppShell({
   children,
@@ -16,9 +21,18 @@ export default function AppShell({
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 text-navy backdrop-blur-md">
-        <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-2.5 sm:px-6">
-          <Link href="/" className="flex items-center gap-2.5">
+      <a
+        href="#main-content"
+        className="absolute left-4 top-3 z-50 -translate-y-[160%] rounded-md bg-navy px-3 py-2 text-sm font-semibold text-white outline-none transition-transform duration-150 focus:translate-y-0 focus-visible:ring-2 focus-visible:ring-steel focus-visible:ring-offset-2"
+      >
+        {t(SKIP_CONTENT, lang)}
+      </a>
+      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white text-navy">
+        <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-2 sm:px-6">
+          <Link
+            href="/"
+            className="flex min-h-10 items-center gap-2.5 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-steel focus-visible:ring-offset-2"
+          >
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-navy-50 ring-1 ring-navy/15">
               <span className="text-sm font-black leading-none tracking-tighter text-navy">HM</span>
             </div>
@@ -34,29 +48,33 @@ export default function AppShell({
           {back ? (
             <Link
               href="/"
-              className="ml-1 rounded-full bg-navy-50 px-3 py-1 text-xs font-medium text-navy ring-1 ring-navy/10 hover:bg-navy-100"
+              className="ml-1 inline-flex min-h-10 items-center rounded-md bg-navy-50 px-3 text-xs font-medium text-navy ring-1 ring-navy/10 transition-colors duration-150 hover:bg-navy-100 active:translate-y-px focus:outline-none focus-visible:ring-2 focus-visible:ring-steel focus-visible:ring-offset-2"
             >
               {chromeText("backHome", lang)}
             </Link>
           ) : null}
 
-          <div className="ml-auto flex items-center gap-0.5 rounded-full bg-slate-100 p-0.5 ring-1 ring-slate-200/80">
+          <RadioGroup
+            value={lang}
+            onChange={(next: Lang) => setLang(next)}
+            aria-label={t(LANG_SWITCH, lang)}
+            className="ml-auto flex items-center gap-0.5 rounded-lg bg-slate-100 p-0.5 ring-1 ring-slate-200"
+          >
             {LANGS.map((l) => (
-              <button
+              <Radio
                 key={l.id}
-                type="button"
-                onClick={() => setLang(l.id)}
-                className={`rounded-full px-2.5 py-1 text-xs font-semibold transition duration-150 active:translate-y-px ${
-                  lang === l.id ? "bg-white text-navy shadow-sm" : "text-ink-muted hover:text-navy"
-                }`}
+                value={l.id}
+                className="inline-flex min-h-10 min-w-10 cursor-pointer items-center justify-center rounded-md px-2.5 text-xs font-semibold text-ink-muted transition-colors duration-150 active:translate-y-px data-[checked]:bg-white data-[checked]:text-navy data-[checked]:shadow-sm data-[hover]:text-navy focus:outline-none data-[focus]:outline-2 data-[focus]:outline-offset-2 data-[focus]:outline-steel"
               >
                 {l.label}
-              </button>
+              </Radio>
             ))}
-          </div>
+          </RadioGroup>
         </div>
       </header>
-      <div className="flex-1">{children}</div>
+      <main id="main-content" tabIndex={-1} className="flex-1 scroll-mt-16 outline-none">
+        {children}
+      </main>
       <footer className="no-print border-t border-slate-200 bg-white">
         <div className="mx-auto max-w-3xl px-4 py-5 text-xs text-ink-muted sm:px-6">
           {chromeText("footer", lang)}
