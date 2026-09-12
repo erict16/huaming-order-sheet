@@ -31,8 +31,10 @@ export function composeOltcSpaced(p: TypeParts): string {
 
 export function composeOltcCompact(p: TypeParts): string {
   if (!p.family) return "";
+  const n = Number(p.unitCount || "1");
+  const prefix = n > 1 ? `${n}×` : "";
   const grade = gradeToken(p.family, p.selectorGrade);
-  const head = `${p.family}${p.phases || ""}`;
+  const head = `${prefix}${p.family}${p.phases || ""}`;
   const mid = `${p.currentA || ""}${p.connection || ""}`;
   const um = `${p.umKv || ""}${grade}`;
   let s = head;

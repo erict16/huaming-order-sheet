@@ -93,6 +93,7 @@ function valuesFromRow(row: OsReplayRow): OrderValues {
     oltc_current_a: p.currentA,
     oltc_um_kv: p.umKv,
   };
+  if (p.unitCount) patch.unit_count = p.unitCount;
   if (p.connection) patch.oltc_connection = p.connection;
   if (p.selectorGrade) patch.oltc_selector_grade = p.selectorGrade;
   const tap = tapPatch(p.tail);

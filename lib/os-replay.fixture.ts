@@ -240,7 +240,6 @@ export const OS_REPLAY: OsReplayRow[] = [
     sheet: "oltc",
     family: "SHZV",
     type: "3×SHZVI-2400Y-72.5D-10193W",
-    skip: "shzv-3x-i",
   },
   {
     id: "wilson-cv2-600d",
@@ -277,6 +276,7 @@ export const MUST_COMPOSE: readonly string[] = [
   "SHZVIII-1000Y/126D-10193W",
   "SHZVGIII-1500Y/72.5C-10193W",
   "CM2III-500Y/72.5B-18353W",
+  "3×SHZVI-2400Y/72.5D-10193W",
   "3×CZI-500/40.5-17",
   "3×CZI-500/40.5-9",
   "SVIII-500D/40.5",
