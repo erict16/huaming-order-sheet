@@ -131,24 +131,22 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="text-sm text-ink-muted">{t(sheet.meta.tag, lang)}</p>
-          <h1 className="mt-0.5 text-2xl font-semibold text-navy">{t(sheet.meta.title, lang)}</h1>
-        </div>
-        <p className="text-sm text-ink-muted">
+      <div className="text-center">
+        <p className="text-sm text-ink-muted">{t(sheet.meta.tag, lang)}</p>
+        <h1 className="mt-1 text-[1.75rem] font-semibold leading-tight text-navy sm:text-[2rem]">{t(sheet.meta.title, lang)}</h1>
+        <p className="mt-2 text-sm text-ink-muted">
           {step + 1}/{sheet.steps.length} {t(current.title, lang)}
         </p>
       </div>
 
-      <nav className="mt-5 flex items-center gap-1" aria-label={chromeText("stepOf", lang, { n: step + 1, total: sheet.steps.length })}>
+      <nav className="mt-5 flex items-center justify-center gap-1.5" aria-label={chromeText("stepOf", lang, { n: step + 1, total: sheet.steps.length })}>
         {sheet.steps.map((s, i) => (
           <button
             key={s.id}
             type="button"
             onClick={() => go(i)}
             title={t(s.title, lang)}
-            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition duration-150 active:translate-y-px ${
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold transition duration-150 active:translate-y-px ${
               i === step
                 ? "bg-navy text-white"
                 : i < step

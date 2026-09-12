@@ -14,7 +14,7 @@ import {
   POS_TX_OPTS,
   VECTOR_GROUP_OPTS,
 } from "./catalog";
-import { SHEETS, allFields, getSheet } from "./schema";
+import { SHEETS, allFields, getSheet, resolveFieldOptions } from "./schema";
 
 describe("orderFields", () => {
   it("keeps 报价单号 on the order step and contact at the last step before review", () => {
@@ -63,6 +63,14 @@ describe("orderFields", () => {
     const oltcKeys = allFields(getSheet("oltc")!, {}).map(({ field }) => field.key);
     expect(oltcKeys).toContain("mv_kv");
     expect(oltcKeys).toContain("vector_group");
+    expect(oltcKeys).toContain("oltc_side");
+    expect(oltcKeys).not.toContain("oltc_on_kv");
+    expect(allFields(getSheet("oltc")!, { ambient_band: "other" }).map(({ field }) => field.key)).toEqual(
+      expect.arrayContaining(["ambient_min", "ambient_max"]),
+    );
+    const side = allFields(getSheet("oltc")!, {}).find(({ field }) => field.key === "oltc_side")!.field;
+    expect(resolveFieldOptions(side, { mv_kv: "22" }).options?.map((o) => o.value)).toContain("mv");
+    expect(resolveFieldOptions(side, {}).options?.map((o) => o.value)).toEqual(["hv", "lv"]);
   });
 
   it("exposes winding data, supporting flange and regulation location on the OLTC sheet", () => {

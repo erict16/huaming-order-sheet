@@ -67,6 +67,18 @@ describe("deriveValues", () => {
     expect(sym.tap_code).toBe("10193W");
   });
 
+  it("sets oltc_on_kv from HV/LV side tabs", () => {
+    const hv = deriveValues({}, { oltc_side: "hv", hv_kv: "66", lv_kv: "11" });
+    expect(hv.oltc_on_kv).toBe("66");
+    const lv = deriveValues(hv, { oltc_side: "lv" });
+    expect(lv.oltc_on_kv).toBe("11");
+  });
+
+  it("composes other ambient as −min～+max ℃", () => {
+    const v = deriveValues({ ambient_band: "other" }, { ambient_min: "25", ambient_max: "50" });
+    expect(v.ambient_temp).toBe("−25～+50 ℃");
+  });
+
   it("composes ±N × % per step when the range is symmetric", () => {
     const v = deriveValues(
       { range_shape: "symmetric", plus_minus: "9" },

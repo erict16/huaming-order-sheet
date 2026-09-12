@@ -635,6 +635,12 @@ export const OLTC_AMBIENT_OPTS = [
   opt("other", "其他", "Other", "Другое", "Khác"),
 ];
 
+export const OLTC_SIDE_OPTS = [
+  opt("hv", "高压侧", "HV side", "Сторона ВН", "Phía cao"),
+  opt("lv", "低压侧", "LV side", "Сторона НН", "Phía hạ"),
+  opt("mv", "中压侧", "MV side", "Сторона СН", "Phía trung"),
+];
+
 export const INS_FILL_OPTS = [
   opt("catalog", "按技术数据 / 目录值", "In accordance with technical data", "По техническим данным", "Theo số liệu kỹ thuật"),
   opt("provided", "下面另填", "Provided as below", "Указать ниже", "Điền bên dưới"),

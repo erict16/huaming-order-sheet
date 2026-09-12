@@ -22,7 +22,7 @@
   }
 
   .field-control {
-    @apply w-full rounded-lg bg-white px-3.5 py-2.5 text-[15px] text-ink shadow-sm
+    @apply w-full rounded-lg bg-white px-3.5 py-3 text-base text-ink shadow-sm
       outline outline-1 -outline-offset-1 outline-slate-300 transition
       placeholder:text-slate-400
       hover:outline-slate-400

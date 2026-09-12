@@ -36,6 +36,7 @@ export interface FieldDef {
   placeholder?: I18nText;
   required?: boolean;
   span?: 1 | 2;
+  prefix?: string;
   applies?: (values: OrderValues) => boolean;
 }
 
