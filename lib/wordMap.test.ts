@@ -64,6 +64,21 @@ describe("oltcSdtValues", () => {
     expect(oltcSdtValues({ paint: "other" })[87]).toBeUndefined();
   });
 
+  it("maps SHZVG into Word family head and row", () => {
+    const v = oltcSdtValues({
+      family: "SHZVG",
+      phases: "III",
+      oltc_current_a: "1500",
+      oltc_um_kv: "72.5",
+      oltc_connection: "Y",
+      oltc_selector_grade: "C",
+      tap_code: "10193W",
+    });
+    expect(v[6]).toBe("SHZVG(Vacuum)");
+    expect(v[55]).toBe("SHZVG");
+    expect(oltcSdtValues({ family: "SHZV" })[6]).toBe("SHZV(Vacuum）");
+  });
+
   it("does not write 报价单号 over the Revision 00 SDT", () => {
     const v = oltcSdtValues({ order_no: "HM-Q-2026-001", designer_name: "Li" });
     expect(v[0]).toBe("Li");
