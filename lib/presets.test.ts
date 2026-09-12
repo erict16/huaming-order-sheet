@@ -112,11 +112,22 @@ describe("ORDER_PRESETS", () => {
   });
 
   it("omits buyer/designer contact fields from every preset", () => {
+    const blankAfterApply = [
+      "designer_name",
+      "designer_phone",
+      "designer_phone_cc",
+      "designer_email",
+      "buyer",
+      "end_user",
+    ] as const;
     for (const preset of ORDER_PRESETS) {
       for (const key of PRESET_CONTACT_KEYS) {
         expect(preset.values[key], `${preset.id}.${key}`).toBeUndefined();
       }
       const applied = applyPreset(preset);
+      for (const key of blankAfterApply) {
+        expect(applied[key], `applied ${preset.id}.${key}`).toBe("");
+      }
       for (const key of PRESET_CONTACT_KEYS) {
         expect(applied[key], `applied ${preset.id}.${key}`).toBe("");
       }
@@ -126,20 +137,66 @@ describe("ORDER_PRESETS", () => {
     }
   });
 
+  it("applyPreset blanks a salesperson card even if the starter object carries one", () => {
+    const base = getPreset("mee-tienyen-cv2")!;
+    const dirty = {
+      ...base,
+      values: {
+        ...base.values,
+        designer_name: "Alice",
+        designer_phone: "13800138000",
+        designer_phone_cc: "+86",
+        designer_email: "alice@huaming.com",
+        buyer: "Old Buyer",
+        end_user: "Old End",
+      },
+    };
+    const applied = applyPreset(dirty);
+    expect(applied.project).toBe("EVN Tiên Yên");
+    expect(applied.designer_name).toBe("");
+    expect(applied.designer_phone).toBe("");
+    expect(applied.designer_phone_cc).toBe("");
+    expect(applied.designer_email).toBe("");
+    expect(applied.buyer).toBe("");
+    expect(applied.end_user).toBe("");
+  });
+
   it("hydrates ?preset= over stored drafts and still omits contact fields", () => {
-    const next = hydrateSheetValues(
-      "oltc",
-      "?preset=mee-tienyen-cv2",
-      { designer_phone_cc: "+86", designer_phone: "13800138000", buyer: "Old" },
-    );
+    const stored = {
+      designer_name: "Old Designer",
+      designer_phone: "13800138000",
+      designer_phone_cc: "+86",
+      designer_email: "old@example.com",
+      buyer: "Old Buyer",
+      end_user: "Old End",
+    };
+    const next = hydrateSheetValues("oltc", "?preset=mee-tienyen-cv2", stored);
     expect(next.project).toBe("EVN Tiên Yên");
     expect(next.country).toBe("Vietnam");
     expect(next.family).toBe("CV2");
     expect(next.oltc_current_a).toBe("350");
     expect(next.tap_code).toBe("10191W");
+    expect(next.designer_name).toBe("");
     expect(next.designer_phone_cc).toBe("");
     expect(next.designer_phone).toBe("");
+    expect(next.designer_email).toBe("");
     expect(next.buyer).toBe("");
+    expect(next.end_user).toBe("");
+
+    for (const preset of ORDER_PRESETS) {
+      const applied = hydrateSheetValues(preset.sheetId, `?preset=${preset.id}`, stored);
+      expect(applied.designer_name, preset.id).toBe("");
+      expect(applied.designer_phone, preset.id).toBe("");
+      expect(applied.designer_phone_cc, preset.id).toBe("");
+      expect(applied.designer_email, preset.id).toBe("");
+      expect(applied.buyer, preset.id).toBe("");
+      expect(applied.end_user, preset.id).toBe("");
+    }
+
+    const kept = hydrateSheetValues("oltc", "", stored);
+    expect(kept.designer_name).toBe("Old Designer");
+    expect(kept.buyer).toBe("Old Buyer");
+    expect(kept.end_user).toBe("Old End");
   });
 });
 

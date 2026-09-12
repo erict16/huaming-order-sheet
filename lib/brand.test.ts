@@ -18,3 +18,13 @@ describe("official Huaming HM favicons", () => {
     expect(readFileSync(path.join(brand, "apple-touch-icon.png")).length).toBe(3933);
   });
 });
+
+describe("Huaming OEM palette", () => {
+  it("keeps navy #00428C and steel #0071A9 in tailwind", () => {
+    const tw = readFileSync(path.join(process.cwd(), "tailwind.config.ts"), "utf8");
+    expect(tw).toContain("#00428C");
+    expect(tw).toContain("#0071A9");
+    expect(tw).toMatch(/navy[\s\S]*DEFAULT:\s*"#00428C"/);
+    expect(tw).toMatch(/steel[\s\S]*DEFAULT:\s*"#0071A9"/);
+  });
+});

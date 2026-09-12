@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { SHEETS } from "./schema";
 
 describe("ice chrome", () => {
   it("keeps a light header and an oil/vacuum family catalog", () => {
@@ -31,5 +32,14 @@ describe("homepage starters", () => {
     expect(picker).not.toMatch(/<details[^>]*\sopen/);
     expect(picker).toContain("sheetId");
     expect(picker).toContain("p.sheetId === sheetId");
+  });
+
+  it("lists all 6 sheets (oltc, hwv, octc, dry, cma7, shm-d)", () => {
+    const home = readFileSync(path.join(process.cwd(), "components/HomePage.tsx"), "utf8");
+    expect(home).toContain("SHEETS.map");
+    expect(home).toContain("`/sheet/${sheet.id}/`");
+    const ids = SHEETS.map((s) => s.id);
+    expect(ids).toHaveLength(6);
+    expect(ids).toEqual(expect.arrayContaining(["oltc", "hwv", "octc", "dry", "cma7", "shm-d"]));
   });
 });
