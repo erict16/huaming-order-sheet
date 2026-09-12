@@ -336,6 +336,20 @@ function rainCoverOs(v: string): string | undefined {
   return undefined;
 }
 
+function kvaNumber(values: OrderValues): number | undefined {
+  const mva = n(values.rated_power_mva);
+  if (mva == null) return undefined;
+  return mva * 1000;
+}
+
+/** Sheet1 H25. Official `2. - ( ) ~+( ) steps`. */
+function asymmetricStepsOs(values: OrderValues): string | undefined {
+  const minus = s(values.range_minus);
+  const plus = s(values.range_plus);
+  if (!minus && !plus) return undefined;
+  return `2. - ( ${minus} ) ~+( ${plus} ) steps`;
+}
+
 const SHAFTS = [800, 1000, 1200, 1500, 2000] as const;
 const SHAFT_H_KEYS = ["h1", "h2", "h3", "h4"] as const;
 const SHAFT_V_KEYS = ["v1", "v2", "v3", "v4"] as const;
@@ -506,8 +520,14 @@ export function oltcCells(values: OrderValues): CellWrites {
   set(out, "H26", fluxOs(s(values.flux)));
   set(out, "H27", tapWindingOs(s(values.tap_winding)));
 
-  const mva = n(values.rated_power_mva);
-  if (mva != null) set(out, "I21", mva * 1000);
+  const kva = kvaNumber(values);
+  // Sheet1 H21 constant kVA; decreasing → S21 kVA / AB21 from-position. ku A95–A96.
+  if (s(values.capacity_mode) === "decreasing") {
+    set(out, "S21", kva);
+    set(out, "AB21", s(values.capacity_from_pos));
+  } else if (kva != null) {
+    set(out, "H21", kva);
+  }
 
   const hv = s(values.hv_kv);
   const mv = s(values.mv_kv);
@@ -521,9 +541,17 @@ export function oltcCells(values: OrderValues): CellWrites {
   else if (side === "lv") set(out, "AD23", "LV side");
   else if (side === "mv") set(out, "AD23", "MV side");
 
-  const pm = n(values.plus_minus);
-  if (pm && values.regulation !== "linear") {
-    set(out, "H24", `1. ±( ${pm} ) steps`);
+  const minus = s(values.range_minus);
+  const plus = s(values.range_plus);
+  const asymmetric =
+    s(values.range_shape) === "asymmetric" || Boolean(minus && plus && minus !== plus);
+  if (asymmetric) {
+    set(out, "H25", asymmetricStepsOs(values));
+  } else {
+    const pm = n(values.plus_minus);
+    if (pm && values.regulation !== "linear") {
+      set(out, "H24", `1. ±( ${pm} ) steps`);
+    }
   }
   set(out, "Z24", s(values.tap_range_pct) ? `x  ( ${s(values.tap_range_pct)} ) %` : undefined);
 
@@ -532,8 +560,16 @@ export function oltcCells(values: OrderValues): CellWrites {
   if (inA != null) set(out, "I28", inA);
   const imax = n(values.imax_a);
   if (imax != null) set(out, "Z28", imax);
-  const ust = n(values.step_voltage_v);
-  if (ust != null) set(out, "I30", ust);
+  // Sheet1 I30 constant Ust. Variable: S30 max / AB30 min. ku A132–A133.
+  if (s(values.ust_mode) === "variable") {
+    const ustMax = n(values.ust_max_v);
+    if (ustMax != null) set(out, "S30", ustMax);
+    const ustMin = n(values.ust_min_v);
+    if (ustMin != null) set(out, "AB30", ustMin);
+  } else {
+    const ust = n(values.step_voltage_v);
+    if (ust != null) set(out, "I30", ust);
+  }
   set(out, "H31", s(values.recovery_voltage_kv) ? `( ${s(values.recovery_voltage_kv)} ) kV` : undefined);
 
   set(out, "H32", potentialOs(s(values.potential_connection)));

@@ -118,8 +118,55 @@ describe("oltcCells", () => {
     expect(String(cells.Q80)).toContain("9b");
   });
 
-  it("converts MVA to kVA", () => {
-    expect(cells.I21).toBe(25000);
+  it("converts MVA to kVA on H21 when capacity is constant", () => {
+    expect(cells.H21).toBe(25000);
+    expect(cells.S21).toBeUndefined();
+    expect(cells.AB21).toBeUndefined();
+  });
+
+  it("writes decreasing kVA to S21 / from-position to AB21 and skips H21", () => {
+    const v = oltcCells({
+      ...oltc,
+      capacity_mode: "decreasing",
+      rated_power_mva: "25",
+      capacity_from_pos: "9",
+    });
+    expect(v.S21).toBe(25000);
+    expect(v.AB21).toBe("9");
+    expect(v.H21).toBeUndefined();
+  });
+
+  it("writes official H25 asymmetric steps and skips H24", () => {
+    const v = oltcCells({
+      ...oltc,
+      range_shape: "asymmetric",
+      range_minus: "20",
+      range_plus: "6",
+    });
+    expect(v.H25).toBe("2. - ( 20 ) ~+( 6 ) steps");
+    expect(v.H24).toBeUndefined();
+  });
+
+  it("writes variable Ust max/min onto S30 / AB30 and skips I30", () => {
+    const v = oltcCells({
+      ...oltc,
+      ust_mode: "variable",
+      ust_max_v: "1200",
+      ust_min_v: "800",
+      step_voltage_v: "950",
+    });
+    expect(v.S30).toBe(1200);
+    expect(v.AB30).toBe(800);
+    expect(v.I30).toBeUndefined();
+  });
+
+  it("keeps constant Ust on I30 and symmetric steps on H24", () => {
+    const v = oltcCells({ ...oltc, ust_mode: "constant", step_voltage_v: "950" });
+    expect(v.I30).toBe(950);
+    expect(v.S30).toBeUndefined();
+    expect(v.AB30).toBeUndefined();
+    expect(v.H24).toBe("1. ±( 8 ) steps");
+    expect(v.H25).toBeUndefined();
   });
 
   it("does not invent overload / flux / tap winding / temp sensor / rain cover when unset", () => {

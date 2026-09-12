@@ -155,6 +155,54 @@ describe("fillWorkbook official templates", () => {
     expect(yes.H146?.v).toBe("1. 不配");
   });
 
+  it("writes OLTC constant/decreasing kVA, asymmetric steps, and variable Ust onto official cells", () => {
+    const file = templatePath(TEMPLATE_FILE.oltc);
+    const buf = readFileSync(file);
+    expect(hasVbaProject(buf)).toBe(true);
+    const blank = XLSX.read(buf, { type: "array", bookVBA: true }).Sheets.Sheet1;
+    expect(blank.A21?.v).toBe("Rated power**");
+    expect(String(blank.H21?.v).trim()).toBe("Constant");
+    expect(blank.S21?.v).toBe("Variable");
+    expect(blank.AB21?.v).toBe("kVA~");
+    expect(blank.H25?.v).toBe("2. - (\u2002\u2002\u2002\u2002\u2002) ~+(\u2002\u2002\u2002) steps");
+    expect(blank.S30?.v).toBe("Variable \xa0Ust max.=");
+    expect(blank.AB30?.v).toBe("V");
+    const constant = XLSX.read(
+      fillWorkbook(buf, oltcCells({ rated_power_mva: "25", capacity_mode: "constant" })),
+      { type: "array", bookVBA: true },
+    ).Sheets.Sheet1;
+    expect(constant.H21?.v).toBe(25000);
+    expect(constant.S21?.v).toBe("Variable");
+    expect(constant.AB21?.v).toBe("kVA~");
+    const variable = XLSX.read(
+      fillWorkbook(
+        buf,
+        oltcCells({
+          capacity_mode: "decreasing",
+          rated_power_mva: "40",
+          capacity_from_pos: "9",
+          range_shape: "asymmetric",
+          range_minus: "20",
+          range_plus: "6",
+          ust_mode: "variable",
+          ust_max_v: "1200",
+          ust_min_v: "800",
+        }),
+      ),
+      { type: "array", bookVBA: true },
+    ).Sheets.Sheet1;
+    expect(variable.S21?.v).toBe(40000);
+    expect(variable.AB21?.v).toBe("9");
+    expect(String(variable.H21?.v).trim()).toBe("Constant");
+    expect(variable.H25?.v).toBe("2. - ( 20 ) ~+( 6 ) steps");
+    expect(variable.H24?.v).toBe("1. ±(\u2002 ) steps");
+    expect(variable.S30?.v).toBe(1200);
+    expect(variable.AB30?.v).toBe(800);
+    expect(hasVbaProject(fillWorkbook(buf, oltcCells({ ust_mode: "variable", ust_max_v: "1200" })))).toBe(
+      true,
+    );
+  });
+
   it("writes OLTC HV / LV / MV side onto official AD23", () => {
     const file = templatePath(TEMPLATE_FILE.oltc);
     const buf = readFileSync(file);
