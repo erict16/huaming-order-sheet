@@ -2,7 +2,17 @@
 
 把华明 **Order Sheet / 订货技术规范书** 做成浏览器里填的表：中文默认，可切 English / Русский / Tiếng Việt。
 
-有载、CMA7 下载的是官方 **Word 订货规范书**（老版本 OS）。空白项按常规。数据只存在当前浏览器，点「保存」即可。
+线上：https://erict16.github.io/huaming-order-sheet/
+
+空白项按常规。数据只存在当前浏览器，点「保存」即可。
+
+## 海外销售怎么用
+
+1. 打开上面的网页。右上角切语言。
+2. 先选一张订货单（有载 / HWV / 无励磁 / 干式 / CMA7 / SHM-D）。开关电气附件填开关单；电机电源、加热、位置传送到 **CMA7** 或 **SHM-D**。
+3. 可选「按真实订单起单」：8 份 OneDrive 真单，一键填规格和工程名。**不带买方、设计人电话**——联系人自己填（导出前那一步，可空）。
+4. 按步骤填。没填的按常规供货。型号在页里自动拼，不是浮层。
+5. 最后一步核对。选 **Word**（官方订货表，有模板时默认）或 **Excel**（有载 / CMA7 / SHM-D 填官方 xlsm；其余是可读 xlsx），再下载。
 
 ## 六张订货单
 
@@ -28,6 +38,6 @@ npm run lint
 npm run typecheck
 ```
 
-GitHub Pages：CI 设置 `NEXT_PUBLIC_BASE_PATH=/huaming-order-sheet`。
+GitHub Pages：CI 设置 `NEXT_PUBLIC_BASE_PATH=/huaming-order-sheet`。线上 https://erict16.github.io/huaming-order-sheet/ 。
 
 官方模板在 `public/templates/*.xlsm`。分接代码与 `oltc-selector/lib/tapCode.ts` 保持同一套图。
