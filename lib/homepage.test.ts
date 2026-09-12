@@ -8,9 +8,10 @@ describe("ice chrome", () => {
     const picker = readFileSync(path.join(process.cwd(), "components/FamilyPicker.tsx"), "utf8");
     const wizard = readFileSync(path.join(process.cwd(), "components/OrderWizard.tsx"), "utf8");
     expect(shell).toContain("bg-white/90");
-    expect(picker).toContain("<table");
+    expect(picker).toContain("grid-cols-[4.75rem_repeat(2,minmax(0,1fr))_repeat(3,minmax(0,1fr))]");
     expect(picker).toContain('"CM"');
     expect(picker).toContain('"CV2"');
+    expect(picker).toContain("w-full");
     expect(wizard).toContain("h-8 w-8");
     expect(wizard).toContain("justify-center");
     expect(shell).toContain("max-w-3xl");
