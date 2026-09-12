@@ -128,9 +128,13 @@ export function deriveValues(prev: OrderValues, patch: OrderValues): OrderValues
     if (p) next.octc_contact = contactFromPositions(p);
   }
 
-  if (/^\d{4}-\d{2}-\d{2}$/.test(next.delivery_date || "") && !next.delivery_date_custom) {
-    next.delivery_date_custom = next.delivery_date;
-    next.delivery_date = "custom";
+  const leadPhrases = ["90 days after PO", "120 days after PO", "150 days after PO", "180 days after PO", "TBC"];
+  if (leadPhrases.includes(next.delivery_date || "")) {
+    next.delivery_lead = next.delivery_date;
+    next.delivery_date = "";
+  }
+  if (next.delivery_date === "custom" && next.delivery_date_custom) {
+    next.delivery_date = next.delivery_date_custom;
   }
 
   if ("range_plus" in patch || "range_minus" in patch) {

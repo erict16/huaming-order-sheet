@@ -34,9 +34,10 @@ describe("orderFields", () => {
       expect(orderNo.label.zh).toBe("报价单号");
       expect(orderNo.label.en).toBe("Quotation No.");
       const delivery = allFields(sheet, {}).find(({ field }) => field.key === "delivery_date")!.field;
-      expect(delivery.type).toBe("select");
-      expect(delivery.options?.map((o) => o.value)).toEqual(DELIVERY_DATE_OPTS.map((o) => o.value));
-      expect(allFields(sheet, { delivery_date: "custom" }).map(({ field }) => field.key)).toContain("delivery_date_custom");
+      expect(delivery.type).toBe("date");
+      const lead = allFields(sheet, {}).find(({ field }) => field.key === "delivery_lead")!.field;
+      expect(lead.type).toBe("radio");
+      expect(lead.options?.map((o) => o.value)).toEqual(DELIVERY_DATE_OPTS.map((o) => o.value));
       const contact = sheet.steps.find((st) => st.id === "contact");
       expect(contact, sheet.id).toBeTruthy();
       const reviewIdx = sheet.steps.findIndex((st) => st.kind === "review");
@@ -83,7 +84,7 @@ describe("orderFields", () => {
     expect(keys).toContain("support_flange");
     expect(keys).toContain("potential_connection");
     expect(keys).not.toContain("wind_r1_mm");
-    expect(keys).toContain("ins_a_pf_kv");
+    expect(keys).not.toContain("ins_a_pf_kv");
     expect(keys).toContain("temp_sensor");
     expect(keys).toContain("ust_mode");
     expect(allFields(oltc, { flange_type: "tank_top" }).map(({ field }) => field.key)).not.toContain("support_flange");
@@ -92,6 +93,7 @@ describe("orderFields", () => {
     expect(withResistor).toContain("wind_cw_pf");
     expect(withResistor).toContain("tie_in_mounting");
     expect(allFields(oltc, { potential_connection: "check" }).map(({ field }) => field.key)).toContain("wind_r1_mm");
+    expect(allFields(oltc, { ins_fill: "provided" }).map(({ field }) => field.key)).toContain("ins_a_pf_kv");
   });
 
   it("keeps 买方 / 变压器厂 on half the 2-col grid", () => {

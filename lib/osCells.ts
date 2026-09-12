@@ -217,7 +217,10 @@ export function formatIntlPhone(cc: string | undefined, phone: string | undefine
 /** ISO dates and custom calendar dates, else the commercial lead-time string. */
 export function resolveDeliveryDate(values: OrderValues): string {
   const d = s(values.delivery_date);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
   if (d === "custom") return s(values.delivery_date_custom);
+  const lead = s(values.delivery_lead);
+  if (lead) return lead;
   return d;
 }
 

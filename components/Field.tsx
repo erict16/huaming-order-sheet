@@ -118,6 +118,10 @@ function Control({
           type="date"
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onClick={(e) => {
+            const el = e.currentTarget;
+            if (typeof el.showPicker === "function") el.showPicker();
+          }}
         />
         <CalendarDaysIcon className="pointer-events-none absolute right-3 top-1/2 size-5 -translate-y-1/2 text-ink-muted" />
       </div>

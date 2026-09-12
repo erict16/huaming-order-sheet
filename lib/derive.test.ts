@@ -24,10 +24,12 @@ describe("deriveValues", () => {
     expect(still.oltc_selector_grade).toBe("DE");
   });
 
-  it("migrates a stored ISO 要货期 into the custom calendar preset", () => {
-    const v = deriveValues({}, { delivery_date: "2026-09-01" });
-    expect(v.delivery_date).toBe("custom");
-    expect(v.delivery_date_custom).toBe("2026-09-01");
+  it("keeps a calendar 要货期 as an ISO date and moves old lead phrases to delivery_lead", () => {
+    const cal = deriveValues({}, { delivery_date: "2026-09-01" });
+    expect(cal.delivery_date).toBe("2026-09-01");
+    const lead = deriveValues({}, { delivery_date: "90 days after PO" });
+    expect(lead.delivery_lead).toBe("90 days after PO");
+    expect(lead.delivery_date).toBe("");
   });
 
   it("switches HWDK onto SHM-X and strips HWV selector grade", () => {
