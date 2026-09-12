@@ -563,13 +563,23 @@ const oltcSheet: SheetDef = {
       id: "family",
       kind: "family",
       title: L("开关系列", "Tap-changer family", "Серия РПН", "Họ máy"),
-      blurb: L(" ", " ", " ", " "),
+      blurb: L(
+        "先选系列。组合式带 B/C/D，复合式（CV/CV2/SV）型号里没有这级字母。",
+        "Pick the family first. Combined types have B/C/D; compound (CV/CV2/SV) does not.",
+        "Сначала серия. Комбинированные — B/C/D; составные (CV/CV2/SV) без буквы.",
+        "Chọn họ máy trước. Tổ hợp có B/C/D; compound (CV/CV2/SV) không có chữ này.",
+      ),
       sections: [],
     },
     {
       id: "order",
       title: L("订单与变压器", "Order & transformer", "Заказ и трансформатор", "Đơn và MBA"),
-      blurb: L(" ", " ", " ", " "),
+      blurb: L(
+        "买方和国家必填。其余空白按常规。",
+        "Buyer and country are required. Other blanks = standard supply.",
+        "Покупатель и страна обязательны. Остальное пусто = стандарт.",
+        "Bên mua và quốc gia bắt buộc. Ô khác trống = tiêu chuẩn.",
+      ),
       sections: [
         { id: "order", title: L("订单", "Order", "Заказ", "Đơn"), fields: orderFields() },
         { id: "transformer", title: L("变压器数据", "Transformer data", "Данные трансформатора", "Dữ liệu MBA"), fields: transformerFields() },
@@ -578,7 +588,12 @@ const oltcSheet: SheetDef = {
     {
       id: "ratings",
       title: L("开关参数", "OLTC ratings", "Параметры РПН", "Thông số OLTC"),
-      blurb: L(" ", " ", " ", " "),
+      blurb: L(
+        "电流、Um、连接和档位组成型号。常见 ±8、中间 3 → 19 档 → 10193W。",
+        "Current, Um, connection and positions make the type. Common: ±8, mid 3 → 19 pos → 10193W.",
+        "Ток, Um, соединение и положения собирают тип. Часто ±8, середина 3 → 10193W.",
+        "Dòng, Um, đấu nối và số vị trí thành kiểu. Phổ biến ±8, giữa 3 → 10193W.",
+      ),
       sections: [
         { id: "oltc", title: L("有载开关数据", "On-load tap-changer data", "Данные РПН", "Dữ liệu OLTC"), fields: oltcRatingFields() },
         { id: "position", title: L("档位定义", "Position definition", "Определение положений", "Định nghĩa vị trí"), fields: positionFields() },
@@ -587,7 +602,12 @@ const oltcSheet: SheetDef = {
     {
       id: "construction",
       title: L("结构与绝缘", "Construction & insulation", "Конструкция и изоляция", "Kết cấu và cách điện"),
-      blurb: L(" ", " ", " ", " "),
+      blurb: L(
+        "法兰、传动轴、电位电阻和绝缘。空白按常规。",
+        "Flange, shafts, tie-in resistor and insulation. Blank = standard.",
+        "Фланец, валы, резистор и изоляция. Пусто = стандарт.",
+        "Mặt bích, trục, điện trở thế và cách điện. Trống = tiêu chuẩn.",
+      ),
       sections: [
         { id: "mechanical", title: L("机械 / 安装", "Mechanical / mounting", "Механика / монтаж", "Cơ khí / lắp đặt"), fields: mechanicalFields() },
         { id: "pipes", title: L("Q / S / R / E2", "Q / S / R / E2", "Q / S / R / E2", "Q / S / R / E2"), fields: pipeFields() },

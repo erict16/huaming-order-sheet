@@ -12,7 +12,7 @@ export function L(zh: string, en: string, ru: string, vi: string): I18nText {
 }
 
 export function t(text: I18nText, lang: Lang): string {
-  return text[lang] || text.zh || text.en;
+  return text[lang] || text.zh || text.en || "";
 }
 
 export function opt(

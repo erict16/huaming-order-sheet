@@ -1,6 +1,9 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { LANGS } from "./copy";
+import { chrome, chromeText } from "./i18n";
+import { ORDER_PRESETS } from "./presets";
 import { SHEETS } from "./schema";
 
 describe("ice chrome", () => {
@@ -41,5 +44,50 @@ describe("homepage starters", () => {
     const ids = SHEETS.map((s) => s.id);
     expect(ids).toHaveLength(6);
     expect(ids).toEqual(expect.arrayContaining(["oltc", "hwv", "octc", "dry", "cma7", "shm-d"]));
+  });
+});
+
+describe("i18n chrome", () => {
+  it("keeps zh/en/ru/vi on every chrome key and does not hide copy with a space", () => {
+    expect(LANGS.map((l) => l.id)).toEqual(["zh", "en", "ru", "vi"]);
+    for (const [key, text] of Object.entries(chrome)) {
+      for (const { id } of LANGS) {
+        expect(text[id], `${key}.${id}`).toEqual(expect.any(String));
+        expect(text[id], `${key}.${id}`).not.toBe(" ");
+      }
+    }
+  });
+
+  it("matches the OneDrive preset count in presetsHint", () => {
+    expect(ORDER_PRESETS).toHaveLength(8);
+    expect(chromeText("presetsHint", "zh")).toMatch(/8/);
+    expect(chromeText("presetsHint", "en").toLowerCase()).toMatch(/eight/);
+    expect(chromeText("presetsHint", "ru").toLowerCase()).toMatch(/восемь/);
+    expect(chromeText("presetsHint", "vi").toLowerCase()).toMatch(/tám/);
+  });
+
+  it("keeps empty-state and validation chrome, and sentence-case EN headings", () => {
+    expect(chromeText("exporting", "zh")).toMatch(/导出/);
+    expect(chromeText("exporting", "en")).toMatch(/Exporting/);
+    expect(chromeText("reviewEmpty", "zh")).toMatch(/核对/);
+    expect(chromeText("missing", "zh")).toMatch(/必填/);
+    expect(chromeText("noMatches", "zh")).toMatch(/无匹配/);
+    expect(chromeText("noFamily", "zh")).toMatch(/系列/);
+    expect(chromeText("standardNote", "zh")).toMatch(/常规/);
+    expect(chromeText("appName", "en")).toBe("Order specifications");
+    expect(chromeText("appNameShort", "en")).toBe("Order sheet");
+    expect(chromeText("typePlate", "en")).toBe("Type designation");
+  });
+});
+
+describe("wizard step blurbs", () => {
+  it("does not use a single-space blurb to hide help", () => {
+    for (const sheet of SHEETS) {
+      for (const step of sheet.steps) {
+        for (const lang of ["zh", "en", "ru", "vi"] as const) {
+          expect(step.blurb[lang], `${sheet.id}.${step.id}.${lang}`).not.toBe(" ");
+        }
+      }
+    }
   });
 });
