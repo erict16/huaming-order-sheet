@@ -166,6 +166,45 @@ describe("oltcSdtValues", () => {
     expect(v[92]).toBeUndefined();
   });
 
+  it("leaves designer / buyer / end-user Word boxes empty when contact is blank", () => {
+    const v = oltcSdtValues({
+      family: "CV2",
+      designer_name: "",
+      designer_phone: "",
+      designer_email: "",
+      buyer: "",
+      end_user: "",
+      quantity: "",
+    });
+    expect(v[0]).toBeUndefined();
+    expect(v[3]).toBeUndefined();
+    expect(v[7]).toBeUndefined();
+    expect(v[92]).toBeUndefined();
+  });
+
+  it("puts MV / LV and notes into Word remarks only when MV is filled", () => {
+    const three = oltcSdtValues({
+      hv_kv: "115",
+      mv_kv: "22",
+      lv_kv: "10.5",
+      notes: "tertiary on MV",
+    });
+    expect(three[19]).toBe("115");
+    expect(three[53]).toContain("MV 22 kV");
+    expect(three[53]).toContain("LV 10.5 kV");
+    expect(three[53]).toContain("tertiary on MV");
+    expect(three[95]).toBeUndefined();
+
+    const mvOnly = oltcSdtValues({ hv_kv: "115", mv_kv: "22" });
+    expect(mvOnly[53]).toBe("MV 22 kV");
+    expect(mvOnly[53]).not.toMatch(/LV/);
+
+    const two = oltcSdtValues({ hv_kv: "66", lv_kv: "11", notes: "keep on 95" });
+    expect(two[53]).toBeUndefined();
+    expect(two[95]).toBe("keep on 95");
+    expect(oltcSdtValues({ hv_kv: "66" })[95]).toBeUndefined();
+  });
+
   it("ticks Constant step voltage, In-neutral, supporting flange Without", () => {
     const c = oltcCheckValues({
       family: "CV",
@@ -226,6 +265,41 @@ describe("fillDocx", () => {
     expect(boxes[7]).toBe(true);
     expect(boxes[9]).toBe(true);
     expect(xml).toContain('w:checked w:val="1"');
+  });
+
+  it("does not stamp empty designer / buyer over the official Word OS", async () => {
+    const buf = readFileSync(template);
+    const zip0 = await JSZip.loadAsync(buf);
+    const before = readSdtTexts(await zip0.file("word/document.xml")!.async("string"));
+    const filled = await fillDocx(
+      buf,
+      oltcSdtValues({ family: "CV", designer_name: "", buyer: "", end_user: "", quantity: "" }),
+    );
+    const after = readSdtTexts(await (await JSZip.loadAsync(filled)).file("word/document.xml")!.async("string"));
+    expect(after[0]).toBe(before[0]);
+    expect(after[3]).toBe(before[3]);
+    expect(after[7]).toBe(before[7]);
+    expect(after[1]).toBe(before[1]);
+  });
+
+  it("writes three-winding MV remarks into the official Word OS", async () => {
+    const filled = await fillDocx(
+      readFileSync(template),
+      oltcSdtValues({
+        hv_kv: "115",
+        mv_kv: "22",
+        lv_kv: "10.5",
+        vector_group: "YNd11yn12",
+        notes: "EVN Tiên Yên tertiary",
+      }),
+    );
+    const xml = await (await JSZip.loadAsync(filled)).file("word/document.xml")!.async("string");
+    const texts = readSdtTexts(xml);
+    expect(texts[10]).toBe("YNd11yn12");
+    expect(texts[19]).toBe("115");
+    expect(texts[53]).toContain("MV 22 kV");
+    expect(texts[53]).toContain("LV 10.5 kV");
+    expect(texts[53]).toContain("EVN Tiên Yên tertiary");
   });
 });
 

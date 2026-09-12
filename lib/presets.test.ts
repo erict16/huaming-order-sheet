@@ -1,15 +1,18 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { SHEET_DEFAULTS } from "./defaults";
 import { TEMPLATE_FILE } from "./osCells";
 import {
   applyPreset,
   getPreset,
   hydrateSheetValues,
   ORDER_PRESETS,
+  pendingPresetKey,
   PRESET_CONTACT_KEYS,
 } from "./presets";
 import { typeFromValues } from "./typeString";
+import { WORD_TEMPLATE } from "./wordMap";
 
 const ALLOWED_SHEETS = ["oltc", "octc", "dry", "cma7", "shm-d", "hwv"] as const;
 
@@ -197,6 +200,34 @@ describe("ORDER_PRESETS", () => {
     expect(kept.designer_name).toBe("Old Designer");
     expect(kept.buyer).toBe("Old Buyer");
     expect(kept.end_user).toBe("Old End");
+  });
+
+  it("applies a pending preset id the same way as ?preset=, still blanking contact", () => {
+    const stored = { designer_name: "Old Designer", buyer: "Old Buyer" };
+    const next = hydrateSheetValues("oltc", "", stored, "mee-tienyen-cv2");
+    expect(next.project).toBe("EVN Tiên Yên");
+    expect(next.family).toBe("CV2");
+    expect(next.designer_name).toBe("");
+    expect(next.buyer).toBe("");
+    expect(hydrateSheetValues("octc", "", stored, "mee-tienyen-cv2").buyer).toBe("Old Buyer");
+    expect(pendingPresetKey("oltc")).toBe("hm-os:pending-preset:oltc");
+    expect(pendingPresetKey("shm-d")).toBe("hm-os:pending-preset:shm-d");
+  });
+
+  it("does not stash contact or multi-shaft segments in starters or sheet defaults", () => {
+    for (const preset of ORDER_PRESETS) {
+      expect(preset.values.shaft_multi, preset.id).toBeUndefined();
+      expect(preset.values.h1, preset.id).toBeUndefined();
+      expect(preset.values.h2, preset.id).toBeUndefined();
+      expect(preset.values.h3, preset.id).toBeUndefined();
+      expect(preset.values.h4, preset.id).toBeUndefined();
+      expect(WORD_TEMPLATE[preset.sheetId], preset.id).toBeTruthy();
+    }
+    for (const id of ALLOWED_SHEETS) {
+      for (const key of PRESET_CONTACT_KEYS) {
+        expect(SHEET_DEFAULTS[id][key], `${id}.${key}`).toBeUndefined();
+      }
+    }
   });
 });
 
