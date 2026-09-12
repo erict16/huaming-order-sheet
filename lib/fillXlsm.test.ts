@@ -137,6 +137,19 @@ describe("fillWorkbook official templates", () => {
     expect(ws.H78?.t).toBe("n");
   });
 
+  it("writes OLTC HV / LV / MV side onto official AD23", () => {
+    const file = templatePath(TEMPLATE_FILE.oltc);
+    const buf = readFileSync(file);
+    expect(hasVbaProject(buf)).toBe(true);
+    const blank = XLSX.read(buf, { type: "array", bookVBA: true }).Sheets.Sheet1;
+    expect(blank.AD23?.v).toBe("HV side");
+    const filled = (side: "hv" | "lv" | "mv") =>
+      XLSX.read(fillWorkbook(buf, oltcCells({ oltc_side: side })), { type: "array", bookVBA: true }).Sheets.Sheet1;
+    expect(filled("hv").AD23?.v).toBe("HV side");
+    expect(filled("lv").AD23?.v).toBe("LV side");
+    expect(filled("mv").AD23?.v).toBe("MV side");
+  });
+
   it("fills SHM-D Order Specification V1.2", () => {
     const file = templatePath(TEMPLATE_FILE["shm-d"]);
     expect(existsSync(file), file).toBe(true);

@@ -132,6 +132,17 @@ describe("drySdtValues", () => {
     expect(v[72]).toContain("90 days after PO");
     expect(v[72]).toContain("indoor");
   });
+
+  it("puts notes and non-1 quantity into remarks SDT 72", () => {
+    const v = drySdtValues({ quantity: "4", notes: "special packing" });
+    expect(v[72]).toContain("Quantity: 4");
+    expect(v[72]).toContain("special packing");
+    expect(v[49]).toBeUndefined();
+    expect(v[69]).toBeUndefined();
+    const one = drySdtValues({ quantity: "1", notes: "indoor" });
+    expect(one[72]).toBe("indoor");
+    expect(one[72]).not.toContain("Quantity");
+  });
 });
 
 describe("dryCheckValues", () => {

@@ -14,4 +14,9 @@ describe("exportClient light helpers", () => {
       expect(hasWordExport(sheet)).toBe(excelHasWord(sheet));
     }
   });
+
+  it("defaults SHM-D to excel because the 2025.3 .doc is not fillable", () => {
+    expect(defaultExportFormat(getSheet("shm-d")!)).toBe("excel");
+    expect(hasWordExport(getSheet("shm-d")!)).toBe(true);
+  });
 });

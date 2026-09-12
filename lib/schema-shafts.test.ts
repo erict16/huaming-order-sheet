@@ -26,3 +26,10 @@ describe("OLTC multi-segment shafts", () => {
     }
   });
 });
+
+describe("OCTC rain cover", () => {
+  it("exposes rain_cover on the octc sheet", () => {
+    const keys = allFields(getSheet("octc")!, {}).map(({ field }) => field.key);
+    expect(keys).toContain("rain_cover");
+  });
+});
