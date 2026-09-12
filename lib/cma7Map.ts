@@ -11,27 +11,38 @@ function n(v: string | undefined): number | undefined {
   return Number.isFinite(x) ? x : undefined;
 }
 
-const MOTOR_VOLT: Record<string, number> = {
-  "380_3": 380,
-  "400_3": 400,
-  "415_3": 415,
-  "440_3": 440,
-  "220_3": 220,
-  "220_1": 220,
-  "230_1": 230,
-  "240_1": 240,
-  "110_1": 110,
+const MOTOR_VOLT: Record<string, string> = {
+  "380_3": "380",
+  "400_3": "400",
+  "415_3": "415",
+  "440_3": "440",
+  "220_3": "220",
+  "220_240": "220-240",
+  "220_1": "220",
+  "230_1": "230",
+  "240_1": "240",
+  "110_1": "110",
 };
 
-const CTRL_VOLT: Record<string, number> = {
-  "220_ac": 220,
-  "230_ac": 230,
-  "240_ac": 240,
-  "110_ac": 110,
-  "220_dc": 220,
-  "125_dc": 125,
-  "110_dc": 110,
+const CTRL_VOLT: Record<string, string> = {
+  "220_ac": "220",
+  "230_ac": "230",
+  "240_ac": "240",
+  "110_ac": "110",
+  "220_dc": "220",
+  "125_dc": "125",
+  "110_dc": "110",
 };
+
+function motorVoltText(values: OrderValues): string | undefined {
+  return MOTOR_VOLT[s(values.motor_voltage)];
+}
+
+function ctrlVoltText(values: OrderValues): string | undefined {
+  const cv = s(values.control_voltage);
+  if (cv === "same") return motorVoltText(values);
+  return CTRL_VOLT[cv];
+}
 
 function motorNet(values: OrderValues): string {
   const explicit = s(values.motor_network);
@@ -179,6 +190,7 @@ export function cma7CheckValues(values: OrderValues): boolean[] {
   const bot = s(values.bottom_plate);
   if (bot === "gland") tick(56);
   else if (bot === "nobore") tick(57);
+  else if (bot === "other") tick(58);
   else tick(55);
 
   if (s(values.padlock) === "yes" || s(values.padlock) === "with") tick(60);
@@ -223,15 +235,14 @@ export function cma7SdtValues(values: OrderValues): Array<string | undefined> {
   set(9, s(values.pos_min) || d?.min);
   set(10, s(values.auto_passage));
 
-  const mv = MOTOR_VOLT[s(values.motor_voltage)];
-  if (mv != null) set(11, String(mv));
-  const cv = CTRL_VOLT[s(values.control_voltage)];
-  if (cv != null) set(12, String(cv));
+  set(11, motorVoltText(values));
+  const cv = ctrlVoltText(values);
+  set(12, cv);
   const cProt = s(values.control_protect);
   if (cProt === "1pole") set(13, "1-pole auto-cut");
   if (cProt === "2pole") set(13, "2-pole auto-cut");
   const hv = CTRL_VOLT[s(values.heat_voltage)] ?? (s(values.heat_from) !== "separate" ? cv : undefined);
-  if (hv != null) set(14, String(hv));
+  set(14, hv);
   const hProt = s(values.heat_protect);
   if (hProt === "1pole") set(15, "1-pole auto-cut");
   if (hProt === "2pole") set(15, "2-pole auto-cut");
@@ -239,6 +250,7 @@ export function cma7SdtValues(values: OrderValues): Array<string | undefined> {
   set(17, s(values.resistor_ohm));
   set(18, s(values.resistor_ohm_2));
   set(19, s(values.resistor_ohm_3));
+  if (s(values.bottom_plate) === "other") set(20, s(values.bottom_plate_other));
   set(21, paintWord(values));
   set(22, s(values.corrosive_class));
   set(23, langWord(s(values.nameplate_language)));

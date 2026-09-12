@@ -312,6 +312,29 @@ describe("cma7Cells", () => {
     expect(cells.H8).toBeUndefined();
     expect(cells.H12).toBe(1);
   });
+
+  it("writes destination port, 220-240 as 220 V, different resistors, gland and other bottom", () => {
+    const cells = cma7Cells({
+      destination_port: "Surabaya",
+      motor_voltage: "220_240",
+      resistor_sig: "2",
+      resistor_ohm: "10",
+      resistor_ohm_2: "50",
+      resistor_zero_first: "yes",
+      bottom_plate: "gland",
+    });
+    expect(cells.Z14).toBe("Surabaya");
+    expect(cells.H22).toBe(220);
+    expect(cells.H55).toBe("3. With(different resistance)");
+    expect(cells.H56).toBe("10Ω");
+    expect(cells.V56).toBe(1);
+    expect(cells.H58).toBe("50Ω");
+    expect(cells.V58).toBe(1);
+    expect(cells.H57).toBe("0Ω");
+    expect(cells.H70).toBe("2xΦ50 hole-std.");
+    expect(cells.H71).toBe("With");
+    expect(cma7Cells({ bottom_plate: "other" }).H70).toContain("drawing provided by the customer");
+  });
 });
 
 describe("shmDCells", () => {
@@ -342,5 +365,57 @@ describe("shmDCells", () => {
     expect(String(cells.AB17)).toContain("( 17 )");
     expect(String(cells.E67)).toContain("CVIII-350D/40.5-10193W");
     expect(cells.A67).toBeUndefined();
+  });
+
+  it("writes explicit positions and CMA7-style extras onto official SHM-D cells", () => {
+    const cells = shmDCells({
+      shm_model: "SHM-D",
+      destination_port: "Hai Phong",
+      pos_max: "1",
+      pos_mid: "9a9b9c",
+      pos_min: "17",
+      motor_voltage: "220_240",
+      control_from: "separate",
+      control_voltage: "230_ac",
+      control_protect: "2pole",
+      heat_from: "motor",
+      hand_lamp: "yes",
+      socket_x10: "other",
+      socket_country: "British",
+      emergency_stop: "yes",
+      bcd_qty: "1",
+      ma_qty: "2",
+      resistor_sig: "1",
+      resistor_ohm: "10",
+      fiber_length_m: "80",
+      door_hinge: "right",
+      padlock: "yes",
+    });
+    expect(cells.Z14).toBe("Hai Phong");
+    expect(cells.H17).toBe("Max. effective number of turns at position ( 1 )");
+    expect(cells.P17).toBe("Mid-position(s) ( 9a9b9c )");
+    expect(cells.AB17).toBe("Min. effective number of turns at position ( 17 )");
+    expect(cells.H20).toBeUndefined();
+    expect(cells.H23).toBe("2. Separate from motor circuit");
+    expect(cells.H24).toBe("230V AC");
+    expect(cells.H25).toBe("2-pole miniature circuit breaker without signal output");
+    expect(cells.H29).toBe("1. Supply from motor circuit-std.");
+    expect(cells.H34).toBe("With-std.");
+    expect(cells.H37).toBe("British");
+    expect(cells.H38).toBe("With");
+    expect(cells.H40).toBe(1);
+    expect(cells.H41).toBe(2);
+    expect(cells.H43).toBe("2. With-Same resistances");
+    expect(cells.H44).toBe("10Ω");
+    expect(cells.H53).toBe(80);
+    expect(cells.H55).toBe("Right-hand");
+    expect(cells.H59).toBe("With");
+  });
+
+  it("does not invent SHM-D without-hand-lamp or without-socket (ku has no Without)", () => {
+    const cells = shmDCells({ shm_model: "SHM-D", hand_lamp: "no", socket_x10: "without" });
+    expect(cells.H34).toBeUndefined();
+    expect(cells.H37).toBeUndefined();
+    expect(cells.H38).toBeUndefined();
   });
 });

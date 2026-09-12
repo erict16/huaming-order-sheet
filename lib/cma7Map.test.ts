@@ -62,6 +62,29 @@ describe("cma7CheckValues", () => {
     expect(c[67]).toBe(false);
     expect(c[68]).toBe(false);
   });
+
+  it("ticks bottom-plate other, 0 Ω first, door right, padlock, lamp, socket, BCD, 4-20 mA", () => {
+    const c = cma7CheckValues({
+      ...px360,
+      bottom_plate: "other",
+      resistor_zero_first: "yes",
+      door_hinge: "right",
+      padlock: "yes",
+      hand_lamp: "yes",
+      socket_x10: "universal",
+      bcd_qty: "1",
+      ma_qty: "2",
+    });
+    expect(c[55]).toBe(false);
+    expect(c[58]).toBe(true);
+    expect(c[50]).toBe(true);
+    expect(c[54]).toBe(true);
+    expect(c[60]).toBe(true);
+    expect(c[23]).toBe(true);
+    expect(c[35]).toBe(true);
+    expect(c[42]).toBe(true);
+    expect(c[46]).toBe(true);
+  });
 });
 
 describe("cma7 Word fill", () => {
@@ -82,5 +105,31 @@ describe("cma7 Word fill", () => {
     expect(boxes[21]).toBe(true);
     expect(boxes[31]).toBe(true);
     expect(xml).toContain('w:checked w:val="1"');
+  });
+
+  it("writes drawing no, 220-240 V, 2nd/3rd Ω and bottom-plate other", async () => {
+    const values = {
+      ...px360,
+      drawing_no: "HM-CMA7-360",
+      motor_voltage: "220_240",
+      resistor_ohm_2: "50",
+      resistor_ohm_3: "100",
+      bottom_plate: "other",
+      bottom_plate_other: "3xM25",
+      control_voltage: "same",
+    };
+    const filled = await fillDocx(readFileSync(template), cma7SdtValues(values), cma7CheckValues(values));
+    const zip = await JSZip.loadAsync(filled);
+    const xml = await zip.file("word/document.xml")!.async("string");
+    const texts = readSdtTexts(xml);
+    expect(texts[6]).toBe("HM-CMA7-360");
+    expect(texts[11]).toBe("220-240");
+    expect(texts[12]).toBe("220-240");
+    expect(texts[18]).toBe("50");
+    expect(texts[19]).toBe("100");
+    expect(texts[20]).toBe("3xM25");
+    const boxes = readLegacyCheckboxes(xml);
+    expect(boxes[58]).toBe(true);
+    expect(boxes[55]).toBe(false);
   });
 });

@@ -191,6 +191,38 @@ function resistorOhm(v: string): string | undefined {
   return `${t}Ω`;
 }
 
+function writeResistorRows(
+  out: CellWrites,
+  values: OrderValues,
+  cells: { flag: string; ohm1: string; qty1: string; zero1: string; ohm2: string; qty2: string },
+  flags: { without: string; same: string; different: string },
+) {
+  const rs = s(values.resistor_sig);
+  if (rs === "without") {
+    set(out, cells.flag, flags.without);
+    return;
+  }
+  if (rs !== "1" && rs !== "2" && rs !== "3") return;
+  const ohm1 = s(values.resistor_ohm);
+  const ohm2 = s(values.resistor_ohm_2);
+  const ohm3 = s(values.resistor_ohm_3);
+  const different = (rs !== "1" && ohm2 && ohm2 !== ohm1) || (rs === "3" && ohm3 && ohm3 !== ohm1);
+  if (different) {
+    set(out, cells.flag, flags.different);
+    set(out, cells.ohm1, resistorOhm(ohm1));
+    set(out, cells.qty1, 1);
+    if (ohm2) {
+      set(out, cells.ohm2, resistorOhm(ohm2));
+      set(out, cells.qty2, rs === "3" && ohm3 && ohm3 === ohm2 ? 2 : 1);
+    }
+  } else {
+    set(out, cells.flag, flags.same);
+    set(out, cells.ohm1, resistorOhm(ohm1));
+    set(out, cells.qty1, Number(rs));
+  }
+  if (s(values.resistor_zero_first) === "yes") set(out, cells.zero1, "0Ω");
+}
+
 function cma7Controller(v: string): string | undefined {
   if (!v) return undefined;
   if (v === "none") return "Without";
@@ -595,6 +627,7 @@ function cma7Motor(values: OrderValues, out: CellWrites) {
     "415_3": 415,
     "440_3": 440,
     "220_3": 220,
+    "220_240": 220,
     "220_1": 220,
     "230_1": 230,
     "240_1": 240,
@@ -668,22 +701,28 @@ function cma7Motor(values: OrderValues, out: CellWrites) {
   if (ma === "without") set(out, "H51", "Without-std.");
   else if (ma === "1" || ma === "2" || ma === "3") set(out, "H51", Number(ma));
 
-  const rs = s(values.resistor_sig);
-  if (rs === "without") set(out, "H55", "1. Without-std.");
-  else if (rs === "1" || rs === "2" || rs === "3") {
-    set(out, "H55", "2. With(same resistance)");
-    set(out, "H56", resistorOhm(s(values.resistor_ohm)));
-    set(out, "V56", Number(rs));
-    if (s(values.resistor_zero_first) === "yes") set(out, "H57", "0Ω");
-  }
+  writeResistorRows(
+    out,
+    values,
+    { flag: "H55", ohm1: "H56", qty1: "V56", zero1: "H57", ohm2: "H58", qty2: "V58" },
+    {
+      without: "1. Without-std.",
+      same: "2. With(same resistance)",
+      different: "3. With(different resistance)",
+    },
+  );
 
   const avr = s(values.avr_model) || s(values.controller);
   set(out, "H61", cma7Controller(avr));
 
   if (s(values.door_hinge) === "right") set(out, "H69", "Right-hand");
   else if (s(values.door_hinge) === "left") set(out, "H69", "Left-hand");
-  if (s(values.bottom_plate) === "nobore") set(out, "H70", "Dummy plate");
-  else if (s(values.bottom_plate) === "holes50" || s(values.bottom_plate) === "gland") set(out, "H70", "2xΦ50 hole-std.");
+  const bot = s(values.bottom_plate);
+  if (bot === "nobore") set(out, "H70", "Dummy plate");
+  else if (bot === "other") {
+    set(out, "H70", "For other specific requirements, the drawing provided by the customer is necessary");
+  } else if (bot === "holes50" || bot === "gland") set(out, "H70", "2xΦ50 hole-std.");
+  if (bot === "gland") set(out, "H71", "With");
   if (s(values.padlock) === "yes" || s(values.padlock) === "with") set(out, "H73", "With");
   else if (s(values.padlock) === "no" || s(values.padlock) === "without") set(out, "H73", "Without-std.");
 }
@@ -709,15 +748,29 @@ export function cma7Cells(values: OrderValues): CellWrites {
   if (n(values.mdu_positions) != null) set(out, "Z16", n(values.mdu_positions)!);
   else if (des) set(out, "Z16", des.pos);
   cma7Motor(values, out);
+  set(out, "Z14", s(values.destination_port));
   set(out, "H75", paintOsStd(values));
   set(out, "H76", corrosiveOsStd(s(values.corrosive_class)));
   set(out, "H78", quantityValue(values));
   set(out, "H79", nameplateOs(s(values.nameplate_language)));
-  const notes = [s(values.notes), s(values.matching_oltc) ? `OLTC: ${s(values.matching_oltc)}` : ""]
+  const ohm3 = s(values.resistor_ohm_3);
+  const ohm2 = s(values.resistor_ohm_2);
+  const extraR =
+    s(values.resistor_sig) === "3" && ohm3 && ohm3 !== s(values.resistor_ohm) && ohm3 !== ohm2
+      ? `3rd resistor: ${resistorOhm(ohm3)}/pos`
+      : "";
+  const notes = [s(values.notes), s(values.matching_oltc) ? `OLTC: ${s(values.matching_oltc)}` : "", extraR]
     .filter(Boolean)
     .join("\n");
   set(out, "D83", notes || undefined);
   return out;
+}
+
+function shmDProtect(v: string): string | undefined {
+  if (v === "without") return "Without-std.";
+  if (v === "1pole") return "1-pole miniature circuit breaker without signal output";
+  if (v === "2pole") return "2-pole miniature circuit breaker without signal output";
+  return undefined;
 }
 
 /** SHM-D Order Specification-V1.2 Sheet1 */
@@ -725,16 +778,22 @@ export function shmDCells(values: OrderValues): CellWrites {
   const out: CellWrites = {};
   commonHeader(values, out);
   set(out, "H16", s(values.shm_model) || "SHM-D");
+  set(out, "Z14", s(values.destination_port));
   const des = designationCells(values);
-  if (des) {
+  if (s(values.pos_max)) {
+    set(out, "H17", `Max. effective number of turns at position ( ${s(values.pos_max)} )`);
+  } else if (des) {
     set(out, "H17", des.maxLine);
-    set(out, "P17", des.midLine);
-    set(out, "AB17", des.minLine);
-    set(out, "Z16", des.pos);
-  } else if (n(values.mdu_positions) != null) {
-    set(out, "Z16", n(values.mdu_positions)!);
   }
-  if (s(values.pos_min) && !des) set(out, "AB17", minPosLine(s(values.pos_min)));
+  if (s(values.pos_mid)) {
+    set(out, "P17", `Mid-position(s) ( ${s(values.pos_mid)} )`);
+  } else if (des) {
+    set(out, "P17", des.midLine);
+  }
+  if (s(values.pos_min)) set(out, "AB17", minPosLine(s(values.pos_min)));
+  else if (des) set(out, "AB17", des.minLine);
+  if (n(values.mdu_positions) != null) set(out, "Z16", n(values.mdu_positions)!);
+  else if (des) set(out, "Z16", des.pos);
 
   const mv = s(values.motor_voltage);
   if (mv === "220_240" || mv === "") {
@@ -745,12 +804,55 @@ export function shmDCells(values: OrderValues): CellWrites {
     set(out, "H20", "400");
   } else if (mv === "415_3") {
     set(out, "H20", "415");
+  } else if (mv === "440_3") {
+    set(out, "H20", "440");
   } else if (mv === "220_3" || mv === "220_1" || mv === "230_1" || mv === "240_1") {
     set(out, "H20", "AC 220-240V 50/60Hz");
   }
 
+  if (s(values.control_from) === "separate") {
+    set(out, "H23", "2. Separate from motor circuit");
+    set(out, "H24", separateVolt(s(values.control_voltage)));
+  } else if (s(values.control_from) === "motor") {
+    set(out, "H23", "1. Supply from motor circuit-std.");
+  }
+  set(out, "H25", shmDProtect(s(values.control_protect)));
+
+  if (s(values.heat_from) === "separate") {
+    set(out, "H29", "2. Separate from motor circuit");
+    set(out, "H30", separateVolt(s(values.heat_voltage)));
+  } else if (s(values.heat_from) === "motor") {
+    set(out, "H29", "1. Supply from motor circuit-std.");
+  }
+  set(out, "H31", shmDProtect(s(values.heat_protect)));
+
   if (s(values.heater) === "yes") set(out, "H32", "Heater with thermostat-std.");
   if (s(values.heater) === "no") set(out, "H32", "Without");
+
+  if (s(values.hand_lamp) === "yes") set(out, "H34", "With-std.");
+
+  if (s(values.socket_x10) === "universal") set(out, "H37", "Universal-std.");
+  else if (s(values.socket_x10) === "other") set(out, "H37", s(values.socket_country));
+
+  if (s(values.emergency_stop) === "yes") set(out, "H38", "With");
+
+  const bcd = s(values.bcd_qty) || (s(values.position_tx) === "bcd" ? "1" : "");
+  if (bcd === "without") set(out, "H40", 0);
+  else if (bcd === "1" || bcd === "2" || bcd === "3") set(out, "H40", Number(bcd));
+  const ma = s(values.ma_qty) || (s(values.position_tx) === "4_20" ? "1" : "");
+  if (ma === "without") set(out, "H41", "Without");
+  else if (ma === "1" || ma === "2" || ma === "3") set(out, "H41", Number(ma));
+
+  writeResistorRows(
+    out,
+    values,
+    { flag: "H43", ohm1: "H44", qty1: "V44", zero1: "H45", ohm2: "H46", qty2: "V46" },
+    {
+      without: "1. Without-std.",
+      same: "2. With-Same resistances",
+      different: "3. With-Dffirent resistances",
+    },
+  );
 
   const ctrl = s(values.controller);
   if (ctrl === "none") set(out, "H49", "Without");
@@ -758,7 +860,16 @@ export function shmDCells(values: OrderValues): CellWrites {
   if (ctrl === "SHM-KX") set(out, "H49", "SHM_KX");
   if (ctrl === "HMIET") set(out, "H49", "HMIET-I");
 
+  const fiber = n(values.fiber_length_m);
+  if (fiber != null) set(out, "H53", fiber);
+
+  if (s(values.door_hinge) === "right") set(out, "H55", "Right-hand");
+  else if (s(values.door_hinge) === "left") set(out, "H55", "Left-hand");
+  if (s(values.padlock) === "yes" || s(values.padlock) === "with") set(out, "H59", "With");
+  else if (s(values.padlock) === "no" || s(values.padlock) === "without") set(out, "H59", "Without-std.");
+
   set(out, "H61", paintOsStd(values));
+  set(out, "H62", corrosiveOsStd(s(values.corrosive_class)));
   set(out, "H64", quantityValue(values));
   set(out, "H65", nameplateOs(s(values.nameplate_language)));
   const notes = [s(values.notes), s(values.matching_oltc) ? `OLTC: ${s(values.matching_oltc)}` : ""]
