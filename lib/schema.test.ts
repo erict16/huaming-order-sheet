@@ -24,7 +24,7 @@ describe("orderFields", () => {
       expect(keys, sheet.id).toContain("order_no");
       expect(keys, sheet.id).toContain("designer_name");
       expect(keys, sheet.id).toContain("designer_phone");
-      expect(keys, sheet.id).toContain("designer_email");
+      expect(keys, sheet.id).not.toContain("designer_email");
       expect(keys, sheet.id).toContain("designer_phone_cc");
       const cc = allFields(sheet, {}).find(({ field }) => field.key === "designer_phone_cc")!.field;
       expect(cc.type, sheet.id).toBe("combobox");
@@ -87,7 +87,7 @@ describe("orderFields", () => {
     expect(keys).not.toContain("ins_a_pf_kv");
     expect(keys).toContain("temp_sensor");
     expect(keys).toContain("ust_mode");
-    expect(allFields(oltc, { flange_type: "tank_top" }).map(({ field }) => field.key)).not.toContain("support_flange");
+    expect(allFields(oltc, { flange_type: "tank_top" }).map(({ field }) => field.key)).toContain("support_flange");
     const withResistor = allFields(oltc, { potential_connection: "with" }).map(({ field }) => field.key);
     expect(withResistor).toContain("wind_r1_mm");
     expect(withResistor).toContain("wind_cw_pf");
