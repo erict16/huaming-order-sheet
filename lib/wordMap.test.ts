@@ -205,6 +205,42 @@ describe("oltcSdtValues", () => {
     expect(oltcSdtValues({ hv_kv: "66" })[95]).toBeUndefined();
   });
 
+  it("keeps HV in SDT 19 and puts OLTC on LV in remarks (no side SDT)", () => {
+    const lv = oltcSdtValues({ hv_kv: "66", lv_kv: "11", oltc_side: "lv" });
+    expect(lv[19]).toBe("66");
+    expect(lv[20]).toBe("11");
+    expect(lv[53]).toBeUndefined();
+    expect(lv[95]).toBe("OLTC on LV");
+
+    const hv = oltcSdtValues({ hv_kv: "66", lv_kv: "11", oltc_side: "hv" });
+    expect(hv[19]).toBe("66");
+    expect(hv[20]).toBe("66");
+    expect(hv[95]).toBeUndefined();
+
+    const withNotes = oltcSdtValues({
+      hv_kv: "66",
+      lv_kv: "11",
+      oltc_side: "lv",
+      notes: "keep on 95",
+    });
+    expect(withNotes[95]).toBe("OLTC on LV\nkeep on 95");
+
+    const three = oltcSdtValues({
+      hv_kv: "115",
+      mv_kv: "22",
+      lv_kv: "10.5",
+      oltc_side: "lv",
+      notes: "tertiary",
+    });
+    expect(three[19]).toBe("115");
+    expect(three[20]).toBe("10.5");
+    expect(three[53]).toContain("MV 22 kV");
+    expect(three[53]).toContain("LV 10.5 kV");
+    expect(three[53]).toContain("OLTC on LV");
+    expect(three[53]).toContain("tertiary");
+    expect(three[95]).toBeUndefined();
+  });
+
   it("ticks Constant step voltage, In-neutral, supporting flange Without", () => {
     const c = oltcCheckValues({
       family: "CV",
@@ -300,6 +336,18 @@ describe("fillDocx", () => {
     expect(texts[53]).toContain("MV 22 kV");
     expect(texts[53]).toContain("LV 10.5 kV");
     expect(texts[53]).toContain("EVN Tiên Yên tertiary");
+  });
+
+  it("writes OLTC on LV into official Word remarks and leaves HV in SDT 19", async () => {
+    const filled = await fillDocx(
+      readFileSync(template),
+      oltcSdtValues({ hv_kv: "66", lv_kv: "11", oltc_side: "lv" }),
+    );
+    const xml = await (await JSZip.loadAsync(filled)).file("word/document.xml")!.async("string");
+    const texts = readSdtTexts(xml);
+    expect(texts[19]).toBe("66");
+    expect(texts[20]).toBe("11");
+    expect(texts[95]).toBe("OLTC on LV");
   });
 });
 

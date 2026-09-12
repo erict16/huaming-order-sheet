@@ -129,6 +129,27 @@ function kvaOf(values: OrderValues): string | undefined {
   return String(mva >= 20 ? mva * 1000 : Math.round(mva * 1000));
 }
 
+/** SDT 20 is “OLTC on _ kV side” (a kV), not an HV/LV/MV dropdown. */
+function oltcOnKvWord(values: OrderValues): string | undefined {
+  const side = s(values.oltc_side);
+  if (side === "lv") return s(values.oltc_on_kv) || s(values.lv_kv) || undefined;
+  if (side === "mv") return s(values.oltc_on_kv) || s(values.mv_kv) || undefined;
+  return s(values.oltc_on_kv) || s(values.hv_kv) || undefined;
+}
+
+/** No dedicated side SDT/checkbox. LV is noted on remarks (53 with MV, else 95). */
+function oltcRemarks(values: OrderValues): string | undefined {
+  const lines: string[] = [];
+  const mv = s(values.mv_kv);
+  if (mv) {
+    lines.push(`MV ${mv} kV`);
+    if (s(values.lv_kv)) lines.push(`LV ${s(values.lv_kv)} kV`);
+  }
+  if (s(values.oltc_side) === "lv") lines.push("OLTC on LV");
+  if (s(values.notes)) lines.push(s(values.notes));
+  return lines.join("\n") || undefined;
+}
+
 function rangeLeft(values: OrderValues): string | undefined {
   const minus = s(values.range_minus);
   if (minus) return `-${minus}`;
@@ -259,7 +280,7 @@ export function oltcSdtValues(values: OrderValues): Array<string | undefined> {
     set(16, kva);
   }
   set(19, s(values.hv_kv));
-  set(20, s(values.oltc_on_kv) || s(values.hv_kv));
+  set(20, oltcOnKvWord(values));
   const steps = n(values.oltc_tap_positions);
   if (steps) set(21, String(steps));
   set(22, rangeLeft(values));
@@ -299,19 +320,9 @@ export function oltcSdtValues(values: OrderValues): Array<string | undefined> {
   set(51, s(values.wind_ca_pf));
   set(52, s(values.recovery_voltage_kv));
   {
-    const mv = s(values.mv_kv);
-    if (mv) {
-      set(
-        53,
-        [
-          `MV ${mv} kV`,
-          s(values.lv_kv) ? `LV ${s(values.lv_kv)} kV` : "",
-          s(values.notes),
-        ]
-          .filter(Boolean)
-          .join("\n"),
-      );
-    }
+    const remarks = oltcRemarks(values);
+    if (s(values.mv_kv)) set(53, remarks);
+    else set(95, remarks);
   }
 
   if (s(values.phases) === "I") set(54, "1x");
@@ -369,7 +380,6 @@ export function oltcSdtValues(values: OrderValues): Array<string | undefined> {
   set(91, langWord(s(values.nameplate_language)));
   set(92, s(values.quantity));
   if (s(values.temp_sensor) === "with") set(77, s(values.temp_sensor_type) || "PT100");
-  if (!out[53]) set(95, s(values.notes));
 
   return out;
 }
