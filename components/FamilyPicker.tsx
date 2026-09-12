@@ -18,7 +18,7 @@ function Cell({
     <button
       type="button"
       onClick={() => onPick(f.code)}
-      className={`inline-flex h-10 items-center gap-1.5 rounded-md px-2.5 font-mono text-[13px] font-semibold tracking-tight transition duration-150 active:translate-y-px ${
+      className={`inline-flex h-11 items-center gap-1.5 rounded-md px-3 font-mono text-[15px] font-semibold tracking-tight transition duration-150 active:translate-y-px ${
         active
           ? "bg-navy text-white"
           : "bg-white text-navy ring-1 ring-slate-200 hover:ring-navy/40"
@@ -61,17 +61,17 @@ export default function FamilyPicker({
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50/80 text-left text-ink-soft">
-              <th className="w-20 px-4 py-2.5 font-medium" />
-              <th className="px-3 py-2.5 font-medium">{lang === "en" ? "Oil" : "油浸"}</th>
-              <th className="px-3 py-2.5 font-medium">{lang === "en" ? "Vacuum" : "真空"}</th>
+              <th className="w-24 px-4 py-3 text-center font-medium" />
+              <th className="px-3 py-3 text-center font-medium">{lang === "en" ? "Oil" : "油浸"}</th>
+              <th className="px-3 py-3 text-center font-medium">{lang === "en" ? "Vacuum" : "真空"}</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((row) => (
               <tr key={row.label.zh} className="border-t border-slate-100">
-                <th className="px-4 py-3 text-left font-medium text-ink-soft">{t(row.label, lang)}</th>
+                <th className="px-4 py-3 text-center font-medium text-ink-soft">{t(row.label, lang)}</th>
                 <td className="px-3 py-3">
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap justify-center gap-2">
                     {row.oil.map((code) => {
                       const f = byCode.get(code);
                       return f ? <Cell key={code} f={f} active={value === code} onPick={onChange} /> : null;
@@ -79,7 +79,7 @@ export default function FamilyPicker({
                   </div>
                 </td>
                 <td className="px-3 py-3">
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap justify-center gap-2">
                     {row.vac.map((code) => {
                       const f = byCode.get(code);
                       return f ? <Cell key={code} f={f} active={value === code} onPick={onChange} /> : null;
@@ -90,9 +90,9 @@ export default function FamilyPicker({
             ))}
             {legacy.length ? (
               <tr className="border-t border-slate-100 bg-slate-50/60">
-                <th className="px-4 py-3 text-left font-medium text-ink-muted">{t(FAMILY_GROUP_LABEL.legacy, lang)}</th>
+                <th className="px-4 py-3 text-center font-medium text-ink-muted">{t(FAMILY_GROUP_LABEL.legacy, lang)}</th>
                 <td className="px-3 py-3" colSpan={2}>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap justify-center gap-2">
                     {legacy.map((f) => (
                       <Cell key={f.code} f={f} active={value === f.code} onPick={onChange} />
                     ))}

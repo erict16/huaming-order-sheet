@@ -43,6 +43,7 @@ import {
   HWV_UST_OPTS,
   INS_FILL_OPTS,
   OLTC_AMBIENT_OPTS,
+  OLTC_SIDE_OPTS,
   SUPPORT_FLANGE_OPTS,
   TEMP_SENSOR_OPTS,
   CMA7_AVR_OPTS,
@@ -198,13 +199,32 @@ function transformerFields(opts?: { fluid?: boolean; txKind?: boolean }): FieldD
       type: "text",
       applies: (v) => v.capacity_mode === "decreasing",
     },
-    { key: "oltc_on_kv", label: L("开关装在哪一侧电压", "OLTC on this kV side", "РПН на стороне, кВ", "OLTC lắp phía kV"), type: "number", unit: "kV" },
+    {
+      key: "oltc_side",
+      label: L("开关装在哪一侧", "OLTC on", "РПН на стороне", "OLTC lắp phía"),
+      type: "radio",
+      options: OLTC_SIDE_OPTS.filter((o) => o.value !== "mv"),
+      span: 2,
+      hint: L("电压填上面高压/低压。有中压时会出现中压侧。", "Voltages are HV/LV above. MV side appears once MV is filled.", "Напряжения ВН/НН выше. СН — когда заполнено.", "Điện áp cao/hạ ở trên. Có trung áp mới hiện phía trung."),
+    },
     { key: "ambient_band", label: L("环境温度", "Ambient temperature", "Температура среды", "Nhiệt độ môi trường"), type: "radio", options: OLTC_AMBIENT_OPTS, span: 2 },
     {
-      key: "ambient_temp",
-      label: L("其他环境温度", "Other ambient", "Другая температура", "Nhiệt độ khác"),
-      type: "text",
-      applies: (v) => v.ambient_band === "other",
+      key: "ambient_min",
+      label: L("最低", "Min", "Мин.", "Min"),
+      type: "number",
+      unit: "℃",
+      prefix: "−",
+      placeholder: L("25", "25", "25", "25"),
+      applies: (v) => v.ambient_band === "other" || v.ambient_temp === "other",
+    },
+    {
+      key: "ambient_max",
+      label: L("最高", "Max", "Макс.", "Max"),
+      type: "number",
+      unit: "℃",
+      prefix: "+",
+      placeholder: L("50", "50", "50", "50"),
+      applies: (v) => v.ambient_band === "other" || v.ambient_temp === "other",
     },
     { key: "standard", label: L("标准", "Standard", "Стандарт", "Tiêu chuẩn"), type: "select", options: STD_OPTS },
   );
@@ -922,7 +942,23 @@ const shmSheet: SheetDef = {
             { key: "control_voltage", label: L("控制电压", "Control voltage", "Напряжение управления", "Điện áp điều khiển"), type: "select", options: CTRL_VOLT_OPTS, required: true },
             { key: "heater", label: L("加热器", "Heater", "Обогреватель", "Sưởi"), type: "radio", options: YES_NO },
             { key: "mdu_ip", label: L("防护等级", "Ingress protection", "Степень защиты", "Cấp bảo vệ"), type: "select", options: IP_OPTS },
-            { key: "ambient_temp", label: L("环境温度", "Ambient temperature", "Температура среды", "Nhiệt độ môi trường"), type: "text" },
+            { key: "ambient_band", label: L("环境温度", "Ambient temperature", "Температура среды", "Nhiệt độ môi trường"), type: "radio", options: OLTC_AMBIENT_OPTS, span: 2 },
+            {
+              key: "ambient_min",
+              label: L("最低", "Min", "Мин.", "Min"),
+              type: "number",
+              unit: "℃",
+              prefix: "−",
+              applies: (v) => v.ambient_band === "other",
+            },
+            {
+              key: "ambient_max",
+              label: L("最高", "Max", "Макс.", "Max"),
+              type: "number",
+              unit: "℃",
+              prefix: "+",
+              applies: (v) => v.ambient_band === "other",
+            },
           ],
         },
       ],
@@ -1022,16 +1058,28 @@ const hwvSheet: SheetDef = {
             {
               key: "frequency_other",
               label: L("其他频率", "Other frequency", "Другая частота", "Tần số khác"),
-              type: "text",
+              type: "number",
               unit: "Hz",
+              placeholder: L("60", "60", "60", "60"),
               applies: (v) => v.frequency_hz === "other",
             },
-            { key: "ambient_temp", label: L("环境温度", "Ambient temperature", "Температура среды", "Nhiệt độ môi trường"), type: "radio", options: HWV_AMBIENT_OPTS },
+            { key: "ambient_temp", label: L("环境温度", "Ambient temperature", "Температура среды", "Nhiệt độ môi trường"), type: "radio", options: HWV_AMBIENT_OPTS, span: 2 },
             {
-              key: "ambient_other",
-              label: L("其他温度", "Other ambient", "Другая температура", "Nhiệt độ khác"),
-              type: "text",
+              key: "ambient_min",
+              label: L("最低", "Min", "Мин.", "Min"),
+              type: "number",
               unit: "℃",
+              prefix: "−",
+              placeholder: L("25", "25", "25", "25"),
+              applies: (v) => v.ambient_temp === "other",
+            },
+            {
+              key: "ambient_max",
+              label: L("最高", "Max", "Макс.", "Max"),
+              type: "number",
+              unit: "℃",
+              prefix: "+",
+              placeholder: L("40", "40", "40", "40"),
               applies: (v) => v.ambient_temp === "other",
             },
             { key: "rated_power_mva", label: L("额定容量", "Rated capacity", "Номинальная мощность", "Công suất định mức"), type: "number", unit: "MVA" },
@@ -1332,6 +1380,10 @@ export function missingRequired(sheet: SheetDef, values: OrderValues): FieldDef[
 }
 
 export function resolveFieldOptions(field: FieldDef, values: OrderValues): FieldDef {
+  if (field.key === "oltc_side") {
+    const opts = String(values.mv_kv ?? "").trim() ? OLTC_SIDE_OPTS : OLTC_SIDE_OPTS.filter((o) => o.value !== "mv");
+    return { ...field, options: opts };
+  }
   if (field.key === "plus_minus") {
     const steps = values.regulation === "coarse_fine" ? PM_STEP_OPTIONS_G : PM_STEP_OPTIONS_W;
     return {

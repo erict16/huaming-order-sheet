@@ -21,6 +21,7 @@ export const SHEET_DEFAULTS: Record<SheetId, OrderValues> = {
     ins_fill: "catalog",
     temp_sensor: "without",
     ambient_band: "-25~50",
+    oltc_side: "hv",
   },
   octc: {
     frequency_hz: "50",

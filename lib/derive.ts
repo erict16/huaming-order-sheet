@@ -150,5 +150,23 @@ export function deriveValues(prev: OrderValues, patch: OrderValues): OrderValues
     else if (nSteps != null) next.tap_range_pct = `±${nSteps}%`;
   }
 
+  if ("oltc_side" in patch || "hv_kv" in patch || "lv_kv" in patch || "mv_kv" in patch) {
+    const side = next.oltc_side || "hv";
+    if (side === "lv") next.oltc_on_kv = next.lv_kv || "";
+    else if (side === "mv") next.oltc_on_kv = next.mv_kv || "";
+    else next.oltc_on_kv = next.hv_kv || "";
+  }
+
+  if ("ambient_min" in patch || "ambient_max" in patch) {
+    const min = num(next.ambient_min);
+    const max = num(next.ambient_max);
+    if (min != null && max != null) {
+      const lo = Math.abs(min);
+      const hi = Math.abs(max);
+      next.ambient_temp = `−${lo}～+${hi} ℃`;
+      next.ambient_other = next.ambient_temp;
+    }
+  }
+
   return next;
 }

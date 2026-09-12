@@ -61,7 +61,7 @@ function Control({
               key={opt.value}
               type="button"
               onClick={() => onChange(opt.value)}
-              className={`rounded-lg px-3 py-2 text-sm shadow-sm ring-1 ring-inset transition ${
+              className={`rounded-lg px-3.5 py-2.5 text-[15px] shadow-sm ring-1 ring-inset transition duration-150 active:translate-y-px ${
                 active
                   ? "bg-navy text-white ring-navy"
                   : "bg-white text-ink-soft ring-slate-300 hover:ring-slate-400"
@@ -124,13 +124,22 @@ function Control({
     );
   }
 
-  return (
+  const input = (
     <input
-      className="field-control"
+      className={`field-control ${field.prefix ? "pl-8" : ""}`}
       type={field.type === "number" ? "number" : "text"}
       value={value}
       placeholder={placeholder}
       onChange={(e) => onChange(e.target.value)}
     />
+  );
+  if (!field.prefix) return input;
+  return (
+    <div className="relative">
+      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[15px] text-ink-muted">
+        {field.prefix}
+      </span>
+      {input}
+    </div>
   );
 }

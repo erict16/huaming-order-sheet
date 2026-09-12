@@ -11,7 +11,9 @@ describe("ice chrome", () => {
     expect(picker).toContain("<table");
     expect(picker).toContain('"CM"');
     expect(picker).toContain('"CV2"');
-    expect(wizard).toContain("h-7 w-7");
+    expect(wizard).toContain("h-8 w-8");
+    expect(wizard).toContain("justify-center");
+    expect(shell).toContain("max-w-3xl");
     expect(wizard.indexOf("<FamilyPicker")).toBeLessThan(wizard.lastIndexOf("<PresetPicker"));
   });
 });

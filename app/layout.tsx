@@ -1,6 +1,19 @@
 import type { Metadata } from "next";
+import { IBM_Plex_Mono, Noto_Sans_SC } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
+
+const sans = Noto_Sans_SC({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
+const mono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["500", "600"],
+  variable: "--font-mono",
+  display: "swap",
+});
 
 /** Must match next.config basePath so GH Pages favicon URLs resolve. */
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
@@ -28,7 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="shortcut icon" href={`${basePath}/brand/favicon-32.png`} type="image/png" />
         <link rel="apple-touch-icon" href={`${basePath}/brand/apple-touch-icon.png`} sizes="180x180" />
       </head>
-      <body className="font-sans">
+      <body className={`${sans.className} ${mono.variable} font-sans`}>
         <Providers>{children}</Providers>
       </body>
     </html>
