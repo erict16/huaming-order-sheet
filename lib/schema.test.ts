@@ -56,6 +56,12 @@ describe("orderFields", () => {
     }
   });
 
+  it("exposes destination_port on every sheet that maps it", () => {
+    for (const id of ["oltc", "dry", "octc", "hwv", "cma7", "shm-d"] as const) {
+      expect(allFields(getSheet(id)!, {}).map(({ field }) => field.key), id).toContain("destination_port");
+    }
+  });
+
   it("exposes official CMA7 groups and three-winding MV on the forms", () => {
     const cma7 = getSheet("cma7")!;
     const keys = allFields(cma7, { heat_from: "separate", socket_x10: "other", resistor_sig: "1", avr_model: "hmc3c_air" }).map(
