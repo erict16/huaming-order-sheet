@@ -41,7 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="shortcut icon" href={`${basePath}/brand/favicon-32.png`} type="image/png" />
         <link rel="apple-touch-icon" href={`${basePath}/brand/apple-touch-icon.png`} sizes="180x180" />
       </head>
-      <body className={`${sans.className} ${mono.variable} font-sans`}>
+      <body className={`${sans.className} ${mono.variable}`}>
         <Providers>{children}</Providers>
       </body>
     </html>
