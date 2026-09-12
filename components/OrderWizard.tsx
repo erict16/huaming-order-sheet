@@ -130,45 +130,46 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
   const canWord = hasWordExport(sheet);
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-steel">
-        {t(sheet.meta.tag, lang)}
-      </p>
-      <h1 className="mt-1 text-2xl font-bold text-navy sm:text-3xl">{t(sheet.meta.title, lang)}</h1>
-      <div className="mt-3">
-        {typeStr.compact ? (
-          <TypePlate compact={typeStr.compact} spaced={typeStr.spaced} />
-        ) : (
-          <p className="text-sm text-ink-muted">{chromeText("typeHint", lang)}</p>
-        )}
+    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-sm text-ink-muted">{t(sheet.meta.tag, lang)}</p>
+          <h1 className="mt-0.5 text-2xl font-semibold text-navy">{t(sheet.meta.title, lang)}</h1>
+        </div>
+        <p className="text-sm text-ink-muted">
+          {step + 1}/{sheet.steps.length} {t(current.title, lang)}
+        </p>
       </div>
-      {t(current.blurb, lang).trim() ? (
-        <p className="mt-2 text-sm text-ink-soft">{t(current.blurb, lang)}</p>
+
+      <nav className="mt-5 flex items-center gap-1" aria-label={chromeText("stepOf", lang, { n: step + 1, total: sheet.steps.length })}>
+        {sheet.steps.map((s, i) => (
+          <button
+            key={s.id}
+            type="button"
+            onClick={() => go(i)}
+            title={t(s.title, lang)}
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition duration-150 active:translate-y-px ${
+              i === step
+                ? "bg-navy text-white"
+                : i < step
+                  ? "bg-navy-50 text-navy"
+                  : "text-ink-muted hover:bg-white"
+            }`}
+          >
+            {i + 1}
+          </button>
+        ))}
+      </nav>
+
+      {typeStr.compact ? (
+        <div className="mt-5">
+          <TypePlate compact={typeStr.compact} spaced={typeStr.spaced} />
+        </div>
       ) : null}
 
-      <ol className="mt-5 flex flex-wrap gap-2">
-        {sheet.steps.map((s, i) => (
-          <li key={s.id}>
-            <button
-              type="button"
-              onClick={() => go(i)}
-              className={`rounded-full px-3 py-1 text-xs font-semibold transition duration-150 active:translate-y-px ${
-                i === step
-                  ? "bg-navy-50 text-navy ring-1 ring-navy/30"
-                  : i < step
-                    ? "bg-white text-navy ring-1 ring-slate-200"
-                    : "bg-transparent text-ink-muted ring-1 ring-transparent hover:bg-white"
-              }`}
-            >
-              {i + 1}. {t(s.title, lang)}
-            </button>
-          </li>
-        ))}
-      </ol>
-
-      <p className="mt-3 text-xs text-ink-muted">
-        {chromeText("stepOf", lang, { n: step + 1, total: sheet.steps.length })} · {chromeText("saved", lang)}
-      </p>
+      {t(current.blurb, lang).trim() ? (
+        <p className="mt-4 text-sm text-ink-soft">{t(current.blurb, lang)}</p>
+      ) : null}
 
       <div className="mt-6 overflow-hidden">
         <AnimatePresence mode="wait">
@@ -189,18 +190,18 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
             ) : null}
 
             {current.kind === "family" && sheet.families ? (
-              <div className="space-y-6">
+              <div className="space-y-5">
+                <FamilyPicker
+                  families={sheet.families}
+                  value={values.family || ""}
+                  onChange={(code) => setField("family", code)}
+                />
                 <PresetPicker
                   sheetId={id}
                   onApply={(preset) => {
                     setValues(applyPreset(preset));
                     go(1);
                   }}
-                />
-                <FamilyPicker
-                  families={sheet.families}
-                  value={values.family || ""}
-                  onChange={(code) => setField("family", code)}
                 />
               </div>
             ) : null}
@@ -295,7 +296,7 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
         </AnimatePresence>
       </div>
 
-      <div className="no-print sticky bottom-3 z-20 mt-6 flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-card backdrop-blur">
+      <div className="no-print sticky bottom-0 z-20 mt-8 flex flex-wrap gap-2 border-t border-slate-200 bg-[#f4f6f8]/95 py-3 backdrop-blur">
         {step === 0 ? (
           <Link href="/" className="btn-secondary">
             <ArrowLeftIcon className="h-4 w-4" />

@@ -3,15 +3,16 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 describe("ice chrome", () => {
-  it("keeps a light header and equal family tiles", () => {
+  it("keeps a light header and an oil/vacuum family catalog", () => {
     const shell = readFileSync(path.join(process.cwd(), "components/AppShell.tsx"), "utf8");
     const picker = readFileSync(path.join(process.cwd(), "components/FamilyPicker.tsx"), "utf8");
+    const wizard = readFileSync(path.join(process.cwd(), "components/OrderWizard.tsx"), "utf8");
     expect(shell).toContain("bg-white/90");
-    expect(shell).not.toMatch(/header className="[^"]*bg-navy[^\-]/);
-    expect(picker).toContain("grid-cols-2");
-    expect(picker).toContain("sm:grid-cols-3");
-    expect(picker).toContain("min-h-[4.25rem]");
-    expect(picker).toContain("bg-navy-50");
+    expect(picker).toContain("<table");
+    expect(picker).toContain('"CM"');
+    expect(picker).toContain('"CV2"');
+    expect(wizard).toContain("h-7 w-7");
+    expect(wizard.indexOf("<FamilyPicker")).toBeLessThan(wizard.lastIndexOf("<PresetPicker"));
   });
 });
 
