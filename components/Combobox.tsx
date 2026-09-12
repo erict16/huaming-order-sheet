@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type HTMLAttributes } from "react";
+import { useRef, useState, type HTMLAttributes } from "react";
 import { Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions } from "@headlessui/react";
 import { CheckIcon, ChevronDownIcon } from "@heroicons/react/20/solid";
 import { t } from "@/lib/copy";
@@ -32,9 +32,11 @@ export default function SearchableCombobox({
   autoComplete?: string;
   inputMode?: HTMLAttributes<HTMLInputElement>["inputMode"];
 }) {
-  const [query, setQuery] = useState("");
+  // null = not editing (show selected). "" = user cleared the input.
+  const [query, setQuery] = useState<string | null>(null);
+  const queryRef = useRef<string | null>(null);
   const selected = options.find((o) => o.value === value);
-  const q = query.trim().toLowerCase();
+  const q = (query ?? "").trim().toLowerCase();
   const filtered = q
     ? options.filter((o) => {
         const label = t(o.label, lang).toLowerCase();
@@ -42,8 +44,14 @@ export default function SearchableCombobox({
       })
     : options;
 
+  function setEditing(next: string | null) {
+    queryRef.current = next;
+    setQuery(next);
+  }
+
+  // allowCustom (country, phone cc): write on close/select, never per keystroke.
   function commitTyped() {
-    const typed = query.trim();
+    const typed = (queryRef.current ?? "").trim();
     if (!typed) return;
     const match = options.find(
       (o) => o.value.toLowerCase() === typed.toLowerCase() || t(o.label, lang).toLowerCase() === typed.toLowerCase(),
@@ -55,12 +63,12 @@ export default function SearchableCombobox({
     <Combobox
       value={value || null}
       onChange={(next) => {
-        setQuery("");
+        setEditing(null);
         onChange(next ?? "");
       }}
       onClose={() => {
         if (allowCustom) commitTyped();
-        setQuery("");
+        setEditing(null);
       }}
       immediate
     >
@@ -73,15 +81,12 @@ export default function SearchableCombobox({
           inputMode={inputMode}
           className="field-control pr-10"
           displayValue={(v: string | null) => {
-            if (query) return query;
+            if (query !== null) return query;
             if (!v) return "";
             const opt = options.find((o) => o.value === v);
             return opt ? t(opt.label, lang) : v;
           }}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            if (allowCustom) onChange(e.target.value.trim());
-          }}
+          onChange={(e) => setEditing(e.target.value)}
           placeholder={placeholder}
         />
         <ComboboxButton
