@@ -33,7 +33,9 @@ export default function PresetPicker({
           <ChevronDownIcon className="size-5 text-ink-muted transition-transform duration-150 group-open:rotate-180" aria-hidden="true" />
         </span>
       </summary>
-      <p className="px-4 pb-2 text-sm text-ink-muted">{chromeText("presetsHint", lang)}</p>
+      <p className="px-4 pb-2 text-sm text-ink-muted">
+        {chromeText("presetsHintN", lang, { n: presets.length })}
+      </p>
       <ul className="divide-y divide-slate-100 border-t border-slate-100">
         {presets.map((preset) => {
           const body = (

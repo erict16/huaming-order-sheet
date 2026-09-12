@@ -23,6 +23,7 @@ describe("ice chrome", () => {
     expect(wizard).toContain("h-10 w-10");
     expect(wizard).toContain('aria-current={i === step ? "step" : undefined}');
     expect(wizard).toContain("justify-center");
+    expect(wizard).toContain("exportWordUnavailable");
     expect(shell).toContain("max-w-3xl");
     expect(wizard.indexOf("<FamilyPicker")).toBeLessThan(wizard.lastIndexOf("<PresetPicker"));
   });
@@ -51,6 +52,8 @@ describe("homepage starters", () => {
     expect(picker).not.toMatch(/<details[^>]*\sopen/);
     expect(picker).toContain("sheetId");
     expect(picker).toContain("p.sheetId === sheetId");
+    expect(picker).toContain("presetsHintN");
+    expect(picker).toMatch(/n:\s*presets\.length/);
   });
 
   it("lists all 6 sheets (oltc, hwv, octc, dry, cma7, shm-d)", () => {
@@ -80,6 +83,14 @@ describe("i18n chrome", () => {
     expect(chromeText("presetsHint", "en").toLowerCase()).toMatch(/eight/);
     expect(chromeText("presetsHint", "ru").toLowerCase()).toMatch(/восемь/);
     expect(chromeText("presetsHint", "vi").toLowerCase()).toMatch(/tám/);
+    const n = ORDER_PRESETS.length;
+    expect(chromeText("presetsHintN", "zh", { n })).toMatch(/8/);
+    expect(chromeText("presetsHintN", "en", { n })).toMatch(/8/);
+    expect(chromeText("presetsHintN", "ru", { n })).toMatch(/8/);
+    expect(chromeText("presetsHintN", "vi", { n })).toMatch(/8/);
+    expect(chromeText("presetsHintN", "zh", { n: 1 })).toContain("1");
+    expect(chromeText("presetsHintN", "zh", { n: 1 })).not.toContain("{n}");
+    expect(chromeText("presetsHintN", "zh", { n: 1 })).not.toMatch(/8/);
   });
 
   it("keeps empty-state and validation chrome, and sentence-case EN headings", () => {
@@ -96,6 +107,19 @@ describe("i18n chrome", () => {
     expect(chromeText("skipToContent", "zh")).toMatch(/正文/);
     expect(chromeText("oil", "ru")).toBe("Масло");
     expect(chromeText("vacuum", "vi")).toBe("Chân không");
+    expect(chromeText("exportWordUnavailable", "zh")).toMatch(/Word/);
+    expect(chromeText("exportWordUnavailable", "en")).toMatch(/Word/);
+  });
+});
+
+describe("review and export chrome", () => {
+  it("keeps sticky section heads and a disabled Word title", () => {
+    const review = readFileSync(path.join(process.cwd(), "components/ReviewPanel.tsx"), "utf8");
+    const seg = readFileSync(path.join(process.cwd(), "components/SegmentedControl.tsx"), "utf8");
+    expect(review).toContain("sticky top-0");
+    expect(review).toContain("reviewEmpty");
+    expect(seg).toContain("opt.title");
+    expect(seg).toContain("aria-label");
   });
 });
 

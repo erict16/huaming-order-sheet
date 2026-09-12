@@ -400,7 +400,12 @@ function ExportFormatControl({
           value={format}
           onChange={onChange}
           options={[
-            { value: "word", label: chromeText("exportWord", lang), disabled: !canWord },
+            {
+              value: "word",
+              label: chromeText("exportWord", lang),
+              disabled: !canWord,
+              title: canWord ? undefined : chromeText("exportWordUnavailable", lang),
+            },
             { value: "excel", label: chromeText("exportExcel", lang) },
           ]}
         />
