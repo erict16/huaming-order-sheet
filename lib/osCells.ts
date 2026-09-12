@@ -329,6 +329,13 @@ function tempSensorOs(values: OrderValues): string | undefined {
   return undefined;
 }
 
+/** Sheet1 H117. Official ku B261–B262 防雨罩. Data Source B32–B34 出线盒 is H146 — do not invent. */
+function rainCoverOs(v: string): string | undefined {
+  if (v === "no" || v === "without") return "1. 不配";
+  if (v === "yes" || v === "with") return "2. 配";
+  return undefined;
+}
+
 const SHAFTS = [800, 1000, 1200, 1500, 2000] as const;
 const SHAFT_H_KEYS = ["h1", "h2", "h3", "h4"] as const;
 const SHAFT_V_KEYS = ["v1", "v2", "v3", "v4"] as const;
@@ -551,6 +558,7 @@ export function oltcCells(values: OrderValues): CellWrites {
   set(out, "H104", topGearOs(s(values.top_gear)));
   set(out, "H96", prvOs(s(values.pressure_relief)));
   set(out, "H97", tempSensorOs(values));
+  set(out, "H117", rainCoverOs(s(values.rain_cover)));
 
   const des = designationCells(values);
   if (des) {

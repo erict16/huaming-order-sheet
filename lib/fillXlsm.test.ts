@@ -137,6 +137,24 @@ describe("fillWorkbook official templates", () => {
     expect(ws.H78?.t).toBe("n");
   });
 
+  it("writes OLTC rain_cover onto official H117 ku 不配/配", () => {
+    const file = templatePath(TEMPLATE_FILE.oltc);
+    const buf = readFileSync(file);
+    expect(hasVbaProject(buf)).toBe(true);
+    const blank = XLSX.read(buf, { type: "array", bookVBA: true }).Sheets.Sheet1;
+    expect(blank.A117?.v).toBe("不锈钢防雨罩");
+    expect(blank.H117?.v).toBe("1. 不配");
+    const noBuf = fillWorkbook(buf, oltcCells({ rain_cover: "no" }));
+    expect(hasVbaProject(noBuf)).toBe(true);
+    expect(XLSX.read(noBuf, { type: "array", bookVBA: true }).Sheets.Sheet1.H117?.v).toBe("1. 不配");
+    const yes = XLSX.read(fillWorkbook(buf, oltcCells({ rain_cover: "yes" })), {
+      type: "array",
+      bookVBA: true,
+    }).Sheets.Sheet1;
+    expect(yes.H117?.v).toBe("2. 配");
+    expect(yes.H146?.v).toBe("1. 不配");
+  });
+
   it("writes OLTC HV / LV / MV side onto official AD23", () => {
     const file = templatePath(TEMPLATE_FILE.oltc);
     const buf = readFileSync(file);

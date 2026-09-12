@@ -122,11 +122,21 @@ describe("oltcCells", () => {
     expect(cells.I21).toBe(25000);
   });
 
-  it("does not invent overload / flux / tap winding / temp sensor when unset", () => {
+  it("does not invent overload / flux / tap winding / temp sensor / rain cover when unset", () => {
     expect(cells.H22).toBeUndefined();
     expect(cells.H26).toBeUndefined();
     expect(cells.H27).toBeUndefined();
     expect(cells.H97).toBeUndefined();
+    expect(cells.H117).toBeUndefined();
+  });
+
+  it("writes official 防雨罩 ku B261–B262 onto H117 and skips 出线盒", () => {
+    expect(oltcCells({ ...oltc, rain_cover: "no" }).H117).toBe("1. 不配");
+    expect(oltcCells({ ...oltc, rain_cover: "without" }).H117).toBe("1. 不配");
+    expect(oltcCells({ ...oltc, rain_cover: "yes" }).H117).toBe("2. 配");
+    expect(oltcCells({ ...oltc, rain_cover: "with" }).H117).toBe("2. 配");
+    expect(oltcCells({ ...oltc, rain_cover: "yes" }).H146).toBeUndefined();
+    expect(String(oltcCells({ ...oltc, rain_cover: "yes" }).A173 || "")).not.toMatch(/出线盒/);
   });
 
   it("writes official Overload / Magnetic flux / Regulated location / Temperature Sensor dropdowns", () => {
