@@ -1,3 +1,4 @@
+import { resolveDeliveryDate } from "./osCells";
 import { operatingDesignation } from "./positions";
 import type { OrderValues } from "./types";
 
@@ -34,6 +35,13 @@ const CTRL_VOLT: Record<string, string> = {
   "110_dc": "110",
 };
 
+/** Official SDT 13 / 15 lists. Schema has no with-signal key. */
+function protectWord(v: string): string | undefined {
+  if (v === "1pole") return "1-pole, auto-cut, without signal";
+  if (v === "2pole") return "2-pole, auto-cut, without signal";
+  return undefined;
+}
+
 function motorVoltText(values: OrderValues): string | undefined {
   return MOTOR_VOLT[s(values.motor_voltage)];
 }
@@ -48,8 +56,8 @@ function motorNet(values: OrderValues): string {
   const explicit = s(values.motor_network);
   if (explicit) return explicit;
   const mv = s(values.motor_voltage);
+  if (!mv) return "";
   if (mv.endsWith("_1")) return "ac";
-  if (mv.endsWith("_3") || mv) return "3acn";
   return "3acn";
 }
 
@@ -58,7 +66,16 @@ function heaterKind(values: OrderValues): string {
   if (k) return k;
   if (s(values.heater) === "no") return "without";
   if (s(values.heater) === "yes") return "resistor";
-  return "resistor";
+  return "";
+}
+
+function avrChoice(values: OrderValues): string {
+  const avr = s(values.avr_model);
+  if (avr) return avr;
+  const c = s(values.controller);
+  if (c === "HMC-3C") return "hmc3c_air";
+  if (c === "ET-SZ6") return "etsz6_air";
+  return "";
 }
 
 function paintWord(values: OrderValues): string | undefined {
@@ -69,13 +86,12 @@ function paintWord(values: OrderValues): string | undefined {
   return paint.replace("RAL", "RAL ");
 }
 
-function langWord(v: string): string | undefined {
-  if (v === "zh") return "Chinese";
+/** Official nameplate / docs lists have no Chinese / Vietnamese / Indonesian. */
+function plateLang(v: string): string | undefined {
   if (v === "en") return "English";
   if (v === "ru") return "Russian";
-  if (v === "vi") return "English";
-  if (v === "pt") return "Portuguese";
   if (v === "tr") return "Turkish";
+  if (v === "pt") return "Portuguese";
   return undefined;
 }
 
@@ -88,11 +104,37 @@ function designation(values: OrderValues) {
   return operatingDesignation(pos, mid);
 }
 
+function remarksWord(values: OrderValues): string | undefined {
+  const lines: string[] = [];
+  if (s(values.matching_oltc)) lines.push(`OLTC: ${s(values.matching_oltc)}`);
+  const qty = s(values.quantity);
+  if (qty && qty !== "1") lines.push(`Quantity: ${qty}`);
+  const del = resolveDeliveryDate(values);
+  if (del) lines.push(del);
+  if (s(values.destination_port)) lines.push(s(values.destination_port));
+  if (s(values.order_no)) lines.push(s(values.order_no));
+  const ip = s(values.mdu_ip);
+  if (ip && ip !== "IP54") lines.push(ip);
+  if (s(values.parallel) === "yes") lines.push("Parallel operation");
+  const side = s(values.mdu_side);
+  if (side === "right") lines.push("MDU on the right");
+  else if (side === "left") lines.push("MDU on the left");
+  const lang = s(values.nameplate_language);
+  if (lang && !plateLang(lang)) {
+    const extra: Record<string, string> = { zh: "Chinese", vi: "Vietnamese", id: "Indonesian" };
+    if (extra[lang]) lines.push(`Nameplate: ${extra[lang]}`);
+  }
+  if (s(values.notes)) lines.push(s(values.notes));
+  return lines.join("\n") || undefined;
+}
+
 export const CMA7_CHECKBOX_COUNT = 69;
+export const CMA7_SDT_COUNT = 32;
 
 /**
  * 69 FORMCHECKBOX on cma7-order-sheet.docx, document order.
- * Word shows a tick only when w:checked/@w:val="1".
+ * Tick only from wizard keys. Printed standard-included block has no boxes
+ * (motor N/C, over-current jumper, in-operation N/O, Remote/Off/Local, Phoenix UK5).
  */
 export function cma7CheckValues(values: OrderValues): boolean[] {
   const on = new Array<boolean>(CMA7_CHECKBOX_COUNT).fill(false);
@@ -104,61 +146,61 @@ export function cma7CheckValues(values: OrderValues): boolean[] {
   if (net === "ac") tick(1);
   else if (net === "3ac") tick(2);
   else if (net === "dc") tick(3);
-  else tick(0);
+  else if (net === "3acn") tick(0);
 
   if (s(values.frequency_hz) === "60") tick(5);
-  else tick(4);
+  else if (s(values.frequency_hz) === "50") tick(4);
 
   if (s(values.control_from) === "separate") tick(7);
-  else tick(6);
+  else if (s(values.control_from) === "motor") tick(6);
 
   const cNet = s(values.control_network);
   if (cNet === "ac") tick(9);
   else if (cNet === "dc") tick(10);
-  else tick(8);
+  else if (cNet === "2ac") tick(8);
 
   const cProt = s(values.control_protect);
   if (cProt === "1pole" || cProt === "2pole") tick(12);
-  else tick(11);
+  else if (cProt === "without") tick(11);
 
   if (s(values.heat_from) === "separate") tick(14);
-  else tick(13);
+  else if (s(values.heat_from) === "motor") tick(13);
 
   if (s(values.heat_network) === "2ac") tick(16);
-  else tick(15);
+  else if (s(values.heat_network) === "ac") tick(15);
 
   const hProt = s(values.heat_protect);
   if (hProt === "1pole" || hProt === "2pole") tick(18);
-  else tick(17);
+  else if (hProt === "without") tick(17);
 
   const hk = heaterKind(values);
   if (hk === "thermostat") tick(20);
   else if (hk === "hygrostat") tick(21);
-  else if (hk !== "without") tick(19);
+  else if (hk === "resistor") tick(19);
 
   if (s(values.hand_lamp) === "yes" || s(values.hand_lamp) === "with") tick(23);
-  else tick(22);
+  else if (s(values.hand_lamp) === "no" || s(values.hand_lamp) === "without") tick(22);
 
   const endp = s(values.end_pos_sig);
   if (endp === "no") tick(25);
   else if (endp === "co") tick(26);
-  else tick(24);
+  else if (endp === "without") tick(24);
 
   const crank = s(values.crank_sig);
   if (crank === "no") tick(28);
   else if (crank === "co") tick(29);
-  else tick(27);
+  else if (crank === "without") tick(27);
 
   if (s(values.cam_s20) === "co") tick(31);
-  else tick(30);
+  else if (s(values.cam_s20) === "without") tick(30);
 
   if (s(values.incomplete_s21) === "co") tick(33);
-  else tick(32);
+  else if (s(values.incomplete_s21) === "without") tick(32);
 
   const sock = s(values.socket_x10);
   if (sock === "universal") tick(35);
   else if (sock === "other") tick(36);
-  else tick(34);
+  else if (sock === "without") tick(34);
 
   const noType = s(values.pos_no_type);
   if (noType === "1mbb") tick(38);
@@ -166,58 +208,60 @@ export function cma7CheckValues(values: OrderValues): boolean[] {
   else if (noType === "2mbb") tick(40);
   else if (noType === "1bbm" || s(values.position_tx) === "potentiometer") tick(37);
 
-  const bcd = s(values.bcd_qty) || (s(values.position_tx) === "bcd" ? "1" : "without");
+  const bcd = s(values.bcd_qty) || (s(values.position_tx) === "bcd" ? "1" : "");
   if (bcd === "1") tick(42);
   else if (bcd === "2") tick(43);
-  else tick(41);
+  else if (bcd === "without") tick(41);
 
-  const ma = s(values.ma_qty) || (s(values.position_tx) === "4_20" ? "1" : "without");
+  const ma = s(values.ma_qty) || (s(values.position_tx) === "4_20" ? "1" : "");
   if (ma === "1") tick(45);
   else if (ma === "2") tick(46);
   else if (ma === "3") tick(47);
-  else tick(44);
+  else if (ma === "without") tick(44);
 
   const rs = s(values.resistor_sig);
   if (rs === "1") tick(49);
   else if (rs === "2") tick(51);
   else if (rs === "3") tick(52);
-  else tick(48);
+  else if (rs === "without") tick(48);
   if (s(values.resistor_zero_first) === "yes") tick(50);
 
   if (s(values.door_hinge) === "right") tick(54);
-  else tick(53);
+  else if (s(values.door_hinge) === "left") tick(53);
 
   const bot = s(values.bottom_plate);
   if (bot === "gland") tick(56);
   else if (bot === "nobore") tick(57);
   else if (bot === "other") tick(58);
-  else tick(55);
+  else if (bot === "holes50") tick(55);
 
   if (s(values.padlock) === "yes" || s(values.padlock) === "with") tick(60);
-  else tick(59);
+  else if (s(values.padlock) === "no" || s(values.padlock) === "without") tick(59);
 
-  const avr =
-    s(values.avr_model) ||
-    (s(values.controller) === "HMC-3C" ? "hmc3c_air" : s(values.controller) === "ET-SZ6" ? "etsz6_air" : "none");
+  const avr = avrChoice(values);
   if (avr === "hmc3c_air") tick(62);
   else if (avr === "hmc3c_term") tick(63);
-  else tick(61);
+  else if (avr === "none" || avr === "etsz6_air" || avr === "etsz6_term") tick(61);
   if (avr === "etsz6_air") tick(65);
   else if (avr === "etsz6_term") tick(66);
-  else tick(64);
+  else if (avr === "none" || avr === "hmc3c_air" || avr === "hmc3c_term") tick(64);
   const aviation = avr === "hmc3c_air" || avr === "etsz6_air";
   if (aviation) {
     const cable = n(values.avr_cable_m);
     if (cable && cable !== 30) tick(68);
-    else tick(67);
+    else if (cable === 30) tick(67);
   }
 
   return on;
 }
 
-/** 32 SDTs on cma7-order-sheet.docx. */
+/**
+ * 32 SDTs on cma7-order-sheet.docx.
+ * 1 is Revision. 24 / 27 / 28 are 2nd language / qty with no wizard keys.
+ * 26 is documentation copy count, not order quantity.
+ */
 export function cma7SdtValues(values: OrderValues): Array<string | undefined> {
-  const out: Array<string | undefined> = new Array(32);
+  const out: Array<string | undefined> = new Array(CMA7_SDT_COUNT);
   const set = (i: number, v: string | undefined) => {
     if (v) out[i] = v;
   };
@@ -238,28 +282,22 @@ export function cma7SdtValues(values: OrderValues): Array<string | undefined> {
   set(11, motorVoltText(values));
   const cv = ctrlVoltText(values);
   set(12, cv);
-  const cProt = s(values.control_protect);
-  if (cProt === "1pole") set(13, "1-pole auto-cut");
-  if (cProt === "2pole") set(13, "2-pole auto-cut");
-  const hv = CTRL_VOLT[s(values.heat_voltage)] ?? (s(values.heat_from) !== "separate" ? cv : undefined);
+  set(13, protectWord(s(values.control_protect)));
+  const hv = CTRL_VOLT[s(values.heat_voltage)] ?? (s(values.heat_from) === "motor" ? cv : undefined);
   set(14, hv);
-  const hProt = s(values.heat_protect);
-  if (hProt === "1pole") set(15, "1-pole auto-cut");
-  if (hProt === "2pole") set(15, "2-pole auto-cut");
+  set(15, protectWord(s(values.heat_protect)));
   set(16, s(values.socket_country));
   set(17, s(values.resistor_ohm));
   set(18, s(values.resistor_ohm_2));
   set(19, s(values.resistor_ohm_3));
   if (s(values.bottom_plate) === "other") set(20, s(values.bottom_plate_other));
   set(21, paintWord(values));
-  set(22, s(values.corrosive_class));
-  set(23, langWord(s(values.nameplate_language)));
-  set(25, langWord(s(values.nameplate_language)));
-  set(26, s(values.quantity));
-  const remarks = [s(values.matching_oltc) ? `OLTC: ${s(values.matching_oltc)}` : "", s(values.notes)]
-    .filter(Boolean)
-    .join("\n");
-  set(29, remarks);
+  const cor = s(values.corrosive_class);
+  if (cor && cor !== "none") set(22, cor);
+  const plate = plateLang(s(values.nameplate_language));
+  set(23, plate);
+  set(25, plate);
+  set(29, remarksWord(values));
   const cable = n(values.avr_cable_m);
   if (cable && cable !== 30) set(30, String(cable));
   return out;
