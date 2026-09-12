@@ -139,6 +139,106 @@ describe("hwvFormValues", () => {
     expect(checks[13]).toBe(false);
     expect(checks[14]).toBe(false);
   });
+
+  it("ticks HWVI, SHM-D, ET-SZ6 and remaining transformer boxes", () => {
+    const v = deriveValues(SHEET_DEFAULTS.hwv, {
+      family: "HWV",
+      phases: "I",
+      mdu_model: "SHM-D",
+      controller: "ET-SZ6",
+      application: "test",
+      flux: "vfvv",
+      overload_mode: "above",
+      overload_pct: "20",
+      overload_hours: "2",
+      capacity_mode: "decreasing",
+      rated_power_mva: "25",
+      capacity_from_pos: "9",
+      ust_mode: "variable",
+      ust_max: "1500",
+      ust_min: "800",
+      recovery_voltage_kv: "12",
+      potential_connection: "with",
+      oltc_mounting: "bolts",
+    });
+    const { texts, checks } = hwvFormValues(v);
+    expect(checks[1]).toBe(true);
+    expect(checks[0]).toBe(false);
+    expect(checks[5]).toBe(true);
+    expect(checks[4]).toBe(false);
+    expect(checks[7]).toBe(true);
+    expect(checks[6]).toBe(false);
+    expect(checks[14]).toBe(true);
+    expect(texts[7]).toBe("Test transformer");
+    expect(checks[32]).toBe(true);
+    expect(checks[31]).toBe(false);
+    expect(checks[30]).toBe(true);
+    expect(texts[14]).toBe("20");
+    expect(texts[15]).toBe("2");
+    expect(checks[28]).toBe(true);
+    expect(texts[12]).toBe("25");
+    expect(texts[13]).toBe("9");
+    expect(checks[43]).toBe(true);
+    expect(texts[27]).toBe("1500");
+    expect(texts[28]).toBe("800");
+    expect(checks[44]).toBe(true);
+    expect(texts[29]).toBe("12");
+    expect(checks[46]).toBe(true);
+    expect(checks[45]).toBe(false);
+    expect(checks[67]).toBe(true);
+    expect(checks[66]).toBe(false);
+  });
+
+  it("ticks HWDKI, SHM-K, QJ6, two C/O PRV, and paint/nameplate others", () => {
+    const v = deriveValues(SHEET_DEFAULTS.hwv, {
+      family: "HWDK",
+      phases: "I",
+      controller: "SHM-K",
+      hwdk_basic: "33_reversing",
+      protective_relay: "qj6",
+      pressure_relief: "prv_two",
+      paint: "RAL7035",
+      nameplate_language: "zh",
+    });
+    const { texts, checks } = hwvFormValues(v);
+    expect(checks[3]).toBe(true);
+    expect(checks[2]).toBe(false);
+    expect(checks[8]).toBe(true);
+    expect(checks[51]).toBe(true);
+    expect(checks[52]).toBe(true);
+    expect(checks[55]).toBe(true);
+    expect(checks[61]).toBe(true);
+    expect(checks[63]).toBe(true);
+    expect(checks[62]).toBe(false);
+    expect(texts[48]).toBe("RAL 7035");
+    expect(checks[65]).toBe(true);
+    expect(checks[64]).toBe(false);
+    expect(texts[49]).toBe("Chinese");
+  });
+
+  it("writes ambient others from min/max when the radio is other", () => {
+    const { texts, checks } = hwvFormValues({
+      ...hwviii400(),
+      ambient_temp: "other",
+      ambient_min: "45",
+      ambient_max: "50",
+    });
+    expect(checks[26]).toBe(true);
+    expect(checks[24]).toBe(false);
+    expect(texts[10]).toBe("-45~+50");
+  });
+
+  it("ticks Word −25~+40 when other min/max are 25 / 40", () => {
+    const { checks, texts } = hwvFormValues({
+      ...hwviii400(),
+      ambient_temp: "other",
+      ambient_min: "25",
+      ambient_max: "40",
+    });
+    expect(checks[24]).toBe(true);
+    expect(checks[26]).toBe(false);
+    expect(texts[10]).toBeUndefined();
+  });
 });
 
 describe("HWV Word fill", () => {

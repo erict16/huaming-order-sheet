@@ -16,7 +16,7 @@ function n(v: string | undefined): number | undefined {
 }
 
 function stripPm(v: string): string {
-  return v.replace(/^[±+\-\s]+/, "").trim();
+  return v.replace(/^[±+\-\s]+/, "").trim().replace(/%\s*$/, "");
 }
 
 function paintWord(values: OrderValues): string {
@@ -24,6 +24,37 @@ function paintWord(values: OrderValues): string {
   if (paint === "other") return s(values.paint_other);
   if (!paint) return "";
   return paint.replace("RAL", "RAL ");
+}
+
+function applicationOther(app: string, values: OrderValues): string {
+  if (app === "other") return s(values.application_other);
+  if (app === "test") return "Test transformer";
+  if (app === "hvdc") return "HVDC";
+  if (app === "reactor") return "Reactor";
+  return app;
+}
+
+function matchesAmbient(amb: string, lo: number, hi: number): boolean {
+  if (!amb) return false;
+  return new RegExp(`[-−]?\\s*${lo}\\s*[~～-]\\s*\\+?\\s*${hi}`).test(amb);
+}
+
+function ambientMinMax(values: OrderValues): string {
+  const min = s(values.ambient_min).replace(/^[−\-]+/, "");
+  const max = s(values.ambient_max).replace(/^[−\-]+/, "");
+  if (min && max) return `-${min}~+${max}`;
+  return "";
+}
+
+function ambientOthersText(values: OrderValues, raw: string): string {
+  const composed = s(values.ambient_other) || ambientMinMax(values);
+  if (composed) return composed;
+  if (raw && raw !== "other") {
+    const m = /^[-−]?(\d+)\s*[~～]\s*\+?(\d+)/.exec(raw);
+    if (m) return `-${m[1]}~+${m[2]}`;
+    return raw;
+  }
+  return "";
 }
 
 function phasesDigit(phases: string): string {
@@ -104,15 +135,18 @@ function octcPositions(values: OrderValues): { max: string; mid: string; min: st
  *   C46 size A  C47 size B
  *   C48 lead A  C49 lead B  C50 lead C
  *   C51 Hand wheel  C52 HMC-3W
- *   C53 Manual drive box  C54 HMC-3W
- *   C55 CMA9  C56 HMC-3W
+ *   C53 Manual drive box  C54 HMC-3W  — no wizard key
+ *   C55 CMA9  C56 HMC-3W  — octc_drive is handwheel/CMA7/SHM-D; cage CMA7 → remarks
  *   C57 WSL-D motor top
  *   C58 Top manual  C59 HMC-3W
- *   C60 Side manual top trans  C61 HMC-3W
- *   C62 Side manual bottom  C63 HMC-3W
+ *   C60 Side manual top trans  C61 HMC-3W  — no wizard key
+ *   C62 Side manual bottom  C63 HMC-3W  — no wizard key
  *   C64 CMA7  C65 HMC-3W
- *   C66 protective cover
+ *   C66 protective cover ← rain_cover
  *   C67 Paint RAL7040  C68 Paint others
+ *
+ * Wizard controller is HMC-3C/ET-SZ6/SHM-K… (not HMC-3W). Only tick C52/C59/C65 when
+ * controller is exactly HMC-3W. Other controller values go to T63 remarks.
  */
 export function octcFormValues(values: OrderValues): {
   texts: Array<string | undefined>;
@@ -158,7 +192,7 @@ export function octcFormValues(values: OrderValues): {
   else if (app === "generator") on(4);
   else if (app) {
     on(5);
-    setT(12, app === "other" ? s(values.application_other) : app);
+    setT(12, applicationOther(app, values));
   }
 
   const tx = s(values.tx_kind);
@@ -170,7 +204,7 @@ export function octcFormValues(values: OrderValues): {
   else if (phases === "I") on(10);
   else if (phases) {
     on(11);
-    setT(13, s(values.phases_other) || phases);
+    setT(13, s(values.phases_other) || phasesDigit(phases));
   }
 
   const freq = s(values.frequency_hz);
@@ -181,12 +215,13 @@ export function octcFormValues(values: OrderValues): {
     setT(14, s(values.frequency_other) || (freq === "other" ? "" : freq));
   }
 
-  const amb = s(values.ambient_temp);
-  if (amb === "-25~+40" || /−?\s*25\s*[~～]\s*\+?\s*40/.test(amb)) on(15);
-  else if (amb === "-40~+40" || /−?\s*40\s*[~～]\s*\+?\s*40/.test(amb)) on(16);
-  else if (amb) {
+  const ambRaw = s(values.ambient_temp) || s(values.ambient_band);
+  const ambText = ambientOthersText(values, ambRaw);
+  if (matchesAmbient(ambRaw, 25, 40) || matchesAmbient(ambText, 25, 40)) on(15);
+  else if (matchesAmbient(ambRaw, 40, 40) || matchesAmbient(ambText, 40, 40)) on(16);
+  else if (ambRaw) {
     on(17);
-    setT(15, s(values.ambient_other) || amb);
+    setT(15, ambText);
   }
 
   const ov = s(values.overload_mode);
@@ -211,10 +246,13 @@ export function octcFormValues(values: OrderValues): {
 
   setT(21, s(values.hv_kv));
 
-  const shape = s(values.range_shape);
+  const plusPct = s(values.range_plus) || s(values.tap_plus_pct);
+  const minusPct = s(values.range_minus) || s(values.tap_minus_pct);
+  const shape =
+    s(values.range_shape) || (plusPct && minusPct && plusPct !== minusPct ? "asymmetric" : "symmetric");
   if (shape === "asymmetric") {
-    setT(23, s(values.tap_plus_pct));
-    setT(24, s(values.tap_minus_pct));
+    setT(23, stripPm(plusPct));
+    setT(24, stripPm(minusPct));
     setT(26, s(values.steps_plus));
     setT(27, s(values.steps_minus));
   } else {
@@ -298,22 +336,41 @@ export function octcFormValues(values: OrderValues): {
   setT(53, s(values.wsld_cable_m));
   setT(54, s(values.wdg_cable_m));
 
+  const ctrl = s(values.controller);
+  const hmc3w = ctrl === "HMC-3W";
   if (isCage(family)) {
-    if (drive === "handwheel") on(51);
-    else if (drive === "CMA7") remarks.push("CMA7 motor drive unit");
+    if (drive === "handwheel") {
+      on(51);
+      if (hmc3w) on(52);
+    } else if (drive === "CMA9") {
+      on(55);
+      if (hmc3w) on(56);
+    } else if (drive === "CMA7") remarks.push("CMA7 motor drive unit");
     else if (drive === "SHM-D") remarks.push("SHM-D motor drive unit");
   } else if (isWslD(family)) {
-    if (drive === "CMA7" || drive === "SHM-D") on(57);
+    if (drive === "CMA7" || drive === "SHM-D" || drive === "CMA9") on(57);
     setT(53, s(values.wsld_cable_m) || s(values.cable_length_m));
   } else if (isDrum(family)) {
-    if (drive === "handwheel") on(58);
-    else if (drive === "CMA7") on(64);
-    else if (drive === "SHM-D") remarks.push("SHM-D motor drive unit");
+    if (drive === "handwheel") {
+      on(58);
+      if (hmc3w) on(59);
+    } else if (drive === "CMA7") {
+      const leadOut = s(values.octc_lead) || s(values.lead_output);
+      if (leadOut === "C") remarks.push("CMA7 motor drive unit");
+      else on(64);
+      if (hmc3w) on(65);
+    } else if (drive === "SHM-D") remarks.push("SHM-D motor drive unit");
   } else if (drive === "handwheel") {
     on(51);
+    if (hmc3w) on(52);
   } else if (drive === "CMA7") {
     on(64);
+    if (hmc3w) on(65);
+  } else if (drive === "CMA9") {
+    on(55);
+    if (hmc3w) on(56);
   }
+  if (ctrl && ctrl !== "none" && !hmc3w) remarks.push(ctrl);
 
   setT(55, s(values.h1) || s(values.drive_shaft_horizontal_mm));
   setT(56, s(values.h2));
@@ -333,6 +390,11 @@ export function octcFormValues(values: OrderValues): {
     setT(62, paintWord(values));
   }
 
+  const mv = s(values.mv_kv);
+  if (mv) {
+    remarks.push(`MV ${mv} kV`);
+    if (s(values.lv_kv)) remarks.push(`LV ${s(values.lv_kv)} kV`);
+  }
   const note = s(values.notes);
   if (note) remarks.push(note);
   setT(63, remarks.join("\n"));

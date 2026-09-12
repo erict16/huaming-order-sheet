@@ -123,6 +123,90 @@ describe("octcFormValues", () => {
     expect(cma7Drum.checks[64]).toBe(true);
     expect(cma7Drum.checks[45]).toBe(true);
   });
+
+  it("does not tick HMC-3W or CMA9 from wizard HMC-3C / CMA7; controller goes to remarks", () => {
+    const cage = octcFormValues({
+      ...meeWsl(),
+      octc_drive: "CMA7",
+      controller: "HMC-3C",
+    });
+    expect(cage.checks[51]).toBe(false);
+    expect(cage.checks[52]).toBe(false);
+    expect(cage.checks[55]).toBe(false);
+    expect(cage.checks[56]).toBe(false);
+    expect(cage.checks[64]).toBe(false);
+    expect(cage.checks[65]).toBe(false);
+    expect(cage.texts[63]).toMatch(/CMA7/);
+    expect(cage.texts[63]).toContain("HMC-3C");
+
+    const drum = octcFormValues(
+      deriveValues(SHEET_DEFAULTS.octc, {
+        family: "WSG",
+        octc_series: "II",
+        current_a: "600",
+        connection: "D",
+        um_kv: "40.5",
+        octc_drive: "CMA7",
+        controller: "ET-SZ6",
+      }),
+    );
+    expect(drum.checks[64]).toBe(true);
+    expect(drum.checks[65]).toBe(false);
+    expect(drum.texts[63]).toContain("ET-SZ6");
+  });
+
+  it("ticks HMC-3W next to handwheel only when controller is HMC-3W", () => {
+    const { checks } = octcFormValues({ ...meeWsl(), controller: "HMC-3W" });
+    expect(checks[51]).toBe(true);
+    expect(checks[52]).toBe(true);
+    expect(checks[55]).toBe(false);
+    expect(checks[59]).toBe(false);
+    expect(checks[65]).toBe(false);
+  });
+
+  it("ticks C66 when rain_cover is yes", () => {
+    const on = octcFormValues({ ...meeWsl(), rain_cover: "yes" });
+    expect(on.checks[66]).toBe(true);
+    expect(octcFormValues(meeWsl()).checks[66]).toBe(false);
+    expect(octcFormValues({ ...meeWsl(), rain_cover: "no" }).checks[66]).toBe(false);
+  });
+
+  it("writes OLTC ambient_band onto Others, not the Word −25~+40 box", () => {
+    const { texts, checks } = octcFormValues({ ...meeWsl(), ambient_band: "-25~50" });
+    expect(checks[15]).toBe(false);
+    expect(checks[16]).toBe(false);
+    expect(checks[17]).toBe(true);
+    expect(texts[15]).toBe("-25~+50");
+  });
+
+  it("ticks Word −40~+40 when other ambient min/max are 40 / 40", () => {
+    const { texts, checks } = octcFormValues({
+      ...meeWsl(),
+      ambient_band: "other",
+      ambient_min: "40",
+      ambient_max: "40",
+    });
+    expect(checks[16]).toBe(true);
+    expect(checks[15]).toBe(false);
+    expect(checks[17]).toBe(false);
+    expect(texts[15]).toBeUndefined();
+  });
+
+  it("puts MV/LV into remarks when MV is filled, and phases II onto Others", () => {
+    const { texts, checks } = octcFormValues({
+      ...meeWsl(),
+      mv_kv: "20",
+      lv_kv: "10",
+      phases: "II",
+    });
+    expect(texts[63]).toContain("MV 20 kV");
+    expect(texts[63]).toContain("LV 10 kV");
+    expect(texts[63]).toContain("钟罩");
+    expect(checks[9]).toBe(false);
+    expect(checks[11]).toBe(true);
+    expect(texts[13]).toBe("2");
+    expect(texts[42]).toBe("2");
+  });
 });
 
 describe("OCTC Word fill", () => {

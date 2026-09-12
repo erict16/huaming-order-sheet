@@ -18,7 +18,19 @@ function n(v: string | undefined): number | undefined {
 }
 
 function stripPm(v: string): string {
-  return v.replace(/^[±+\-\s]+/, "").trim();
+  return v.replace(/^[±+\-\s]+/, "").trim().replace(/%\s*$/, "");
+}
+
+function matchesAmbient(amb: string, lo: number, hi: number): boolean {
+  if (!amb) return false;
+  return new RegExp(`[-−]?\\s*${lo}\\s*[~～-]\\s*\\+?\\s*${hi}`).test(amb);
+}
+
+function ambientMinMax(values: OrderValues): string {
+  const min = s(values.ambient_min).replace(/^[−\-]+/, "");
+  const max = s(values.ambient_max).replace(/^[−\-]+/, "");
+  if (min && max) return `-${min}~+${max}`;
+  return "";
 }
 
 function paintWord(values: OrderValues): string {
@@ -144,15 +156,13 @@ export function hwvFormValues(values: OrderValues): {
     setT(9, s(values.frequency_other) || (freq === "other" ? "" : freq));
   }
 
-  const amb = s(values.ambient_temp);
-  if (!amb || amb === "-25~+40") on(24);
-  else if (amb === "-40~+40") on(25);
-  else if (amb === "other") {
+  const ambRaw = s(values.ambient_temp);
+  const ambText = s(values.ambient_other) || ambientMinMax(values) || (ambRaw === "other" ? "" : ambRaw);
+  if (!ambRaw || matchesAmbient(ambRaw, 25, 40) || matchesAmbient(ambText, 25, 40)) on(24);
+  else if (matchesAmbient(ambRaw, 40, 40) || matchesAmbient(ambText, 40, 40)) on(25);
+  else {
     on(26);
-    setT(10, s(values.ambient_other));
-  } else {
-    on(26);
-    setT(10, amb);
+    if (ambText) setT(10, ambText);
   }
 
   const capMode = s(values.capacity_mode) || "constant";
@@ -314,7 +324,11 @@ export function hwvFormValues(values: OrderValues): {
     setT(49, nameplateWord(lang));
   }
 
-  setT(50, s(values.notes));
+  const extra: string[] = [];
+  if (!hwdk && s(values.mdu_model) === "SHM-X") extra.push("SHM-X");
+  const note = s(values.notes);
+  if (note) extra.push(note);
+  setT(50, extra.join("\n"));
 
   const mount = s(values.oltc_mounting);
   if (mount === "weld") on(66);
