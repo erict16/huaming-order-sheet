@@ -85,6 +85,14 @@ Word export should keep HV in SDT 19, vector in SDT 10, and put `MV … kV` / `L
 - **Excel S30:** variable Ust max / AB30 min. Constant stays I30.
 - **Excel Z18:** ambient ku strings from `ambient_band`. Wizard −25/45/60～+50 maps onto Excel +55.
 - **Excel S14:** destination / 交货地点 (`destination_port`).
+- **Word destination_port:** no place-of-delivery SDT on `oltc-order-sheet.docx`. Leftover goes to remarks SDT 53 (with MV) / 95 (`wordMap.oltcSdtValues`).
+- **OLTC oil_filter leftover:** Sheet1 has no ZXJY cell (separate OS). Excel Remark A173 (`osCells.oltcCells`). Word SDT 53/95. Do not invent a checkbox.
+- **Excel CMA7 H65 / V66 / V67:** aviation cable length (`avr_cable_m`). AB66/AB67 stay CEILING supply formulas.
+- **Excel CMA7 H77:** leftover docs language from `nameplate_language` (English / Russian / Portuguese; no Chinese).
+- **Excel SHM-D H63:** leftover docs language from `nameplate_language` or `hmi_language`.
+- **HWV leftover Word:** project / corrosive / leftover controller → T50 (`hwvMap`). No HMC-3W box.
+- **OCTC leftover Word:** T63 leftovers (project, type, vector, flux, corrosive, supporting flange, top gear, V4, motor/heater). Do not invent CMA9 / HMC-3W ticks unless the value is literally that.
+- **Dry leftover Word:** Type / range / I / Imax on remaining transformer SDTs 11 / 20–24 (`dryMap.drySdtValues`). Other extras to remarks. No CVT. No invented altitude.
 - **Dry Word:** official `dry-order-sheet.docx` is filled in-place (`fillDocx` + `dryMap`). Extra ticks from existing keys: `ins_fill` catalog/provided, `tap_winding` diagrams, `ust_mode` variable. Altitude and CZ terminals stay off (no keys). No CVT.
 - **SHM-D default:** Excel (`shm-d-order-specification-v1.2.xlsm`) because the 2025.3 `.doc` is not fillable. Choosing Word downloads the blank `.doc`.
 - **CMA7 leftover Word SDTs:** protect dropdowns (13 / 15), nameplate/docs language (23 / 25), remarks leftovers (29). Do not tick printed standard-included items or write order qty into docs copies (26 / 28).
@@ -94,3 +102,6 @@ Word export should keep HV in SDT 19, vector in SDT 10, and put `MV … kV` / `L
 - CV2-500 three-phase (catalogue III is 350/600).
 - Tap code 10181W (not in Fig 3-3).
 - SHM-D 2025.3 `.doc` checkboxes (not a fillable form).
+- Excel has no oil-filter cell (ZXJY leftover is remarks A173 / Word SDT 53/95).
+- Supporting flange is Word-only (`wordMap.oltcCheckValues` 21–23). Sheet1 has no cell (AH78 is mounting `flange_type`).
+- Transformer fluid Z19 unmapped (no dedicated key). H19 is tap-changer `insulating_fluid`.
