@@ -255,13 +255,107 @@ function fluidOs(v: string): string | undefined {
   return undefined;
 }
 
+/** Sheet1 H22. Official ku A102–A103; do not write IEC 60354. */
+function overloadOs(values: OrderValues): string | undefined {
+  const mode = s(values.overload_mode);
+  if (mode === "iec") return "1. IEC 60076-7 / ANSI C57.92";
+  if (mode !== "above") return undefined;
+  const pct = s(values.overload_pct);
+  const hours = s(values.overload_hours);
+  return `2. >IEC 60076-7 / ANSI C57.92 ( ${pct} )% overload ( ${hours} )hours`;
+}
+
+/** Sheet1 H26. Official ku A116–A118. */
+function fluxOs(v: string): string | undefined {
+  if (v === "cfvv") return "1. Constant flux voltage regulation";
+  if (v === "vfvv") return "2. Variable flux voltage regulation";
+  if (v === "combined") return "3. Compound voltage regulation";
+  return undefined;
+}
+
+/** Sheet1 H27. Official ku G17–G26. linear_end / linear_middle have no Excel option. */
+function tapWindingOs(v: string): string | undefined {
+  const map: Record<string, string> = {
+    star_neutral: "1. Star,in neutral",
+    star_middle: "2. Star,in center",
+    star_end: "3. Star,at line end",
+    delta_end: "4. Delta,at line end",
+    delta_middle: "5. Delta, in center",
+    "1plus2": "6. 1+2 phases",
+  };
+  return map[v];
+}
+
+/** Sheet1 H97. Official ku B471–B473. `other` is not on the list. */
+function tempSensorOs(values: OrderValues): string | undefined {
+  const t = s(values.temp_sensor);
+  if (t === "without") return "1. Without";
+  if (t !== "with") return undefined;
+  const kind = s(values.temp_sensor_type);
+  if (kind === "BWTY") return "3. With BWTY";
+  if (kind === "PT100" || !kind) return "2. With PT100";
+  return undefined;
+}
+
 const SHAFTS = [800, 1000, 1200, 1500, 2000] as const;
+const SHAFT_H_KEYS = ["h1", "h2", "h3", "h4"] as const;
+const SHAFT_V_KEYS = ["v1", "v2", "v3", "v4"] as const;
 
 function shaftQty(mm: number | undefined): { len: number; row: number } | undefined {
   if (!mm) return undefined;
   const i = SHAFTS.indexOf(mm as (typeof SHAFTS)[number]);
   if (i >= 0) return { len: mm, row: 154 + i };
   return undefined;
+}
+
+function shaftSegMm(values: OrderValues, keys: readonly string[]): number[] {
+  const out: number[] = [];
+  for (const k of keys) {
+    const mm = n(values[k]);
+    if (mm != null) out.push(mm);
+  }
+  return out;
+}
+
+/** Rows 154–158: quantity ticks per catalogue length. No H1–H4 / V1–V4 length cells on Sheet1. */
+function writeShaftColumn(out: CellWrites, col: "H" | "Z", mms: number[]) {
+  const qty: Partial<Record<(typeof SHAFTS)[number], number>> = {};
+  for (const mm of mms) {
+    if ((SHAFTS as readonly number[]).includes(mm)) {
+      const len = mm as (typeof SHAFTS)[number];
+      qty[len] = (qty[len] || 0) + 1;
+    }
+  }
+  SHAFTS.forEach((len, i) => {
+    const count = qty[len];
+    if (count) set(out, `${col}${154 + i}`, count);
+  });
+}
+
+function writeOltcShafts(values: OrderValues, out: CellWrites) {
+  const multi = s(values.shaft_multi) === "yes";
+  const hSegs = shaftSegMm(values, SHAFT_H_KEYS);
+  const vSegs = shaftSegMm(values, SHAFT_V_KEYS);
+  if (multi && hSegs.length) writeShaftColumn(out, "H", hSegs);
+  else {
+    const hShaft = shaftQty(n(values.drive_shaft_horizontal_mm));
+    if (hShaft) set(out, `H${hShaft.row}`, 1);
+  }
+  if (multi && vSegs.length) writeShaftColumn(out, "Z", vSegs);
+  else {
+    const vShaft = shaftQty(n(values.drive_shaft_vertical_mm));
+    if (vShaft) set(out, `Z${vShaft.row}`, 1);
+  }
+}
+
+function shaftRemark(values: OrderValues): string {
+  if (s(values.shaft_multi) !== "yes") return "";
+  const parts: string[] = [];
+  for (const k of [...SHAFT_H_KEYS, ...SHAFT_V_KEYS]) {
+    const mm = s(values[k]);
+    if (mm) parts.push(`${k.toUpperCase()}=${mm} mm`);
+  }
+  return parts.join("; ");
 }
 
 function designationCells(
@@ -369,6 +463,9 @@ export function oltcCells(values: OrderValues): CellWrites {
   set(out, "H18", freqOs(s(values.frequency_hz)));
   set(out, "H19", fluidOs(s(values.insulating_fluid)));
   set(out, "Z18", s(values.ambient_temp));
+  set(out, "H22", overloadOs(values));
+  set(out, "H26", fluxOs(s(values.flux)));
+  set(out, "H27", tapWindingOs(s(values.tap_winding)));
 
   const mva = n(values.rated_power_mva);
   if (mva != null) set(out, "I21", mva * 1000);
@@ -417,6 +514,7 @@ export function oltcCells(values: OrderValues): CellWrites {
   set(out, "AH78", flangeOs(s(values.flange_type)));
   set(out, "H104", topGearOs(s(values.top_gear)));
   set(out, "H96", prvOs(s(values.pressure_relief)));
+  set(out, "H97", tempSensorOs(values));
 
   const des = designationCells(values);
   if (des) {
@@ -464,10 +562,7 @@ export function oltcCells(values: OrderValues): CellWrites {
   else if (e2 === "Q" || (e2 && e2 === s(values.pipe_q))) set(out, "H152", "3. Same as pipe Q");
   else if (e2 === "S" || (e2 && e2 === s(values.pipe_s))) set(out, "H152", "4. Same as pipe S");
 
-  const hShaft = shaftQty(n(values.drive_shaft_horizontal_mm));
-  if (hShaft) set(out, `H${hShaft.row}`, 1);
-  const vShaft = shaftQty(n(values.drive_shaft_vertical_mm));
-  if (vShaft) set(out, `Z${vShaft.row}`, 1);
+  writeOltcShafts(values, out);
 
   set(out, "H167", paintOs(values));
   const corrosive = s(values.corrosive_class);
@@ -476,7 +571,7 @@ export function oltcCells(values: OrderValues): CellWrites {
   set(out, "H169", nameplateOs(s(values.nameplate_language)));
   set(out, "H170", quantityValue(values));
 
-  const notes = [s(values.notes), compact ? `Type: ${compact}` : ""]
+  const notes = [s(values.notes), compact ? `Type: ${compact}` : "", shaftRemark(values)]
     .filter(Boolean)
     .join("\n");
   set(out, "A173", notes);

@@ -50,6 +50,36 @@ describe("fillWorkbook official templates", () => {
     expect(ws.A172?.v).toBe("Remark");
   });
 
+  it("writes OLTC overload / flux / tap winding / temp sensor onto official H22 H26 H27 H97", () => {
+    const file = templatePath(TEMPLATE_FILE.oltc);
+    const buf = readFileSync(file);
+    expect(hasVbaProject(buf)).toBe(true);
+    const cells = oltcCells({
+      family: "CM2",
+      overload_mode: "above",
+      overload_pct: "120",
+      overload_hours: "4",
+      flux: "vfvv",
+      tap_winding: "delta_end",
+      temp_sensor: "with",
+      temp_sensor_type: "PT100",
+      shaft_multi: "yes",
+      h1: "1000",
+      v1: "1500",
+    });
+    const out = fillWorkbook(buf, cells);
+    expect(hasVbaProject(out)).toBe(true);
+    const ws = XLSX.read(out, { type: "array", bookVBA: true }).Sheets.Sheet1;
+    expect(ws.H22?.v).toBe("2. >IEC 60076-7 / ANSI C57.92 ( 120 )% overload ( 4 )hours");
+    expect(ws.H26?.v).toBe("2. Variable flux voltage regulation");
+    expect(ws.H27?.v).toBe("4. Delta,at line end");
+    expect(ws.H97?.v).toBe("2. With PT100");
+    expect(ws.H155?.v).toBe(1);
+    expect(ws.Z157?.v).toBe(1);
+    expect(String(ws.A173?.v)).toContain("H1=1000 mm");
+    expect(String(ws.A173?.v)).toContain("V1=1500 mm");
+  });
+
   it("fills CMA7 Order Specification V1.2", () => {
     const file = templatePath(TEMPLATE_FILE.cma7);
     expect(existsSync(file), file).toBe(true);

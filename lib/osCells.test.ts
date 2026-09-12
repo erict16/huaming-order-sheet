@@ -122,8 +122,61 @@ describe("oltcCells", () => {
     expect(cells.I21).toBe(25000);
   });
 
-  it("does not invent motor voltage on the OLTC sheet", () => {
+  it("does not invent overload / flux / tap winding / temp sensor when unset", () => {
     expect(cells.H22).toBeUndefined();
+    expect(cells.H26).toBeUndefined();
+    expect(cells.H27).toBeUndefined();
+    expect(cells.H97).toBeUndefined();
+  });
+
+  it("writes official Overload / Magnetic flux / Regulated location / Temperature Sensor dropdowns", () => {
+    expect(
+      oltcCells({ ...oltc, overload_mode: "iec" }).H22,
+    ).toBe("1. IEC 60076-7 / ANSI C57.92");
+    expect(
+      oltcCells({ ...oltc, overload_mode: "above", overload_pct: "150", overload_hours: "2" }).H22,
+    ).toBe("2. >IEC 60076-7 / ANSI C57.92 ( 150 )% overload ( 2 )hours");
+    expect(oltcCells({ ...oltc, flux: "cfvv" }).H26).toBe("1. Constant flux voltage regulation");
+    expect(oltcCells({ ...oltc, flux: "vfvv" }).H26).toBe("2. Variable flux voltage regulation");
+    expect(oltcCells({ ...oltc, flux: "combined" }).H26).toBe("3. Compound voltage regulation");
+    expect(oltcCells({ ...oltc, tap_winding: "star_neutral" }).H27).toBe("1. Star,in neutral");
+    expect(oltcCells({ ...oltc, tap_winding: "star_middle" }).H27).toBe("2. Star,in center");
+    expect(oltcCells({ ...oltc, tap_winding: "star_end" }).H27).toBe("3. Star,at line end");
+    expect(oltcCells({ ...oltc, tap_winding: "delta_end" }).H27).toBe("4. Delta,at line end");
+    expect(oltcCells({ ...oltc, tap_winding: "delta_middle" }).H27).toBe("5. Delta, in center");
+    expect(oltcCells({ ...oltc, tap_winding: "1plus2" }).H27).toBe("6. 1+2 phases");
+    expect(oltcCells({ ...oltc, tap_winding: "linear_end" }).H27).toBeUndefined();
+    expect(oltcCells({ ...oltc, tap_winding: "linear_middle" }).H27).toBeUndefined();
+    expect(oltcCells({ ...oltc, temp_sensor: "without" }).H97).toBe("1. Without");
+    expect(oltcCells({ ...oltc, temp_sensor: "with", temp_sensor_type: "PT100" }).H97).toBe("2. With PT100");
+    expect(oltcCells({ ...oltc, temp_sensor: "with" }).H97).toBe("2. With PT100");
+    expect(oltcCells({ ...oltc, temp_sensor: "with", temp_sensor_type: "BWTY" }).H97).toBe("3. With BWTY");
+    expect(oltcCells({ ...oltc, temp_sensor: "with", temp_sensor_type: "other" }).H97).toBeUndefined();
+  });
+
+  it("ticks 154–158 shaft quantities for H1–H4 / V1–V4 and lists them in A173", () => {
+    const cells = oltcCells({
+      ...oltc,
+      shaft_multi: "yes",
+      h1: "800",
+      h2: "800",
+      h3: "1000",
+      h4: "1800",
+      v1: "2000",
+      v2: "1200",
+      drive_shaft_horizontal_mm: "2000",
+      drive_shaft_vertical_mm: "2000",
+    });
+    expect(cells.H154).toBe(2);
+    expect(cells.H155).toBe(1);
+    expect(cells.H158).toBeUndefined();
+    expect(cells.Z156).toBe(1);
+    expect(cells.Z158).toBe(1);
+    expect(String(cells.A173)).toContain("H1=800 mm");
+    expect(String(cells.A173)).toContain("H2=800 mm");
+    expect(String(cells.A173)).toContain("H4=1800 mm");
+    expect(String(cells.A173)).toContain("V1=2000 mm");
+    expect(String(cells.A173)).toContain("V2=1200 mm");
   });
 
   it("writes 报价单号 to S13", () => {
