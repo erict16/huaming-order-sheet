@@ -13,7 +13,7 @@ const chrome = {
   heroLead: L("空白项按常规配置。", "Blank fields = standard supply.", "Пустые поля — стандарт.", "Ô trống = tiêu chuẩn."),
   pickSheet: L("选择要填的订货单", "Choose an order sheet", "Выберите бланк", "Chọn phiếu đặt hàng"),
   start: L("开始填写", "Start", "Начать", "Bắt đầu"),
-  backHome: L("返回选择", "All sheets", "Все бланки", "Tất cả phiếu"),
+  backHome: L("返回首页", "All sheets", "Все бланки", "Về trang đầu"),
   next: L("下一步", "Next", "Далее", "Tiếp"),
   prev: L("上一步", "Back", "Назад", "Trước"),
   review: L("核对并导出", "Review & export", "Проверка и экспорт", "Kiểm tra và xuất"),

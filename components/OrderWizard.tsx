@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowLeftIcon,
@@ -35,6 +36,7 @@ import PipeTable from "./PipeTable";
 import PresetPicker from "./PresetPicker";
 import ReviewPanel from "./ReviewPanel";
 import SegmentedControl from "./SegmentedControl";
+import TypePlate from "./TypePlate";
 
 export default function OrderWizard({ sheetId }: { sheetId: string }) {
   const id = sheetId as SheetId;
@@ -55,16 +57,20 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
     const q = params.get("preset");
     const sessionKey = pendingPresetKey(id);
     if (q) sessionStorage.setItem(sessionKey, q);
-    const next = hydrateSheetValues(id, window.location.search, loadValues(id), sessionStorage.getItem(sessionKey));
+    const pending = sessionStorage.getItem(sessionKey);
+    const next = hydrateSheetValues(id, window.location.search, loadValues(id), pending);
     saveValues(id, next);
     setValues(next);
-    if (q || sessionStorage.getItem(sessionKey)) {
+    const fromPreset = !!(q || pending);
+    if (fromPreset) {
       sessionStorage.removeItem(sessionKey);
       if (q) {
         const url = new URL(window.location.href);
         url.searchParams.delete("preset");
         window.history.replaceState({}, "", url.pathname + url.search + url.hash);
       }
+      const sh = getSheet(id);
+      if (sh?.steps[0]?.kind === "family" && next.family) setStep(1);
     }
     setLoaded(true);
   }, [id]);
@@ -129,11 +135,13 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
         {t(sheet.meta.tag, lang)}
       </p>
       <h1 className="mt-1 text-2xl font-bold text-navy sm:text-3xl">{t(sheet.meta.title, lang)}</h1>
-      {typeStr.compact ? (
-        <p className="mt-2 font-mono text-sm font-semibold tracking-tight text-navy">{typeStr.compact}</p>
-      ) : (
-        <p className="mt-2 text-sm text-ink-muted">{chromeText("typeHint", lang)}</p>
-      )}
+      <div className="mt-3">
+        {typeStr.compact ? (
+          <TypePlate compact={typeStr.compact} spaced={typeStr.spaced} />
+        ) : (
+          <p className="text-sm text-ink-muted">{chromeText("typeHint", lang)}</p>
+        )}
+      </div>
       {t(current.blurb, lang).trim() ? (
         <p className="mt-2 text-sm text-ink-soft">{t(current.blurb, lang)}</p>
       ) : null}
@@ -171,15 +179,24 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.12 }}
           >
+            {step === 0 && current.kind !== "family" ? (
+              <PresetPicker
+                sheetId={id}
+                onApply={(preset) => {
+                  setValues(applyPreset(preset));
+                }}
+              />
+            ) : null}
+
             {current.kind === "family" && sheet.families ? (
               <div className="space-y-6">
-                {id === "oltc" ? (
-                  <PresetPicker
-                    onApply={(preset) => {
-                      setValues(applyPreset(preset));
-                    }}
-                  />
-                ) : null}
+                <PresetPicker
+                  sheetId={id}
+                  onApply={(preset) => {
+                    setValues(applyPreset(preset));
+                    go(1);
+                  }}
+                />
                 <FamilyPicker
                   families={sheet.families}
                   value={values.family || ""}
@@ -233,14 +250,41 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
                         </div>
                       ) : (
                         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                          {fields.map((field) => (
-                            <Field
-                              key={field.key}
-                              field={field}
-                              value={values[field.key] ?? ""}
-                              onChange={(v) => setField(field.key, v)}
-                            />
-                          ))}
+                          {section.id === "oltc" && typeStr.compact ? (
+                            <div className="sm:col-span-2">
+                              <TypePlate compact={typeStr.compact} spaced={typeStr.spaced} />
+                            </div>
+                          ) : null}
+                          {fields.map((field) => {
+                            if (field.key === "designer_phone") return null;
+                            if (field.key === "designer_phone_cc") {
+                              const num = fields.find((f) => f.key === "designer_phone");
+                              return (
+                                <div key="phone" className="grid grid-cols-[minmax(8.5rem,11rem)_1fr] gap-3 sm:col-span-2">
+                                  <Field
+                                    field={field}
+                                    value={values.designer_phone_cc ?? ""}
+                                    onChange={(v) => setField("designer_phone_cc", v)}
+                                  />
+                                  {num ? (
+                                    <Field
+                                      field={num}
+                                      value={values.designer_phone ?? ""}
+                                      onChange={(v) => setField("designer_phone", v)}
+                                    />
+                                  ) : null}
+                                </div>
+                              );
+                            }
+                            return (
+                              <Field
+                                key={field.key}
+                                field={field}
+                                value={values[field.key] ?? ""}
+                                onChange={(v) => setField(field.key, v)}
+                              />
+                            );
+                          })}
                         </div>
                       )}
                     </section>
@@ -252,10 +296,17 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
       </div>
 
       <div className="no-print sticky bottom-3 z-20 mt-6 flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-card backdrop-blur">
-        <button type="button" className="btn-secondary" disabled={step === 0} onClick={() => go(step - 1)}>
-          <ArrowLeftIcon className="h-4 w-4" />
-          {chromeText("prev", lang)}
-        </button>
+        {step === 0 ? (
+          <Link href="/" className="btn-secondary">
+            <ArrowLeftIcon className="h-4 w-4" />
+            {chromeText("backHome", lang)}
+          </Link>
+        ) : (
+          <button type="button" className="btn-secondary" onClick={() => go(step - 1)}>
+            <ArrowLeftIcon className="h-4 w-4" />
+            {chromeText("prev", lang)}
+          </button>
+        )}
         {step < sheet.steps.length - 1 ? (
           <button
             type="button"

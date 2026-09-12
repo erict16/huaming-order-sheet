@@ -49,6 +49,8 @@ export const ORDER_PRESETS: OrderPreset[] = [
       regulation: "reversing",
       plus_minus: "9",
       oltc_tap_mid: "1",
+      step_percent: "1.78",
+      range_shape: "symmetric",
       tap_range_pct: "±9×1.78%",
       step_voltage_v: "1181.83",
       through_current_a: "200.82",
@@ -395,6 +397,6 @@ export function hydrateSheetValues(
   pendingId?: string | null,
 ): OrderValues {
   const preset = getPreset(new URLSearchParams(search).get("preset") || pendingId || "");
-  if (preset) return applyPreset(preset);
+  if (preset && preset.sheetId === id) return applyPreset(preset);
   return deriveValues({}, { ...(SHEET_DEFAULTS[id] ?? {}), ...stored });
 }

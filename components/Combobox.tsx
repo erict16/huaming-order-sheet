@@ -13,12 +13,14 @@ export default function SearchableCombobox({
   onChange,
   placeholder,
   lang,
+  allowCustom = false,
 }: {
   options: FieldOption[];
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   lang: Lang;
+  allowCustom?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const selected = options.find((o) => o.value === value);
@@ -30,24 +32,40 @@ export default function SearchableCombobox({
       })
     : options;
 
+  function commitTyped() {
+    const typed = query.trim();
+    if (!typed) return;
+    const match = options.find(
+      (o) => o.value.toLowerCase() === typed.toLowerCase() || t(o.label, lang).toLowerCase() === typed.toLowerCase(),
+    );
+    onChange(match ? match.value : typed);
+  }
+
   return (
     <Combobox
       value={value || null}
       onChange={(next) => {
-        if (next) onChange(next);
+        onChange(next ?? "");
       }}
-      onClose={() => setQuery("")}
+      onClose={() => {
+        if (allowCustom) commitTyped();
+        setQuery("");
+      }}
       immediate
     >
       <div className="relative">
         <ComboboxInput
           className="field-control pr-10"
           displayValue={(v: string | null) => {
+            if (query) return query;
             if (!v) return "";
             const opt = options.find((o) => o.value === v);
             return opt ? t(opt.label, lang) : v;
           }}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            if (allowCustom) onChange(e.target.value.trim());
+          }}
           placeholder={placeholder}
         />
         <ComboboxButton className="absolute inset-y-0 right-0 flex items-center px-2.5">

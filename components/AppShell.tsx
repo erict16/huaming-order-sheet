@@ -36,7 +36,7 @@ export default function AppShell({
           {back ? (
             <Link
               href="/"
-              className="ml-2 hidden rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white/80 ring-1 ring-white/15 hover:bg-white/15 sm:inline"
+              className="ml-2 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white/80 ring-1 ring-white/15 hover:bg-white/15"
             >
               {chromeText("backHome", lang)}
             </Link>

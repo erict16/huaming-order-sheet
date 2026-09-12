@@ -9,22 +9,26 @@ import { useLang } from "@/lib/useLang";
 
 export default function PresetPicker({
   onApply,
+  sheetId,
 }: {
   onApply?: (preset: OrderPreset) => void;
+  sheetId?: string;
 }) {
   const { lang } = useLang();
+  const presets = sheetId ? ORDER_PRESETS.filter((p) => p.sheetId === sheetId) : ORDER_PRESETS;
+  if (!presets.length) return null;
 
   return (
     <details className="mb-8 rounded-2xl border border-slate-200 bg-white">
       <summary className="cursor-pointer list-none px-5 py-3 text-sm font-semibold text-navy marker:content-none [&::-webkit-details-marker]:hidden">
         <span className="flex items-center justify-between gap-3">
           <span>{chromeText("presets", lang)}</span>
-          <span className="text-xs font-normal text-ink-muted">{ORDER_PRESETS.length}</span>
+          <span className="text-xs font-normal text-ink-muted">{presets.length}</span>
         </span>
       </summary>
       <p className="px-5 pb-2 text-sm text-ink-muted">{chromeText("presetsHint", lang)}</p>
       <ul className="grid gap-3 px-5 pb-5 sm:grid-cols-2">
-        {ORDER_PRESETS.map((preset) => {
+        {presets.map((preset) => {
           const body = (
             <>
               <div className="flex items-start justify-between gap-3">

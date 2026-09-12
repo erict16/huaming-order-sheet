@@ -83,6 +83,7 @@ function Control({
         onChange={onChange}
         placeholder={placeholder}
         lang={lang}
+        allowCustom={field.key === "designer_phone_cc"}
       />
     );
   }
