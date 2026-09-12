@@ -57,19 +57,35 @@ describe("fillWorkbook official templates", () => {
     const out = fillWorkbook(
       buf,
       cma7Cells({
-        matching_oltc: "CM2III-500Y/72.5B-10193W",
-        mdu_positions: "19",
-        oltc_tap_positions: "19",
-        oltc_tap_mid: "3",
-        regulation: "reversing",
+        matching_oltc: "CM2III-500Y/72.5B-18353W",
+        mdu_positions: "33",
+        pos_max: "1",
+        pos_mid: "17A,17B,17C",
+        pos_min: "33",
         frequency_hz: "50",
-        motor_voltage: "415_3",
-        controller: "none",
+        motor_voltage: "380_3",
+        motor_network: "3acn",
+        control_from: "motor",
+        control_protect: "2pole",
+        heater_kind: "hygrostat",
+        cam_s20: "co",
+        incomplete_s21: "co",
+        bcd_qty: "1",
+        avr_model: "none",
       }),
     );
     const ws = XLSX.read(out, { type: "array", bookVBA: true }).Sheets.Sheet1;
     expect(ws.H16?.v).toBe("CMA7");
-    expect(ws.H22?.v).toBe(415);
+    expect(ws.H20?.v).toBe("1. Three-phase motor_3ACN");
+    expect(ws.H22?.v).toBe(380);
+    expect(ws.H25?.v).toBe("1. Supply from motor circuit-std.");
+    expect(ws.H27?.v).toBe("3. 2-pole miniature circuit breaker");
+    expect(ws.H38?.v).toBe("Heater with Temperature and Humidity controller");
+    expect(ws.H43?.v).toBe("1 C/O");
+    expect(ws.H44?.v).toBe("1 C/O");
+    expect(ws.H50?.v).toBe(1);
+    expect(String(ws.P17?.v)).toContain("17A,17B,17C");
+    expect(ws.H17?.v).toBe("Max. effective number of turns at position ( 1 )");
   });
 
   it("fills SHM-D Order Specification V1.2", () => {

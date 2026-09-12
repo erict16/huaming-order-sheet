@@ -184,23 +184,21 @@ export function cma7CheckValues(values: OrderValues): boolean[] {
   if (s(values.padlock) === "yes" || s(values.padlock) === "with") tick(60);
   else tick(59);
 
-  const avr = s(values.avr_model) || (s(values.controller) === "HMC-3C" ? "hmc3c_air" : s(values.controller) === "ET-SZ6" ? "etsz6_air" : "none");
+  const avr =
+    s(values.avr_model) ||
+    (s(values.controller) === "HMC-3C" ? "hmc3c_air" : s(values.controller) === "ET-SZ6" ? "etsz6_air" : "none");
   if (avr === "hmc3c_air") tick(62);
   else if (avr === "hmc3c_term") tick(63);
-  else if (avr === "etsz6_air") {
-    tick(61);
-    tick(65);
-  } else if (avr === "etsz6_term") {
-    tick(61);
-    tick(66);
-  } else {
-    tick(61);
-    tick(64);
+  else tick(61);
+  if (avr === "etsz6_air") tick(65);
+  else if (avr === "etsz6_term") tick(66);
+  else tick(64);
+  const aviation = avr === "hmc3c_air" || avr === "etsz6_air";
+  if (aviation) {
+    const cable = n(values.avr_cable_m);
+    if (cable && cable !== 30) tick(68);
+    else tick(67);
   }
-
-  const cable = n(values.avr_cable_m);
-  if (cable && cable !== 30) tick(68);
-  else tick(67);
 
   return on;
 }
@@ -220,11 +218,9 @@ export function cma7SdtValues(values: OrderValues): Array<string | undefined> {
   set(6, s(values.drawing_no));
 
   const d = designation(values);
-  if (d) {
-    set(7, d.max);
-    set(8, d.mid);
-    set(9, d.min);
-  }
+  set(7, s(values.pos_max) || d?.max);
+  set(8, s(values.pos_mid) || d?.mid);
+  set(9, s(values.pos_min) || d?.min);
   set(10, s(values.auto_passage));
 
   const mv = MOTOR_VOLT[s(values.motor_voltage)];

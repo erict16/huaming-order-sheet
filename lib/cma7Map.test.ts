@@ -49,6 +49,18 @@ describe("cma7CheckValues", () => {
     expect(c[49]).toBe(true);
     expect(c[61]).toBe(true);
     expect(c[64]).toBe(true);
+    expect(c[67]).toBe(false);
+    expect(c[68]).toBe(false);
+  });
+
+  it("ticks HMC-3C terminal, ET-SZ6 Without, and no 30 m cable", () => {
+    const c = cma7CheckValues({ ...px360, avr_model: "hmc3c_term" });
+    expect(c[61]).toBe(false);
+    expect(c[63]).toBe(true);
+    expect(c[64]).toBe(true);
+    expect(c[65]).toBe(false);
+    expect(c[67]).toBe(false);
+    expect(c[68]).toBe(false);
   });
 });
 
@@ -59,6 +71,7 @@ describe("cma7 Word fill", () => {
     const xml = await zip.file("word/document.xml")!.async("string");
     const texts = readSdtTexts(xml);
     expect(texts[7]).toBe("1");
+    expect(texts[8]).toBe("17A,17B,17C");
     expect(texts[9]).toBe("33");
     expect(texts[11]).toBe("380");
     expect(texts[13]).toBe("2-pole auto-cut");
