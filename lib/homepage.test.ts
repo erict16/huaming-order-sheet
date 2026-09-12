@@ -17,6 +17,9 @@ describe("ice chrome", () => {
     expect(shell).toContain("skipToContent");
     expect(shell).toContain("langSwitch");
     expect(picker).toContain("grid-cols-[4.75rem_repeat(2,minmax(0,1fr))_repeat(3,minmax(0,1fr))]");
+    expect(picker).toContain("space-y-5 md:hidden");
+    expect(picker).toContain("hidden min-w-[36rem]");
+    expect(picker).toContain("md:grid");
     expect(picker).toContain("row.families.map");
     expect(picker).not.toContain("f: FamilyDef | undefined");
     expect(picker).toContain('"CM"');
@@ -30,6 +33,10 @@ describe("ice chrome", () => {
     expect(wizard).toContain("exportWordBlank");
     expect(shell).toContain("max-w-3xl");
     expect(wizard.indexOf("<FamilyPicker")).toBeLessThan(wizard.lastIndexOf("<PresetPicker"));
+    const pipes = readFileSync(path.join(process.cwd(), "components/PipeTable.tsx"), "utf8");
+    expect(pipes).toContain("space-y-5 md:hidden");
+    expect(pipes).toContain("hidden overflow-x-auto rounded-lg ring-1 ring-slate-200 md:block");
+    expect(pipes).toContain("min-w-[36rem]");
   });
 });
 
