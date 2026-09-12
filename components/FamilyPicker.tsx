@@ -65,6 +65,45 @@ function SlotRow({
   );
 }
 
+function StackedGroup({
+  heading,
+  rows,
+  byCode,
+  value,
+  onChange,
+}: {
+  heading: string;
+  rows: { label: string; codes: string[] }[];
+  byCode: Map<string, FamilyDef>;
+  value: string;
+  onChange: (code: string) => void;
+}) {
+  const visible = rows
+    .map((row) => ({
+      label: row.label,
+      families: row.codes.map((code) => byCode.get(code)).filter((f): f is FamilyDef => !!f),
+    }))
+    .filter((row) => row.families.length);
+  if (!visible.length) return null;
+  return (
+    <div>
+      <h3 className="text-sm font-medium text-ink-soft">{heading}</h3>
+      <div className="mt-2 space-y-3">
+        {visible.map((row) => (
+          <div key={row.label}>
+            <p className="mb-1.5 text-xs text-ink-muted">{row.label}</p>
+            <div className="grid grid-cols-2 gap-2">
+              {row.families.map((f) => (
+                <Chip key={f.code} f={f} active={value === f.code} onPick={onChange} />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function FamilyPicker({
   families,
   value,
@@ -83,14 +122,40 @@ export default function FamilyPicker({
   if (catalog) {
     const combined = L("组合式", "Combined", "Комбинированный", "Tổ hợp");
     const compound = L("复合式", "Compound", "Составной", "Compound");
+    const combinedLabel = t(combined, lang);
+    const compoundLabel = t(compound, lang);
+    const legacyLabel = t(FAMILY_GROUP_LABEL.legacy, lang);
     return (
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
-        <div className="grid min-w-[36rem] grid-cols-[4.75rem_repeat(2,minmax(0,1fr))_repeat(3,minmax(0,1fr))] items-center gap-2">
+      <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+        <div className="space-y-5 md:hidden">
+          <StackedGroup
+            heading={chromeText("oil", lang)}
+            rows={[
+              { label: combinedLabel, codes: ["CM", "CMD"] },
+              { label: compoundLabel, codes: ["CV", "SV"] },
+              { label: legacyLabel, codes: ["SY"] },
+            ]}
+            byCode={byCode}
+            value={value}
+            onChange={onChange}
+          />
+          <StackedGroup
+            heading={chromeText("vacuum", lang)}
+            rows={[
+              { label: combinedLabel, codes: ["CM2", "SHZV", "SHZVG"] },
+              { label: compoundLabel, codes: ["CV2"] },
+            ]}
+            byCode={byCode}
+            value={value}
+            onChange={onChange}
+          />
+        </div>
+        <div className="hidden min-w-[36rem] grid-cols-[4.75rem_repeat(2,minmax(0,1fr))_repeat(3,minmax(0,1fr))] items-center gap-2 md:grid">
           <div />
           <div className="col-span-2 text-center text-sm font-medium text-ink-soft">{chromeText("oil", lang)}</div>
           <div className="col-span-3 text-center text-sm font-medium text-ink-soft">{chromeText("vacuum", lang)}</div>
           <SlotRow
-            label={t(combined, lang)}
+            label={combinedLabel}
             oil={["CM", "CMD"]}
             vac={["CM2", "SHZV", "SHZVG"]}
             byCode={byCode}
@@ -98,7 +163,7 @@ export default function FamilyPicker({
             onChange={onChange}
           />
           <SlotRow
-            label={t(compound, lang)}
+            label={compoundLabel}
             oil={["CV", "SV"]}
             vac={["CV2"]}
             byCode={byCode}
@@ -106,7 +171,7 @@ export default function FamilyPicker({
             onChange={onChange}
           />
           <SlotRow
-            label={t(FAMILY_GROUP_LABEL.legacy, lang)}
+            label={legacyLabel}
             oil={["SY"]}
             vac={[]}
             byCode={byCode}

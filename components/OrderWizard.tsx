@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
@@ -52,6 +52,26 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
   const [exportFormat, setExportFormat] = useState<ExportFormat>(
     sheet ? defaultExportFormat(sheet) : "excel",
   );
+  const footerRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const el = footerRef.current;
+    if (!el) return;
+    const root = document.documentElement;
+    const apply = () => {
+      const h = Math.ceil(el.getBoundingClientRect().height);
+      el.parentElement?.style.setProperty("--wizard-footer-h", `${h}px`);
+      root.style.scrollPaddingBottom = `${h}px`;
+    };
+    apply();
+    const ro = new ResizeObserver(apply);
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      el.parentElement?.style.removeProperty("--wizard-footer-h");
+      root.style.scrollPaddingBottom = "";
+    };
+  }, [lang, step, savedFlash, exporting, exportFormat]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -178,7 +198,7 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
         <p className="mt-4 text-pretty text-sm text-ink-soft">{t(current.blurb, lang)}</p>
       ) : null}
 
-      <div className="mt-6 overflow-hidden">
+      <div className="mt-6 overflow-hidden pb-[var(--wizard-footer-h,7.5rem)]">
         <AnimatePresence mode="wait">
           <motion.div
             key={current.id}
@@ -197,7 +217,7 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
             ) : null}
 
             {current.kind === "family" && sheet.families ? (
-              <div className="scroll-mb-24 space-y-5">
+              <div className="scroll-mb-[var(--wizard-footer-h,7.5rem)] space-y-5">
                 <FamilyPicker
                   families={sheet.families}
                   value={values.family || ""}
@@ -214,7 +234,7 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
             ) : null}
 
             {current.kind === "review" ? (
-              <div className="scroll-mb-24 space-y-4">
+              <div className="scroll-mb-[var(--wizard-footer-h,7.5rem)] space-y-4">
                 {missing.length ? (
                   <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
                     <p className="font-semibold">{chromeText("missing", lang)}</p>
@@ -247,7 +267,7 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
                   );
                   if (!fields.length) return null;
                   return (
-                    <section key={section.id} className="card mb-5 scroll-mb-24 p-5 sm:p-6">
+                    <section key={section.id} className="card mb-5 scroll-mb-[var(--wizard-footer-h,7.5rem)] p-5 sm:p-6">
                       <h2 className="text-lg font-semibold text-navy">{t(section.title, lang)}</h2>
                       {section.hint ? (
                         <p className="mt-1 text-sm text-ink-soft">{t(section.hint, lang)}</p>
@@ -298,7 +318,10 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
         </AnimatePresence>
       </div>
 
-      <div className="no-print sticky bottom-0 z-20 mt-8 flex flex-wrap items-center gap-2 border-t border-slate-200 bg-[#f4f6f8] pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <div
+        ref={footerRef}
+        className="no-print sticky bottom-0 z-20 mt-8 flex flex-wrap items-center gap-2 border-t border-slate-200 bg-[#f4f6f8] pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+      >
         <div className="flex min-w-0 flex-wrap gap-2">
           {step === 0 ? (
             <Link href="/" className="btn-secondary min-h-10">
