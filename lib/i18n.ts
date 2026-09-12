@@ -38,6 +38,7 @@ const chrome = {
   exportExcel: L("导出 Excel", "Export Excel", "Экспорт Excel", "Xuất Excel"),
   exportFormat: L("导出格式", "Export format", "Формат экспорта", "Định dạng xuất"),
   presets: L("按真实订单起单", "Start from a real order", "Начать с реального заказа", "Bắt đầu từ đơn thật"),
+  presetsHint: L("8 份 OneDrive 真单，点开再选。默认收着，先选下面的订货单。", "Eight real OneDrive orders. Closed by default — pick a sheet first.", "Восемь реальных заказов. Свёрнуто — сначала бланк.", "Tám đơn OneDrive thật. Mặc định gập, chọn phiếu trước."),
   presetApply: L("一键填入", "Prefill", "Заполнить", "Điền sẵn"),
   search: L("搜索", "Search", "Поиск", "Tìm"),
   noMatches: L("无匹配", "No matches", "Нет совпадений", "Không khớp"),

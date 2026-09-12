@@ -107,6 +107,12 @@ describe("oltcCells", () => {
     expect(oltcCells({ delivery_date: "2026-06-15" }).H14).toBe("2026-06-15");
   });
 
+  it("writes HV/MV/LV into Excel H23 for a three-winding transformer", () => {
+    const cells = oltcCells({ ...oltc, hv_kv: "115", mv_kv: "22", lv_kv: "10.5", vector_group: "YNd11yn12" });
+    expect(cells.H23).toBe("HV(115) kV\nMV(22) kV\nLV(10.5) kV");
+    expect(cells.O23).toBe("YNd11yn12");
+  });
+
   it("writes catalogue RAL and custom paint_other / vector_group_other", () => {
     expect(oltcCells({ ...oltc, paint: "RAL5012" }).H167).toBe("RAL5012");
     expect(oltcCells({ ...oltc, paint: "other" }).H167).toBeUndefined();

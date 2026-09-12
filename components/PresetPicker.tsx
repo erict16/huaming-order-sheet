@@ -15,11 +15,15 @@ export default function PresetPicker({
   const { lang } = useLang();
 
   return (
-    <section className="mb-8">
-      <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-muted">
-        {chromeText("presets", lang)}
-      </h2>
-      <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+    <details className="mb-8 rounded-2xl border border-slate-200 bg-white">
+      <summary className="cursor-pointer list-none px-5 py-3 text-sm font-semibold text-navy marker:content-none [&::-webkit-details-marker]:hidden">
+        <span className="flex items-center justify-between gap-3">
+          <span>{chromeText("presets", lang)}</span>
+          <span className="text-xs font-normal text-ink-muted">{ORDER_PRESETS.length}</span>
+        </span>
+      </summary>
+      <p className="px-5 pb-2 text-sm text-ink-muted">{chromeText("presetsHint", lang)}</p>
+      <ul className="grid gap-3 px-5 pb-5 sm:grid-cols-2">
         {ORDER_PRESETS.map((preset) => {
           const body = (
             <>
@@ -54,6 +58,6 @@ export default function PresetPicker({
           );
         })}
       </ul>
-    </section>
+    </details>
   );
 }

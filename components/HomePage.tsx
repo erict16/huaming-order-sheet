@@ -16,10 +16,7 @@ export default function HomePage() {
         {chromeText("appName", lang)}
       </h1>
       <p className="mt-2 text-sm text-ink-soft">{chromeText("heroLead", lang)}</p>
-      <div className="mt-8">
-        <PresetPicker />
-      </div>
-      <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-muted">
+      <h2 className="mt-8 text-xs font-semibold uppercase tracking-[0.16em] text-ink-muted">
         {chromeText("pickSheet", lang)}
       </h2>
       <ul className="mt-3 divide-y divide-slate-200 overflow-hidden rounded-2xl border border-slate-200 bg-white">
@@ -38,6 +35,9 @@ export default function HomePage() {
           </li>
         ))}
       </ul>
+      <div className="mt-8">
+        <PresetPicker />
+      </div>
     </div>
   );
 }

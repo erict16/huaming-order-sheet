@@ -9,7 +9,8 @@ import { allFields } from "./schema";
 import { t } from "./copy";
 import { typeFromValues } from "./typeString";
 import type { Lang, OrderValues, SheetDef } from "./types";
-import { cma7SdtValues, oltcCheckValues, oltcSdtValues, WORD_TEMPLATE } from "./wordMap";
+import { cma7CheckValues, cma7SdtValues } from "./cma7Map";
+import { oltcCheckValues, oltcSdtValues, WORD_TEMPLATE } from "./wordMap";
 
 export const APP_VERSION = "1.2.2";
 export const SCHEMA_VERSION = "3";
@@ -142,7 +143,7 @@ export async function exportOrderSheet(
       return;
     }
     if (sheet.id === "cma7") {
-      const filled = await fillDocx(template, cma7SdtValues(values));
+      const filled = await fillDocx(template, cma7SdtValues(values), cma7CheckValues(values));
       downloadBuf(filled, `HM-OS_${safe}.docx`, plan.mime);
       return;
     }

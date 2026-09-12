@@ -298,7 +298,16 @@ export function oltcSdtValues(values: OrderValues): Array<string | undefined> {
   set(50, s(values.wind_cw_pf));
   set(51, s(values.wind_ca_pf));
   set(52, s(values.recovery_voltage_kv));
-  set(53, s(values.notes));
+  {
+    const wind = [
+      s(values.mv_kv) ? `MV ${s(values.mv_kv)} kV` : "",
+      s(values.lv_kv) ? `LV ${s(values.lv_kv)} kV` : "",
+      s(values.notes),
+    ]
+      .filter(Boolean)
+      .join("\n");
+    set(53, wind || undefined);
+  }
 
   set(54, s(values.phases) === "I" ? "1x" : "3x");
   set(55, FAMILY_ROW[s(values.family)]);
@@ -353,33 +362,7 @@ export function oltcSdtValues(values: OrderValues): Array<string | undefined> {
   return out;
 }
 
-/** CMA7 order sheet.docx — 32 SDTs. */
-export function cma7SdtValues(values: OrderValues): Array<string | undefined> {
-  const out: Array<string | undefined> = new Array(32);
-  const set = (i: number, v: string | undefined) => {
-    if (v) out[i] = v;
-  };
-  set(0, s(values.designer_name));
-  set(2, s(values.order_date));
-  set(3, s(values.buyer));
-  set(4, [s(values.end_user), s(values.country)].filter(Boolean).join(", "));
-  set(5, s(values.project));
-  const d = designation(values);
-  if (d) {
-    set(7, d.max);
-    set(8, d.mid);
-    set(9, d.min);
-  }
-  set(21, paintWord(values));
-  set(23, langWord(s(values.nameplate_language)));
-  set(25, langWord(s(values.nameplate_language)));
-  set(26, s(values.quantity) || "1");
-  const remarks = [s(values.matching_oltc) ? `OLTC: ${s(values.matching_oltc)}` : "", s(values.notes)]
-    .filter(Boolean)
-    .join("\n");
-  set(29, remarks);
-  return out;
-}
+export { cma7CheckValues, cma7SdtValues } from "./cma7Map";
 
 export const WORD_TEMPLATE: Record<string, { file: string; mime: string }> = {
   oltc: {

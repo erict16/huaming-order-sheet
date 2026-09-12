@@ -40,6 +40,29 @@ describe("orderFields", () => {
     }
   });
 
+  it("exposes official CMA7 groups and three-winding MV on the forms", () => {
+    const cma7 = getSheet("cma7")!;
+    const keys = allFields(cma7, { heat_from: "separate", socket_x10: "other", resistor_sig: "1", avr_model: "hmc3c_air" }).map(
+      ({ field }) => field.key,
+    );
+    for (const k of [
+      "motor_network",
+      "control_from",
+      "heater_kind",
+      "cam_s20",
+      "incomplete_s21",
+      "bcd_qty",
+      "door_hinge",
+      "avr_model",
+      "pos_max",
+    ]) {
+      expect(keys, k).toContain(k);
+    }
+    const oltcKeys = allFields(getSheet("oltc")!, {}).map(({ field }) => field.key);
+    expect(oltcKeys).toContain("mv_kv");
+    expect(oltcKeys).toContain("vector_group");
+  });
+
   it("exposes winding data, supporting flange and regulation location on the OLTC sheet", () => {
     const oltc = getSheet("oltc")!;
     const keys = allFields(oltc, { flange_type: "bell", ust_mode: "constant" }).map(({ field }) => field.key);
@@ -202,9 +225,10 @@ describe("CMA7 / SHM-D option lists", () => {
     ]);
     expect(POS_TX_OPTS.find((o) => o.value === "0_5v")?.label.en).toBe("0–5 V");
     expect(POS_TX_OPTS.find((o) => o.value === "1_5v")?.label.en).toBe("1–5 V");
-    for (const id of ["cma7", "shm-d"] as const) {
-      const field = allFields(getSheet(id)!, {}).find(({ field }) => field.key === "position_tx")!.field;
-      expect(field.options?.map((o) => o.value), id).toEqual(POS_TX_OPTS.map((o) => o.value));
-    }
+    const shm = allFields(getSheet("shm-d")!, {}).find(({ field }) => field.key === "position_tx")!.field;
+    expect(shm.options?.map((o) => o.value)).toEqual(POS_TX_OPTS.map((o) => o.value));
+    const cma7Keys = allFields(getSheet("cma7")!, {}).map(({ field }) => field.key);
+    expect(cma7Keys).toContain("bcd_qty");
+    expect(cma7Keys).toContain("ma_qty");
   });
 });

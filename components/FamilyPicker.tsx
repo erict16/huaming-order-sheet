@@ -43,9 +43,9 @@ export default function FamilyPicker({
                       : "border-slate-200 bg-white text-navy hover:border-slate-400"
                   }`}
                 >
-                  {f.code}
+                  <span className="font-mono text-[13px]">{f.code}</span>
                   {f.aliases?.[0] ? (
-                    <span className={`ml-1.5 font-normal ${active ? "text-white/70" : "text-ink-muted"}`}>
+                    <span className={`ml-1.5 text-xs font-normal ${active ? "text-white/70" : "text-ink-muted"}`}>
                       {f.aliases[0]}
                     </span>
                   ) : null}
