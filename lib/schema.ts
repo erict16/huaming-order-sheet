@@ -1,5 +1,6 @@
 import {
   APP_OPTS,
+  COUNTRY_CODE_OPTS,
   CONN_OPTS,
   DELIVERY_DATE_OPTS,
   CTRL_OPTS,
@@ -120,7 +121,19 @@ function orderFields(): FieldDef[] {
 function contactFields(): FieldDef[] {
   return [
     { key: "designer_name", label: L("设计人", "Designer", "Проектировщик", "Người thiết kế"), type: "text" },
-    { key: "designer_phone", label: L("电话", "Phone", "Телефон", "Điện thoại"), type: "text", placeholder: L("+86 138…", "+86 138…", "+86 138…", "+86 138…") },
+    {
+      key: "designer_phone_cc",
+      label: L("区号", "Country code", "Код страны", "Mã vùng"),
+      type: "combobox",
+      options: COUNTRY_CODE_OPTS,
+      placeholder: L("选或填 +84", "Pick or type +84", "Выберите или введите +84", "Chọn hoặc gõ +84"),
+    },
+    {
+      key: "designer_phone",
+      label: L("电话号码", "Phone number", "Номер", "Số điện thoại"),
+      type: "text",
+      placeholder: L("不填区号", "Number only", "Только номер", "Chỉ số"),
+    },
     { key: "designer_email", label: L("邮箱", "Email", "Эл. почта", "Email"), type: "text" },
   ];
 }
@@ -336,18 +349,33 @@ function oltcRatingFields(): FieldDef[] {
     },
     { key: "imax_a", label: L("变压器最大电流 Imax", "Transformer max. current Imax", "Макс. ток Imax", "Dòng max Imax"), type: "number", unit: "A" },
     {
+      key: "range_shape",
+      label: L("调压范围写法", "Range layout", "Запись диапазона", "Cách ghi dải"),
+      type: "radio",
+      options: HWV_RANGE_SHAPE_OPTS,
+      span: 2,
+    },
+    {
       key: "range_minus",
       label: L("调压 −%", "Range −%", "Диапазон −%", "Dải −%"),
       type: "number",
       unit: "%",
+      applies: (v) => v.range_shape === "asymmetric",
     },
     {
       key: "range_plus",
       label: L("调压 +%", "Range +%", "Диапазон +%", "Dải +%"),
       type: "number",
       unit: "%",
+      applies: (v) => v.range_shape === "asymmetric",
     },
-    { key: "tap_range_pct", label: L("调压范围", "Tap range", "Диапазон регулирования", "Dải điều áp"), type: "text", placeholder: L("±8×1.25%", "±8×1.25%", "±8×1.25%", "±8×1.25%") },
+    {
+      key: "tap_range_pct",
+      label: L("调压范围（自动）", "Tap range (composed)", "Диапазон (собирается)", "Dải (tự ghép)"),
+      type: "text",
+      span: 2,
+      hint: L("由 ±N 和每级百分数拼出，可改。对称常见 ±8×1.25%。", "From ±N and % per step. Override if the OS writes something else.", "Из ±N и % на ступень. Можно править.", "Từ ±N và % mỗi nấc. Có thể sửa."),
+    },
   ];
 }
 

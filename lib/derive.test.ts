@@ -66,4 +66,12 @@ describe("deriveValues", () => {
     expect(sym.tap_range_pct).toBe("±16%");
     expect(sym.tap_code).toBe("10193W");
   });
+
+  it("composes ±N × % per step when the range is symmetric", () => {
+    const v = deriveValues(
+      { range_shape: "symmetric", plus_minus: "9" },
+      { step_percent: "1.78" },
+    );
+    expect(v.tap_range_pct).toBe("±9×1.78%");
+  });
 });

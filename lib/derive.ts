@@ -140,6 +140,14 @@ export function deriveValues(prev: OrderValues, patch: OrderValues): OrderValues
       next.tap_range_pct = plus === minus ? `±${plus}%` : `−${minus}/+${plus}%`;
       if (plus !== minus) next.range_shape = "asymmetric";
     }
+  } else if (
+    next.range_shape !== "asymmetric" &&
+    ("plus_minus" in patch || "step_percent" in patch || "regulation" in patch)
+  ) {
+    const nSteps = num(next.plus_minus);
+    const pct = String(next.step_percent ?? "").trim();
+    if (nSteps != null && pct) next.tap_range_pct = `±${nSteps}×${pct}%`;
+    else if (nSteps != null) next.tap_range_pct = `±${nSteps}%`;
   }
 
   return next;

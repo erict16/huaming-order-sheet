@@ -12,5 +12,7 @@ describe("homepage starters", () => {
     expect(presetAt).toBeGreaterThan(pickAt);
     expect(picker).toContain("<details");
     expect(picker).not.toMatch(/<details[^>]*\sopen/);
+    expect(picker).toContain("sheetId");
+    expect(picker).toContain("p.sheetId === sheetId");
   });
 });

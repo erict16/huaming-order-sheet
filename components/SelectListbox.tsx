@@ -28,7 +28,7 @@ export default function SelectListbox({
           <span className={`block truncate ${selected ? "text-ink" : "text-slate-400"}`}>
             {selected ? t(selected.label, lang) : "—"}
           </span>
-          <ChevronDownIcon className="absolute right-2.5 size-5 text-ink-muted" />
+          <ChevronDownIcon className="pointer-events-none absolute right-2.5 top-1/2 size-5 -translate-y-1/2 text-ink-muted" />
         </ListboxButton>
         <ListboxOptions transition className="plus-options">
           {items.map((opt) => (

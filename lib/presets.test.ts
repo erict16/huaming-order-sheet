@@ -95,6 +95,8 @@ describe("ORDER_PRESETS", () => {
 
     expect(getPreset("VCV")?.family).toBe("CV2");
     expect(getPreset("CV2")?.id).toBe("mee-tienyen-cv2");
+    expect(hydrateSheetValues("oltc", "?preset=mee-wsl", {}).family).not.toBe("WSL");
+    expect(hydrateSheetValues("octc", "?preset=mee-wsl", {}).family).toBe("WSL");
 
     const tien = applyPreset(getPreset("mee-tienyen-cv2")!);
     expect(tien.application).toBe("network");

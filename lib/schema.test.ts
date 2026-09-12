@@ -24,7 +24,9 @@ describe("orderFields", () => {
       expect(keys, sheet.id).toContain("designer_name");
       expect(keys, sheet.id).toContain("designer_phone");
       expect(keys, sheet.id).toContain("designer_email");
-      expect(keys, sheet.id).not.toContain("designer_phone_cc");
+      expect(keys, sheet.id).toContain("designer_phone_cc");
+      const cc = allFields(sheet, {}).find(({ field }) => field.key === "designer_phone_cc")!.field;
+      expect(cc.type, sheet.id).toBe("combobox");
       const orderNo = allFields(sheet, {}).find(({ field }) => field.key === "order_no")!.field;
       expect(orderNo.label.zh).toBe("报价单号");
       expect(orderNo.label.en).toBe("Quotation No.");
@@ -183,8 +185,11 @@ describe("transformer / accessories polish", () => {
     const oltc = allFields(getSheet("oltc")!, {});
     expect(oltc.find(({ field }) => field.key === "oltc_current_a")?.field.label.zh).toContain("Ium");
     expect(oltc.find(({ field }) => field.key === "through_current_a")?.field.label.zh).toContain("I");
-    expect(oltc.find(({ field }) => field.key === "range_plus")?.field).toBeTruthy();
-    expect(oltc.find(({ field }) => field.key === "range_minus")?.field).toBeTruthy();
+    expect(oltc.find(({ field }) => field.key === "range_shape")?.field).toBeTruthy();
+    expect(oltc.find(({ field }) => field.key === "tap_range_pct")?.field).toBeTruthy();
+    const asym = allFields(getSheet("oltc")!, { range_shape: "asymmetric" });
+    expect(asym.find(({ field }) => field.key === "range_plus")?.field).toBeTruthy();
+    expect(asym.find(({ field }) => field.key === "range_minus")?.field).toBeTruthy();
     expect(oltc.find(({ field }) => field.key === "corrosive_class")?.field.options?.map((o) => o.value)).toEqual(
       CORROSIVE_OPTS.map((o) => o.value),
     );
