@@ -529,7 +529,8 @@ export const PIPE_HEIGHT_OPTS = [
   opt("231", "231 mm"),
 ];
 
-export const SHAFT_LEN_OPTS = [1000, 1200, 1500, 2000].map((n) => opt(String(n), `${n} mm`));
+/** In-tank Excel rows 154–158: 800 / 1000 / 1200 / 1500 / 2000 mm. */
+export const SHAFT_LEN_OPTS = [800, 1000, 1200, 1500, 2000].map((n) => opt(String(n), `${n} mm`));
 
 export const YES_NO = [
   opt("yes", "是", "Yes", "Да", "Có"),
@@ -552,6 +553,7 @@ export const MOTOR_VOLT_OPTS = [
   opt("415_3", "AC 415 V 三相", "AC 415 V 3-ph", "AC 415 В 3ф", "AC 415 V 3 pha"),
   opt("440_3", "AC 440 V 三相", "AC 440 V 3-ph", "AC 440 В 3ф", "AC 440 V 3 pha"),
   opt("220_3", "AC 220 V 三相", "AC 220 V 3-ph", "AC 220 В 3ф", "AC 220 V 3 pha"),
+  opt("220_240", "AC 220–240 V", "AC 220–240 V", "AC 220–240 В", "AC 220–240 V"),
   opt("220_1", "AC 220 V 单相", "AC 220 V 1-ph", "AC 220 В 1ф", "AC 220 V 1 pha"),
   opt("230_1", "AC 230 V 单相", "AC 230 V 1-ph", "AC 230 В 1ф", "AC 230 V 1 pha"),
   opt("240_1", "AC 240 V 单相", "AC 240 V 1-ph", "AC 240 В 1ф", "AC 240 V 1 pha"),
@@ -722,6 +724,7 @@ export const CMA7_BOTTOM_OPTS = [
   opt("holes50", "2×φ50 孔", "2× φ50 holes", "2× φ50", "2× φ50"),
   opt("gland", "2×φ50 + 电缆接头", "2× φ50 and cable gland", "2× φ50 и сальник", "2× φ50 + gland"),
   opt("nobore", "不开孔", "Without bore-hole", "Без отверстия", "Không khoét lỗ"),
+  opt("other", "其他（附图）", "Others (attach drawing)", "Другое (чертёж)", "Khác (kèm bản vẽ)"),
 ];
 
 export const CMA7_AVR_OPTS = [
@@ -773,6 +776,13 @@ export const OCTC_DRIVE_OPTS = [
   opt("handwheel", "手轮", "Handwheel", "Штурвал", "Tay quay"),
   opt("CMA7", "CMA7 电动", "CMA7 motor", "CMA7 привод", "CMA7 động cơ"),
   opt("SHM-D", "SHM-D 电动", "SHM-D motor", "SHM-D привод", "SHM-D động cơ"),
+];
+
+/** Official OCTC Word C48–C50 lead output. */
+export const OCTC_LEAD_OPTS = [
+  opt("A", "A"),
+  opt("B", "B"),
+  opt("C", "C"),
 ];
 
 export const SHM_MODEL_OPTS = [
