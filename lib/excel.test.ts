@@ -6,7 +6,7 @@ import { getSheet } from "./schema";
 
 describe("export plan", () => {
   it("bumps the patch version", () => {
-    expect(APP_VERSION).toBe("1.2.2");
+    expect(APP_VERSION).toBe("1.2.3");
   });
 
   it("dropped the unused exportExcel alias", () => {

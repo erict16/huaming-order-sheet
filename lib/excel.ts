@@ -13,7 +13,7 @@ import { cma7CheckValues, cma7SdtValues } from "./cma7Map";
 import { dryCheckValues, drySdtValues } from "./dryMap";
 import { oltcCheckValues, oltcSdtValues, WORD_TEMPLATE } from "./wordMap";
 
-export const APP_VERSION = "1.2.2";
+export const APP_VERSION = "1.2.3";
 const SCHEMA_VERSION = "3";
 
 export type ExportFormat = "word" | "excel";
@@ -40,6 +40,8 @@ function templateUrl(file: string): string {
 }
 
 export function defaultExportFormat(sheet: SheetDef): ExportFormat {
+  // SHM-D Word is a 2025.3 .doc, not a fillable form. Official fill is the xlsm.
+  if (sheet.id === "shm-d") return "excel";
   return WORD_TEMPLATE[sheet.id] ? "word" : "excel";
 }
 

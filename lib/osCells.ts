@@ -509,6 +509,10 @@ export function oltcCells(values: OrderValues): CellWrites {
     set(out, "H23", `HV(${hv || "     "}) kV\nMV(${mv || "     "}) kV\nLV(${lv || "     "}) kV`);
   }
   set(out, "O23", vectorGroupOs(values));
+  const side = s(values.oltc_side);
+  if (side === "hv") set(out, "AD23", "HV side");
+  else if (side === "lv") set(out, "AD23", "LV side");
+  else if (side === "mv") set(out, "AD23", "MV side");
 
   const pm = n(values.plus_minus);
   if (pm && values.regulation !== "linear") {

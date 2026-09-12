@@ -46,6 +46,9 @@ describe("oltc Excel gaps", () => {
     expect(empty.H6).toBeUndefined();
     expect(empty.Z5).toBeUndefined();
     expect(empty.H8).toBeUndefined();
+    expect(oltcCells({ oltc_side: "lv" }).AD23).toBe("LV side");
+    expect(oltcCells({ oltc_side: "hv" }).AD23).toBe("HV side");
+    expect(oltcCells({ oltc_side: "mv" }).AD23).toBe("MV side");
     expect(oltcCells({ delivery_lead: "90 days after PO" }).H14).toBe("90 days after PO");
     expect(oltcCells({ delivery_date: "custom", delivery_date_custom: "2026-12-01" }).H14).toBe(
       "2026-12-01",

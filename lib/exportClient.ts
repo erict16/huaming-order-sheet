@@ -12,6 +12,7 @@ import { WORD_TEMPLATE } from "./wordMap";
 export type ExportFormat = "word" | "excel";
 
 export function defaultExportFormat(sheet: SheetDef): ExportFormat {
+  if (sheet.id === "shm-d") return "excel";
   return WORD_TEMPLATE[sheet.id] ? "word" : "excel";
 }
 

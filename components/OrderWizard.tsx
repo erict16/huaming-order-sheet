@@ -188,7 +188,7 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
         ))}
       </nav>
 
-      {typeStr.compact ? (
+      {typeStr.compact && current.kind !== "review" ? (
         <div className="mt-5">
           <TypePlate compact={typeStr.compact} />
         </div>

@@ -780,7 +780,15 @@ const octcSheet: SheetDef = {
       title: L("安装与备注", "Mounting & notes", "Монтаж и примечания", "Lắp đặt và ghi chú"),
       blurb: L("箱内安装为主。需要电动时选 CMA7。", "Usually in-tank. Choose CMA7 if motorized.", "Обычно в баке. CMA7 — если с двигателем.", "Thường trong thùng. CMA7 nếu có động cơ."),
       sections: [
-        { id: "mechanical", title: L("安装", "Mounting", "Монтаж", "Lắp đặt"), fields: [...mechanicalFields(), ...paintFields()] },
+        {
+          id: "mechanical",
+          title: L("安装", "Mounting", "Монтаж", "Lắp đặt"),
+          fields: [
+            ...mechanicalFields(),
+            { key: "rain_cover", label: L("防雨罩", "Rain cover", "Защитный кожух", "Nắp che mưa"), type: "select", options: YES_NO },
+            ...paintFields(),
+          ],
+        },
         { id: "drive", title: L("若配电动机构", "If motorized", "Если с приводом", "Nếu có động cơ"), fields: driveFields(false), hint: L("手轮方案可跳过。", "Skip if handwheel.", "Пропустите при штурвале.", "Bỏ qua nếu tay quay.") },
         { id: "notes", title: L("备注", "Notes", "Примечания", "Ghi chú"), fields: [notesField] },
       ],

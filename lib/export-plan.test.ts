@@ -19,7 +19,7 @@ describe("export plan", () => {
       expect(["word", "xlsm", "xlsx"], sheet.id).toContain(excel.kind);
       expect(word.kind, sheet.id).toBe("word");
       expect(WORD_TEMPLATE[sheet.id], sheet.id).toBeTruthy();
-      expect(defaultExportFormat(sheet), sheet.id).toBe("word");
+      expect(defaultExportFormat(sheet), sheet.id).toBe(sheet.id === "shm-d" ? "excel" : "word");
     }
   });
 
@@ -51,6 +51,10 @@ describe("export plan", () => {
       expect(excelTemplateFor(id)).toBe(file);
       expect(resolveExportPlan(getSheet(id)!, "excel")).toEqual({ kind: "xlsm", file });
     }
+  });
+
+  it("defaults SHM-D export to the official xlsm because the .doc is not fillable", () => {
+    expect(defaultExportFormat(getSheet("shm-d")!)).toBe("excel");
   });
 
   it("exports SHM-D Word as the 2025.3 .doc, not a fillable docx", () => {
