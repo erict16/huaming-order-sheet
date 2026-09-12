@@ -255,6 +255,7 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
                   onChange={setExportFormat}
                   canWord={canWord}
                   lang={lang}
+                  sheetId={id}
                 />
                 <ReviewPanel sheet={sheet} values={values} typeStr={typeStr.compact} />
               </div>
@@ -380,19 +381,33 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
   );
 }
 
+function exportFormatHint(sheetId: SheetId, format: ExportFormat, lang: Lang): string {
+  if (format === "word" && sheetId === "shm-d") return chromeText("exportWordBlank", lang);
+  if (format === "excel" && (sheetId === "hwv" || sheetId === "octc" || sheetId === "dry")) {
+    return chromeText("exportExcelGeneric", lang);
+  }
+  return "";
+}
+
 function ExportFormatControl({
   format,
   onChange,
   canWord,
   lang,
+  sheetId,
 }: {
   format: ExportFormat;
   onChange: (v: ExportFormat) => void;
   canWord: boolean;
   lang: Lang;
+  sheetId: SheetId;
 }) {
+  const hint = exportFormatHint(sheetId, format, lang);
   return (
-    <fieldset className="rounded-xl border border-slate-200 bg-white px-4 py-4">
+    <fieldset
+      className="rounded-xl border border-slate-200 bg-white px-4 py-4"
+      aria-describedby={hint ? "export-format-hint" : undefined}
+    >
       <legend className="px-1 text-sm font-semibold text-navy">{chromeText("exportFormat", lang)}</legend>
       <div className="mt-2">
         <SegmentedControl
@@ -410,6 +425,11 @@ function ExportFormatControl({
           ]}
         />
       </div>
+      {hint ? (
+        <p id="export-format-hint" className="mt-2 text-xs leading-relaxed text-ink-muted">
+          {hint}
+        </p>
+      ) : null}
     </fieldset>
   );
 }

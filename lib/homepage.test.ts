@@ -24,6 +24,8 @@ describe("ice chrome", () => {
     expect(wizard).toContain('aria-current={i === step ? "step" : undefined}');
     expect(wizard).toContain("justify-center");
     expect(wizard).toContain("exportWordUnavailable");
+    expect(wizard).toContain("exportExcelGeneric");
+    expect(wizard).toContain("exportWordBlank");
     expect(shell).toContain("max-w-3xl");
     expect(wizard.indexOf("<FamilyPicker")).toBeLessThan(wizard.lastIndexOf("<PresetPicker"));
   });
@@ -109,6 +111,11 @@ describe("i18n chrome", () => {
     expect(chromeText("vacuum", "vi")).toBe("Chân không");
     expect(chromeText("exportWordUnavailable", "zh")).toMatch(/Word/);
     expect(chromeText("exportWordUnavailable", "en")).toMatch(/Word/);
+    expect(chromeText("exportExcelGeneric", "zh")).toMatch(/xlsx/);
+    expect(chromeText("exportExcelGeneric", "en")).toMatch(/xlsx/);
+    expect(chromeText("exportWordBlank", "zh")).toMatch(/\.doc/);
+    expect(chromeText("exportWordBlank", "en")).toMatch(/\.doc/);
+    expect(chromeText("exportWordBlank", "en")).toMatch(/xlsm/);
   });
 });
 
