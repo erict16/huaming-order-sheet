@@ -5,23 +5,22 @@ import { useLang } from "@/lib/useLang";
 import type { FamilyDef } from "@/lib/types";
 import { FAMILY_GROUP_LABEL } from "@/lib/catalog";
 
-function Cell({
+function Chip({
   f,
   active,
   onPick,
 }: {
-  f: FamilyDef;
+  f: FamilyDef | undefined;
   active: boolean;
   onPick: (code: string) => void;
 }) {
+  if (!f) return <div />;
   return (
     <button
       type="button"
       onClick={() => onPick(f.code)}
-      className={`inline-flex h-11 items-center gap-1.5 rounded-md px-3 font-mono text-[15px] font-semibold tracking-tight transition duration-150 active:translate-y-px ${
-        active
-          ? "bg-navy text-white"
-          : "bg-white text-navy ring-1 ring-slate-200 hover:ring-navy/40"
+      className={`flex h-11 w-full items-center justify-center gap-1 rounded-lg font-mono text-sm font-semibold tracking-tight transition duration-150 active:translate-y-px ${
+        active ? "bg-navy text-white" : "bg-white text-navy ring-1 ring-slate-200 hover:ring-navy/40"
       }`}
     >
       {f.code}
@@ -31,6 +30,36 @@ function Cell({
         </span>
       ) : null}
     </button>
+  );
+}
+
+function SlotRow({
+  label,
+  oil,
+  vac,
+  byCode,
+  value,
+  onChange,
+}: {
+  label: string;
+  oil: string[];
+  vac: string[];
+  byCode: Map<string, FamilyDef>;
+  value: string;
+  onChange: (code: string) => void;
+}) {
+  const oilSlots = [oil[0], oil[1]];
+  const vacSlots = [vac[0], vac[1], vac[2]];
+  return (
+    <>
+      <div className="flex items-center text-sm font-medium text-ink-soft">{label}</div>
+      {oilSlots.map((code, i) => (
+        <Chip key={`o${i}`} f={code ? byCode.get(code) : undefined} active={!!code && value === code} onPick={onChange} />
+      ))}
+      {vacSlots.map((code, i) => (
+        <Chip key={`v${i}`} f={code ? byCode.get(code) : undefined} active={!!code && value === code} onPick={onChange} />
+      ))}
+    </>
   );
 }
 
@@ -50,58 +79,39 @@ export default function FamilyPicker({
     families.some((f) => f.category.startsWith("vacuum"));
 
   if (catalog) {
-    const rows: { label: ReturnType<typeof L>; oil: string[]; vac: string[] }[] = [
-      { label: L("组合式", "Combined", "Комбинированный", "Tổ hợp"), oil: ["CM", "CMD"], vac: ["CM2", "SHZV", "SHZVG"] },
-      { label: L("复合式", "Compound", "Составной", "Compound"), oil: ["CV", "SV"], vac: ["CV2"] },
-    ];
-    const legacy = families.filter((f) => f.category === "legacy");
-
+    const combined = L("组合式", "Combined", "Комбинированный", "Tổ hợp");
+    const compound = L("复合式", "Compound", "Составной", "Compound");
     return (
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-        <table className="w-full border-collapse text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 bg-slate-50/80 text-left text-ink-soft">
-              <th className="w-24 px-4 py-3 text-center font-medium" />
-              <th className="px-3 py-3 text-center font-medium">{lang === "en" ? "Oil" : "油浸"}</th>
-              <th className="px-3 py-3 text-center font-medium">{lang === "en" ? "Vacuum" : "真空"}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.label.zh} className="border-t border-slate-100">
-                <th className="px-4 py-3 text-center font-medium text-ink-soft">{t(row.label, lang)}</th>
-                <td className="px-3 py-3">
-                  <div className="flex flex-wrap justify-center gap-2">
-                    {row.oil.map((code) => {
-                      const f = byCode.get(code);
-                      return f ? <Cell key={code} f={f} active={value === code} onPick={onChange} /> : null;
-                    })}
-                  </div>
-                </td>
-                <td className="px-3 py-3">
-                  <div className="flex flex-wrap justify-center gap-2">
-                    {row.vac.map((code) => {
-                      const f = byCode.get(code);
-                      return f ? <Cell key={code} f={f} active={value === code} onPick={onChange} /> : null;
-                    })}
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {legacy.length ? (
-              <tr className="border-t border-slate-100 bg-slate-50/60">
-                <th className="px-4 py-3 text-center font-medium text-ink-muted">{t(FAMILY_GROUP_LABEL.legacy, lang)}</th>
-                <td className="px-3 py-3" colSpan={2}>
-                  <div className="flex flex-wrap justify-center gap-2">
-                    {legacy.map((f) => (
-                      <Cell key={f.code} f={f} active={value === f.code} onPick={onChange} />
-                    ))}
-                  </div>
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
+      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+        <div className="grid min-w-[36rem] grid-cols-[4.75rem_repeat(2,minmax(0,1fr))_repeat(3,minmax(0,1fr))] items-center gap-2">
+          <div />
+          <div className="col-span-2 text-center text-sm font-medium text-ink-soft">{lang === "en" ? "Oil" : "油浸"}</div>
+          <div className="col-span-3 text-center text-sm font-medium text-ink-soft">{lang === "en" ? "Vacuum" : "真空"}</div>
+          <SlotRow
+            label={t(combined, lang)}
+            oil={["CM", "CMD"]}
+            vac={["CM2", "SHZV", "SHZVG"]}
+            byCode={byCode}
+            value={value}
+            onChange={onChange}
+          />
+          <SlotRow
+            label={t(compound, lang)}
+            oil={["CV", "SV"]}
+            vac={["CV2"]}
+            byCode={byCode}
+            value={value}
+            onChange={onChange}
+          />
+          <SlotRow
+            label={t(FAMILY_GROUP_LABEL.legacy, lang)}
+            oil={["SY"]}
+            vac={[]}
+            byCode={byCode}
+            value={value}
+            onChange={onChange}
+          />
+        </div>
       </div>
     );
   }
@@ -120,9 +130,9 @@ export default function FamilyPicker({
           <h3 className="mb-2 text-sm font-medium text-ink-soft">
             {t(FAMILY_GROUP_LABEL[cat as keyof typeof FAMILY_GROUP_LABEL], lang)}
           </h3>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {list.map((f) => (
-              <Cell key={f.code} f={f} active={value === f.code} onPick={onChange} />
+              <Chip key={f.code} f={f} active={value === f.code} onPick={onChange} />
             ))}
           </div>
         </div>
