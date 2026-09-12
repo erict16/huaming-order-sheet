@@ -102,7 +102,9 @@ describe("fillWorkbook official templates", () => {
         cam_s20: "co",
         incomplete_s21: "co",
         bcd_qty: "1",
-        avr_model: "none",
+        avr_model: "hmc3c_air",
+        avr_cable_m: "50",
+        padlock: "yes",
       }),
     );
     const ws = XLSX.read(out, { type: "array", bookVBA: true }).Sheets.Sheet1;
@@ -118,7 +120,12 @@ describe("fillWorkbook official templates", () => {
     expect(String(ws.P17?.v)).toContain("17A,17B,17C");
     expect(ws.H17?.v).toBe("Max. effective number of turns at position ( 1 )");
     expect(ws.AB17?.v).toBe("Min. effective number of turns at position ( 33 )");
-    expect(ws.H61?.v).toBe("Without");
+    expect(ws.H61?.v).toBe("HMC-3C(Terminal Type)");
+    expect(ws.H65?.v).toBe("2. 配");
+    expect(ws.V66?.v).toBe(50);
+    expect(ws.V67?.v).toBe(50);
+    expect(ws.AB66?.f).toMatch(/CEILING\(V66/);
+    expect(ws.H73?.v).toBe("With");
     expect(String(ws.D83?.v)).toContain("CM2III-500Y/72.5B-18353W");
     expect(ws.A83?.v).toBe("Remark");
   });

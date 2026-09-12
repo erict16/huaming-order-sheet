@@ -419,6 +419,25 @@ describe("cma7Cells", () => {
     expect(cells.H71).toBe("With");
     expect(cma7Cells({ bottom_plate: "other" }).H70).toContain("drawing provided by the customer");
   });
+
+  it("writes aviation cable length onto H65 and V66/V67, not the AB supply formulas", () => {
+    const cells = cma7Cells({ avr_model: "hmc3c_air", avr_cable_m: "50" });
+    expect(cells.H65).toBe("2. 配");
+    expect(cells.V66).toBe(50);
+    expect(cells.V67).toBe(50);
+    expect(cells.AB66).toBeUndefined();
+    expect(cells.AB67).toBeUndefined();
+    expect(cma7Cells({ avr_model: "hmc3c_air", avr_cable_m: "30" }).V66).toBe(30);
+    expect(cma7Cells({ avr_model: "hmc3c_term" }).H65).toBeUndefined();
+    expect(cma7Cells({ avr_model: "hmc3c_term" }).V66).toBeUndefined();
+  });
+
+  it("writes padlock and official corrosive ku strings", () => {
+    expect(cma7Cells({ padlock: "yes" }).H73).toBe("With");
+    expect(cma7Cells({ padlock: "no" }).H73).toBe("Without-std.");
+    expect(cma7Cells({ corrosive_class: "C5-M" }).H76).toBe("C5-M-std.");
+    expect(cma7Cells({ corrosive_class: "none" }).H76).toBeUndefined();
+  });
 });
 
 describe("shmDCells", () => {

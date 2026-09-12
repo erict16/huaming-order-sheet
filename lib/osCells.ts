@@ -791,6 +791,14 @@ function cma7Motor(values: OrderValues, out: CellWrites) {
   const avr = s(values.avr_model) || s(values.controller);
   set(out, "H61", cma7Controller(avr));
 
+  // V66/V67 are requested m; AB66/AB67 stay CEILING supply formulas.
+  const cable = n(values.avr_cable_m);
+  if (cable != null && cable > 0) {
+    set(out, "H65", "2. 配");
+    set(out, "V66", cable);
+    set(out, "V67", cable);
+  }
+
   if (s(values.door_hinge) === "right") set(out, "H69", "Right-hand");
   else if (s(values.door_hinge) === "left") set(out, "H69", "Left-hand");
   const bot = s(values.bottom_plate);
