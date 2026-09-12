@@ -425,6 +425,10 @@ function mechanicalFields(): FieldDef[] {
   ];
 }
 
+function needsTieIn(v: OrderValues): boolean {
+  return v.potential_connection === "with" || v.potential_connection === "check";
+}
+
 function insulationFields(): FieldDef[] {
   return [
     { key: "ins_fill", label: L("绝缘水平", "Insulation levels", "Уровни изоляции", "Cấp cách điện"), type: "radio", options: INS_FILL_OPTS, span: 2 },
@@ -442,16 +446,25 @@ function insulationFields(): FieldDef[] {
     { key: "ins_c2_li_kv", label: L("粗调相间 (c2) 冲击", "Coarse phases (c2), LI", "Грубые фазы (c2), импульс", "Thô giữa pha (c2) xung"), type: "number", unit: "kV" },
     { key: "ins_d_pf_kv", label: L("粗调绕组 (d) 工频", "Coarse winding (d), PF", "Грубая обмотка (d)", "Cuộn thô (d)"), type: "number", unit: "kV" },
     { key: "ins_d_li_kv", label: L("粗调绕组 (d) 冲击", "Coarse winding (d), LI", "Грубая обмотка (d), импульс", "Cuộn thô (d) xung"), type: "number", unit: "kV" },
-    { key: "wind_r1_mm", label: L("绕组 R1", "Winding R1", "Обмотка R1", "Cuộn R1"), type: "number", unit: "mm" },
-    { key: "wind_r2_mm", label: L("绕组 R2", "Winding R2", "Обмотка R2", "Cuộn R2"), type: "number", unit: "mm" },
-    { key: "wind_r3_mm", label: L("绕组 R3", "Winding R3", "Обмотка R3", "Cuộn R3"), type: "number", unit: "mm" },
-    { key: "wind_r4_mm", label: L("绕组 R4", "Winding R4", "Обмотка R4", "Cuộn R4"), type: "number", unit: "mm" },
-    { key: "wind_h1_mm", label: L("绕组 H1", "Winding H1", "Обмотка H1", "Cuộn H1"), type: "number", unit: "mm" },
-    { key: "wind_h2_mm", label: L("绕组 H2", "Winding H2", "Обмотка H2", "Cuộn H2"), type: "number", unit: "mm" },
-    { key: "wind_cw_pf", label: L("Cw", "Cw", "Cw", "Cw"), type: "number", unit: "pF" },
-    { key: "wind_ca_pf", label: L("Ca", "Ca", "Ca", "Ca"), type: "number", unit: "pF" },
     { key: "recovery_voltage_kv", label: L("恢复电压", "Recovery voltage", "Напряжение восстановления", "Điện áp phục hồi"), type: "number", unit: "kV" },
     { key: "special_winding", label: L("特殊绕组布置", "Special winding arrangement", "Особая схема обмотки", "Bố trí cuộn đặc biệt"), type: "radio", options: YES_NO },
+    {
+      key: "potential_connection",
+      label: L("电位电阻", "Potential / tie-in resistor", "Потенциальный резистор", "Điện trở thế"),
+      type: "select",
+      options: POTENTIAL_OPTS,
+      span: 2,
+      hint: L("不带就不用填绕组尺寸。带或交给华明核算时，再填 R1–R4 / H1 / H2 / Cw / Ca。", "Skip winding sizes if without. Fill R1–R4 / H1 / H2 / Cw / Ca only when fitted or Huaming is to check.", "Размеры обмотки — только если резистор нужен или считает Huaming.", "Không mang thì khỏi điền. Có hoặc Huaming tính mới điền R1–R4."),
+    },
+    { key: "tie_in_mounting", label: L("电位电阻安装", "Tie-in mounting", "Крепление резистора", "Cách lắp điện trở"), type: "select", options: TIE_IN_OPTS, applies: needsTieIn },
+    { key: "wind_r1_mm", label: L("绕组 R1", "Winding R1", "Обмотка R1", "Cuộn R1"), type: "number", unit: "mm", applies: needsTieIn },
+    { key: "wind_r2_mm", label: L("绕组 R2", "Winding R2", "Обмотка R2", "Cuộn R2"), type: "number", unit: "mm", applies: needsTieIn },
+    { key: "wind_r3_mm", label: L("绕组 R3", "Winding R3", "Обмотка R3", "Cuộn R3"), type: "number", unit: "mm", applies: needsTieIn },
+    { key: "wind_r4_mm", label: L("绕组 R4", "Winding R4", "Обмотка R4", "Cuộn R4"), type: "number", unit: "mm", applies: needsTieIn },
+    { key: "wind_h1_mm", label: L("绕组 H1", "Winding H1", "Обмотка H1", "Cuộn H1"), type: "number", unit: "mm", applies: needsTieIn },
+    { key: "wind_h2_mm", label: L("绕组 H2", "Winding H2", "Обмотка H2", "Cuộn H2"), type: "number", unit: "mm", applies: needsTieIn },
+    { key: "wind_cw_pf", label: L("Cw", "Cw", "Cw", "Cw"), type: "number", unit: "pF", applies: needsTieIn },
+    { key: "wind_ca_pf", label: L("Ca", "Ca", "Ca", "Ca"), type: "number", unit: "pF", applies: needsTieIn },
   ];
 }
 
@@ -495,8 +508,6 @@ function accessoryFields(opts?: { oil?: boolean }): FieldDef[] {
     f.push(
       { key: "protective_relay", label: L("保护继电器", "Protective relay", "Защитное реле", "Rơle bảo vệ"), type: "select", options: RELAY_OPTS, span: 2 },
       { key: "pressure_relief", label: L("压力释放", "Pressure relief", "Сброс давления", "Xả áp"), type: "select", options: PRV_OPTS },
-      { key: "potential_connection", label: L("电位电阻", "Potential / tie-in resistor", "Потенциальный резистор", "Điện trở thế"), type: "select", options: POTENTIAL_OPTS, hint: L("复合式恢复电压 >15 kV、组合式 >35 kV 通常要带，并附绕组图。", "Usually required when recovery voltage >15 kV (compound) or >35 kV (combined). Attach winding layout.", "Нужен при высоком напряжении восстановления. Приложите схему.", "Thường cần khi điện áp phục hồi cao. Kèm sơ đồ quấn.") },
-      { key: "tie_in_mounting", label: L("电位电阻安装", "Tie-in mounting", "Крепление резистора", "Cách lắp điện trở"), type: "select", options: TIE_IN_OPTS, applies: (v) => v.potential_connection === "with" || v.potential_connection === "check" },
       { key: "oil_filter", label: L("在线滤油机", "Online oil filter", "Фильтр масла", "Lọc dầu online"), type: "select", options: FILTER_OPTS },
       { key: "temp_sensor", label: L("温度传感器", "Temperature sensor", "Датчик температуры", "Cảm biến nhiệt"), type: "radio", options: TEMP_SENSOR_OPTS },
       {
@@ -579,7 +590,7 @@ const oltcSheet: SheetDef = {
     {
       id: "package",
       title: L("附件", "Accessories", "Аксессуары", "Phụ kiện"),
-      blurb: L("保护继电器、压力释放、电位电阻。电动机构电气在 CMA7 / SHM-D 单上填。", "Relay, pressure relief, tie-in resistor. Motor-drive electrics go on the CMA7 / SHM-D sheet.", "Реле, сброс давления, резистор. Электрика привода — в бланке CMA7 / SHM-D.", "Rơle, xả áp, điện trở. Điện cơ cấu điền ở phiếu CMA7 / SHM-D."),
+      blurb: L("保护继电器、压力释放。电位电阻在绝缘那一步。电动机构电气在 CMA7 / SHM-D 单上填。", "Relay and pressure relief. Tie-in resistor is on the insulation step. Motor-drive electrics go on CMA7 / SHM-D.", "Реле и сброс давления. Резистор — на шаге изоляции.", "Rơle và xả áp. Điện trở thế ở bước cách điện."),
       sections: [
         { id: "drive", title: L("所配电动机构", "Matching motor drive", "Привод", "Bộ truyền động"), fields: [{ key: "mdu_model", label: L("电动机构", "Motor drive unit", "Привод", "Bộ truyền động"), type: "radio", options: MDU_OPTS, span: 2, hint: L("这里只选型号。电机电源、加热、位置传送请到 CMA7 或 SHM-D 订货单。", "Family only. Motor supply, heater and transmitters belong on the CMA7 or SHM-D sheet.", "Только тип. Питание и сигналы — в бланке CMA7 / SHM-D.", "Chỉ chọn kiểu. Nguồn và tín hiệu điền ở phiếu CMA7 / SHM-D.") }] },
         { id: "accessories", title: L("附件", "Accessories", "Аксессуары", "Phụ kiện"), fields: accessoryFields() },

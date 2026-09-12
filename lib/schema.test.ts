@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   APP_OPTS,
+  COUNTRY_CODE_OPTS,
   CONN_OPTS,
   CORROSIVE_OPTS,
   CTRL_OPTS,
@@ -27,6 +28,8 @@ describe("orderFields", () => {
       expect(keys, sheet.id).toContain("designer_phone_cc");
       const cc = allFields(sheet, {}).find(({ field }) => field.key === "designer_phone_cc")!.field;
       expect(cc.type, sheet.id).toBe("combobox");
+      expect(COUNTRY_CODE_OPTS.find((o) => o.value === "+86")?.label.zh).toBe("+86");
+      expect(COUNTRY_CODE_OPTS.find((o) => o.value === "+84")?.label.zh).toBe("+84");
       const orderNo = allFields(sheet, {}).find(({ field }) => field.key === "order_no")!.field;
       expect(orderNo.label.zh).toBe("报价单号");
       expect(orderNo.label.en).toBe("Quotation No.");
@@ -78,12 +81,17 @@ describe("orderFields", () => {
     const keys = allFields(oltc, { flange_type: "bell", ust_mode: "constant" }).map(({ field }) => field.key);
     expect(keys).toContain("tap_winding");
     expect(keys).toContain("support_flange");
-    expect(keys).toContain("wind_r1_mm");
-    expect(keys).toContain("wind_cw_pf");
+    expect(keys).toContain("potential_connection");
+    expect(keys).not.toContain("wind_r1_mm");
     expect(keys).toContain("ins_a_pf_kv");
     expect(keys).toContain("temp_sensor");
     expect(keys).toContain("ust_mode");
     expect(allFields(oltc, { flange_type: "tank_top" }).map(({ field }) => field.key)).not.toContain("support_flange");
+    const withResistor = allFields(oltc, { potential_connection: "with" }).map(({ field }) => field.key);
+    expect(withResistor).toContain("wind_r1_mm");
+    expect(withResistor).toContain("wind_cw_pf");
+    expect(withResistor).toContain("tie_in_mounting");
+    expect(allFields(oltc, { potential_connection: "check" }).map(({ field }) => field.key)).toContain("wind_r1_mm");
   });
 
   it("keeps 买方 / 变压器厂 on half the 2-col grid", () => {
