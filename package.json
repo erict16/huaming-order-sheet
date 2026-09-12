@@ -17,7 +17,7 @@
     "@xmldom/xmldom": "^0.9.12",
     "framer-motion": "^11.15.0",
     "jszip": "^3.10.1",
-    "next": "^15.1.9",
+    "next": "^15.1.12",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
     "xlsx": "0.18.5"
