@@ -34,7 +34,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="zh-CN">
+    <html lang="zh-CN" suppressHydrationWarning>
       <head>
         <link rel="icon" href={`${basePath}/brand/favicon-32.png`} type="image/png" sizes="32x32" />
         <link rel="icon" href={`${basePath}/brand/favicon-48.png`} type="image/png" sizes="48x48" />
