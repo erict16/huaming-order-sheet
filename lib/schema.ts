@@ -136,7 +136,6 @@ function contactFields(): FieldDef[] {
       type: "text",
       placeholder: L("不填区号", "Number only", "Только номер", "Chỉ số"),
     },
-    { key: "designer_email", label: L("邮箱", "Email", "Эл. почта", "Email"), type: "text" },
   ];
 }
 
@@ -418,8 +417,7 @@ function mechanicalFields(): FieldDef[] {
       type: "radio",
       options: SUPPORT_FLANGE_OPTS,
       span: 2,
-      applies: (v) => v.flange_type === "bell",
-      hint: L("Word 表 Supporting flange for bell-type tank。箱盖安装不用填。", "Word OS: supporting flange for bell-type tank. Skip for tank-top.", "Только для колокольного бака.", "Chỉ khi kiểu chuông."),
+      hint: L("Word 表这一行：Without / With / Special。不带也要勾 Without。", "Word OS row: Without / With / Special. Tick Without if not required.", "В бланке Word: Without / With / Special.", "Phiếu Word: Without / With / Special. Không mang cũng phải tick Without."),
     },
     { key: "top_gear", label: L("出轴方向", "Top gear output", "Выход верхнего редуктора", "Hướng trục ra"), type: "radio", options: TOP_GEAR_OPTS, hint: L("齿轮盒出轴，不是机构装在哪一侧。", "Shaft output of the top gear, not which side the MDU hangs.", "Выход вала, не сторона привода.", "Trục ra hộp bánh, không phải bên cơ cấu.") },
     { key: "drive_shaft_horizontal_mm", label: L("水平传动轴长度", "Horizontal drive shaft", "Горизонтальный вал", "Trục ngang"), type: "select", unit: "mm", options: SHAFT_LEN_OPTS },
@@ -515,13 +513,16 @@ function accessoryFields(opts?: { oil?: boolean }): FieldDef[] {
       { key: "protective_relay", label: L("保护继电器", "Protective relay", "Защитное реле", "Rơle bảo vệ"), type: "select", options: RELAY_OPTS, span: 2 },
       { key: "pressure_relief", label: L("压力释放", "Pressure relief", "Сброс давления", "Xả áp"), type: "select", options: PRV_OPTS },
       { key: "oil_filter", label: L("在线滤油机", "Online oil filter", "Фильтр масла", "Lọc dầu online"), type: "select", options: FILTER_OPTS },
-      { key: "temp_sensor", label: L("温度传感器", "Temperature sensor", "Датчик температуры", "Cảm biến nhiệt"), type: "radio", options: TEMP_SENSOR_OPTS },
+      { key: "temp_sensor", label: L("温度传感器", "Temperature sensor", "Датчик температуры", "Cảm biến nhiệt"), type: "radio", options: TEMP_SENSOR_OPTS, span: 2, hint: L("Word 表：Without（常规）或 With 再选型号。不带也要勾 Without。", "Word OS: Without (standard) or With plus type. Tick Without if not required.", "В бланке: Without или With.", "Phiếu Word: Without hoặc With. Không mang cũng tick Without.") },
       {
         key: "temp_sensor_type",
-        label: L("传感器型号", "Sensor type", "Тип датчика", "Kiểu cảm biến"),
-        type: "text",
-        placeholder: L("PT100 / BWTY", "PT100 / BWTY", "PT100 / BWTY", "PT100 / BWTY"),
-        applies: (v) => v.temp_sensor === "with",
+        label: L("传感器型号（选 With 时）", "Sensor type (if With)", "Тип датчика (если With)", "Kiểu cảm biến (nếu With)"),
+        type: "select",
+        options: [
+          { value: "PT100", label: L("PT100", "PT100", "PT100", "PT100") },
+          { value: "BWTY", label: L("BWTY", "BWTY", "BWTY", "BWTY") },
+          { value: "other", label: L("其他", "Other", "Другое", "Khác") },
+        ],
       },
     );
   }
