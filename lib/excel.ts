@@ -10,6 +10,7 @@ import { t } from "./copy";
 import { typeFromValues } from "./typeString";
 import type { Lang, OrderValues, SheetDef } from "./types";
 import { cma7CheckValues, cma7SdtValues } from "./cma7Map";
+import { dryCheckValues, drySdtValues } from "./dryMap";
 import { oltcCheckValues, oltcSdtValues, WORD_TEMPLATE } from "./wordMap";
 
 export const APP_VERSION = "1.2.2";
@@ -154,6 +155,11 @@ export async function exportOrderSheet(
     }
     if (sheet.id === "octc") {
       const filled = await fillFormTextDocx(template, octcFormValues(values));
+      downloadBuf(filled, `HM-OS_${safe}.docx`, plan.mime);
+      return;
+    }
+    if (sheet.id === "dry") {
+      const filled = await fillDocx(template, drySdtValues(values), dryCheckValues(values));
       downloadBuf(filled, `HM-OS_${safe}.docx`, plan.mime);
       return;
     }

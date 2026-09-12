@@ -62,4 +62,15 @@ describe("export plan", () => {
     });
     expect(resolveExportPlan(hwv, "excel")).toEqual({ kind: "xlsx" });
   });
+
+  it("exports dry-type as the official CZ Word OS", () => {
+    const dry = getSheet("dry")!;
+    expect(defaultExportFormat(dry)).toBe("word");
+    expect(resolveExportPlan(dry, "word")).toEqual({
+      kind: "word",
+      file: "dry-order-sheet.docx",
+      mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    });
+    expect(resolveExportPlan(dry, "excel")).toEqual({ kind: "xlsx" });
+  });
 });
