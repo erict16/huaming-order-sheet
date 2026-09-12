@@ -205,6 +205,33 @@ describe("oltcSdtValues", () => {
     expect(oltcSdtValues({ hv_kv: "66" })[95]).toBeUndefined();
   });
 
+  it("puts leftover oil_filter into remarks, not an invented checkbox", () => {
+    expect(oltcSdtValues({ oil_filter: "none" })[95]).toBeUndefined();
+    expect(oltcSdtValues({ oil_filter: "" })[95]).toBeUndefined();
+    expect(oltcSdtValues({})[95]).toBeUndefined();
+
+    const two = oltcSdtValues({ oil_filter: "ZXJY-I", notes: "indoor" });
+    expect(two[53]).toBeUndefined();
+    expect(two[95]).toBe("ZXJY-I\nindoor");
+
+    const three = oltcSdtValues({
+      hv_kv: "115",
+      mv_kv: "22",
+      lv_kv: "10.5",
+      oil_filter: "ZXJY-II",
+    });
+    expect(three[53]).toContain("MV 22 kV");
+    expect(three[53]).toContain("LV 10.5 kV");
+    expect(three[53]).toContain("ZXJY-II");
+    expect(three[95]).toBeUndefined();
+
+    const boxes = oltcCheckValues({ oil_filter: "ZXJY-III" });
+    expect(boxes[13]).toBe(false);
+    expect(boxes[26]).toBe(false);
+    expect(boxes[38]).toBe(false);
+    expect(boxes[39]).toBe(false);
+  });
+
   it("keeps HV in SDT 19 and puts OLTC on LV in remarks (no side SDT)", () => {
     const lv = oltcSdtValues({ hv_kv: "66", lv_kv: "11", oltc_side: "lv" });
     expect(lv[19]).toBe("66");
@@ -445,6 +472,21 @@ describe("fillDocx", () => {
     expect(texts[53]).toContain("MV 22 kV");
     expect(texts[53]).toContain("LV 10.5 kV");
     expect(texts[53]).toContain("EVN Tiên Yên tertiary");
+  });
+
+  it("writes leftover oil_filter into official Word remarks", async () => {
+    const filled = await fillDocx(
+      readFileSync(template),
+      oltcSdtValues({ oil_filter: "ZXJY-I" }),
+      oltcCheckValues({ oil_filter: "ZXJY-I" }),
+    );
+    const xml = await (await JSZip.loadAsync(filled)).file("word/document.xml")!.async("string");
+    const texts = readSdtTexts(xml);
+    const boxes = readLegacyCheckboxes(xml);
+    expect(texts[95]).toBe("ZXJY-I");
+    expect(boxes[13]).toBe(false);
+    expect(boxes[38]).toBe(false);
+    expect(boxes[39]).toBe(false);
   });
 
   it("writes OLTC on LV into official Word remarks and leaves HV in SDT 19", async () => {

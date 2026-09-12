@@ -136,7 +136,7 @@ function oltcOnKvWord(values: OrderValues): string | undefined {
   return s(values.oltc_on_kv) || s(values.hv_kv) || undefined;
 }
 
-/** No dedicated side SDT/checkbox. LV is noted on remarks (53 with MV, else 95). */
+/** No side or oil-filter SDT/checkbox. Those go on remarks (53 with MV, else 95). */
 function oltcRemarks(values: OrderValues): string | undefined {
   const lines: string[] = [];
   const mv = s(values.mv_kv);
@@ -145,6 +145,8 @@ function oltcRemarks(values: OrderValues): string | undefined {
     if (s(values.lv_kv)) lines.push(`LV ${s(values.lv_kv)} kV`);
   }
   if (s(values.oltc_side) === "lv") lines.push("OLTC on LV");
+  const filter = s(values.oil_filter);
+  if (filter && filter !== "none") lines.push(filter);
   if (s(values.notes)) lines.push(s(values.notes));
   return lines.join("\n") || undefined;
 }
