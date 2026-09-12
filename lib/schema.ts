@@ -650,7 +650,14 @@ const oltcSheet: SheetDef = {
         "Bên mua và quốc gia bắt buộc. Ô khác trống = tiêu chuẩn.",
       ),
       sections: [
-        { id: "order", title: L("订单", "Order", "Заказ", "Đơn"), fields: orderFields() },
+        {
+          id: "order",
+          title: L("订单", "Order", "Заказ", "Đơn"),
+          fields: [
+            ...orderFields(),
+            { key: "destination_port", label: L("交货地点", "Place of delivery", "Место поставки", "Nơi giao"), type: "text" },
+          ],
+        },
         { id: "transformer", title: L("变压器数据", "Transformer data", "Данные трансформатора", "Dữ liệu MBA"), fields: transformerFields() },
       ],
     },
@@ -820,7 +827,14 @@ const drySheet: SheetDef = {
       title: L("订单与变压器", "Order & transformer", "Заказ и трансформатор", "Đơn và MBA"),
       blurb: L("干变、室内、真空切换。默认三相订 3 台单相 CZ。", "Dry, indoor, vacuum switching. Default 3 single-phase CZ for three-phase.", "Сухой, внутри, вакуум. По умолчанию 3 однофазных CZ.", "Khô, trong nhà, chân không. Mặc định 3 CZ một pha."),
       sections: [
-        { id: "order", title: L("订单", "Order", "Заказ", "Đơn"), fields: orderFields() },
+        {
+          id: "order",
+          title: L("订单", "Order", "Заказ", "Đơn"),
+          fields: [
+            ...orderFields(),
+            { key: "destination_port", label: L("交货地点", "Place of delivery", "Место поставки", "Nơi giao"), type: "text" },
+          ],
+        },
         { id: "transformer", title: L("干式变压器", "Dry-type transformer", "Сухой трансформатор", "MBA khô"), fields: transformerFields({ fluid: false, txKind: false }) },
       ],
     },

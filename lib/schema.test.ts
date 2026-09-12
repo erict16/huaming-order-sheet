@@ -96,6 +96,8 @@ describe("orderFields", () => {
     expect(resolveFieldOptions(side, { mv_kv: "22" }).options?.map((o) => o.value)).toContain("mv");
     expect(resolveFieldOptions(side, {}).options?.map((o) => o.value)).toEqual(["hv", "lv"]);
     expect(allFields(getSheet("octc")!, {}).map(({ field }) => field.key)).toContain("rain_cover");
+    expect(allFields(getSheet("oltc")!, {}).map(({ field }) => field.key)).toContain("destination_port");
+    expect(allFields(getSheet("dry")!, {}).map(({ field }) => field.key)).toContain("destination_port");
   });
 
   it("exposes winding data, supporting flange and regulation location on the OLTC sheet", () => {
