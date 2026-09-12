@@ -1,5 +1,5 @@
 import { operatingDesignation } from "./positions";
-import { formatIntlPhone, resolveDeliveryDate } from "./osCells";
+import { formatDesignerPhone, resolveDeliveryDate } from "./osCells";
 import type { OrderValues } from "./types";
 
 export const OCTC_FORMTEXT_COUNT = 64;
@@ -136,8 +136,7 @@ export function octcFormValues(values: OrderValues): {
 
   setT(0, s(values.designer_name));
   if (s(values.designer_phone)) {
-    const cc = s(values.designer_phone_cc) === "other" ? s(values.designer_phone_cc_other) : s(values.designer_phone_cc);
-    setT(1, formatIntlPhone(cc, values.designer_phone));
+    setT(1, formatDesignerPhone(values));
   }
   setT(2, s(values.designer_email));
   setT(3, s(values.designer_fax));

@@ -309,10 +309,14 @@ function resolvedPhoneCc(values: OrderValues): string {
   return s(values.designer_phone_cc) === "other" ? s(values.designer_phone_cc_other) : s(values.designer_phone_cc);
 }
 
+export function formatDesignerPhone(values: OrderValues): string {
+  return formatIntlPhone(resolvedPhoneCc(values), values.designer_phone);
+}
+
 function commonHeader(values: OrderValues, out: CellWrites) {
   set(out, "H5", s(values.designer_name));
   set(out, "H6", s(values.designer_email));
-  set(out, "Z5", formatIntlPhone(resolvedPhoneCc(values), values.designer_phone));
+  set(out, "Z5", formatDesignerPhone(values));
   set(out, "Z3", s(values.order_date));
   set(out, "H8", s(values.buyer));
   set(out, "H9", s(values.end_user));

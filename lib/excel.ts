@@ -173,8 +173,3 @@ export async function exportOrderSheet(
   const wb = buildWorkbook(sheet, values);
   XLSX.writeFile(wb, `HM-OS_${safe}.xlsx`);
 }
-
-/** @deprecated use exportOrderSheet */
-export function exportExcel(sheet: SheetDef, values: OrderValues): void {
-  void exportOrderSheet(sheet, values);
-}

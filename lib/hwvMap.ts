@@ -1,6 +1,6 @@
 import { EARTH_INSULATION } from "./catalog";
-import { operatingDesignation } from "./positions";
 import { resolveDeliveryDate } from "./osCells";
+import { operatingDesignation } from "./positions";
 import { typeFromValues } from "./typeString";
 import type { OrderValues } from "./types";
 
@@ -19,10 +19,6 @@ function n(v: string | undefined): number | undefined {
 
 function stripPm(v: string): string {
   return v.replace(/^[±+\-\s]+/, "").trim();
-}
-
-function deliveryWord(values: OrderValues): string {
-  return resolveDeliveryDate(values);
 }
 
 function paintWord(values: OrderValues): string {
@@ -93,7 +89,7 @@ export function hwvFormValues(values: OrderValues): {
 
   setT(0, s(values.end_user) || s(values.buyer));
   setT(1, s(values.country));
-  setT(2, [deliveryWord(values), s(values.destination_port)].filter(Boolean).join(" / "));
+  setT(2, [resolveDeliveryDate(values), s(values.destination_port)].filter(Boolean).join(" / "));
   setT(3, s(values.transformer_sn));
   setT(4, s(values.huaming_sn));
   setT(5, s(values.quantity));

@@ -78,13 +78,6 @@ function setBoxVal(box: XmlEl, name: string, on: boolean) {
 }
 
 /** Official OLTC Word OS uses 40 legacy FORMCHECKBOX fields (`w:checked`). */
-export function countLegacyCheckboxes(xml: string): number {
-  const doc = new DOMParser().parseFromString(xml, "application/xml");
-  const root = doc.documentElement;
-  if (!root) return 0;
-  return collectCheckBoxes(root).length;
-}
-
 export function setLegacyCheckboxes(xml: string, checks: Array<boolean | undefined | null>): string {
   const doc = new DOMParser().parseFromString(xml, "application/xml");
   const root = doc.documentElement;

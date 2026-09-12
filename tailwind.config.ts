@@ -43,15 +43,6 @@ const config: Config = {
         card: "0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.10)",
         panel: "0 10px 30px -12px rgba(0, 66, 140, 0.25)",
       },
-      keyframes: {
-        "fade-in": {
-          from: { opacity: "0" },
-          to: { opacity: "1" },
-        },
-      },
-      animation: {
-        "fade-in": "fade-in 0.3s ease-out",
-      },
     },
   },
   plugins: [],

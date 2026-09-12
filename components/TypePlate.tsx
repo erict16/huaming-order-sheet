@@ -4,7 +4,7 @@ import { useState } from "react";
 import { chromeText } from "@/lib/i18n";
 import { useLang } from "@/lib/useLang";
 
-export default function TypePlate({ compact }: { compact: string; spaced?: string }) {
+export default function TypePlate({ compact }: { compact: string }) {
   const { lang } = useLang();
   const [copied, setCopied] = useState(false);
   if (!compact) return null;

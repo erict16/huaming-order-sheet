@@ -170,7 +170,7 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
 
       {typeStr.compact ? (
         <div className="mt-5">
-          <TypePlate compact={typeStr.compact} spaced={typeStr.spaced} />
+          <TypePlate compact={typeStr.compact} />
         </div>
       ) : null}
 
@@ -260,7 +260,7 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
                         <div className="mt-4 grid gap-4 sm:grid-cols-2">
                           {section.id === "oltc" && typeStr.compact ? (
                             <div className="sm:col-span-2">
-                              <TypePlate compact={typeStr.compact} spaced={typeStr.spaced} />
+                              <TypePlate compact={typeStr.compact} />
                             </div>
                           ) : null}
                           {fields.map((field) => {

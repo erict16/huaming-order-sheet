@@ -30,6 +30,9 @@ describe("deriveValues", () => {
     const lead = deriveValues({}, { delivery_date: "90 days after PO" });
     expect(lead.delivery_lead).toBe("90 days after PO");
     expect(lead.delivery_date).toBe("");
+    const tbc = deriveValues({}, { delivery_date: "TBC" });
+    expect(tbc.delivery_lead).toBe("TBC");
+    expect(tbc.delivery_date).toBe("");
     const custom = deriveValues({ delivery_date: "custom" }, { delivery_date_custom: "2026-12-15" });
     expect(custom.delivery_date).toBe("2026-12-15");
     const fromCustom = deriveValues({}, { delivery_date_custom: "2026-11-01" });

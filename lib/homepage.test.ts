@@ -26,6 +26,17 @@ describe("ice chrome", () => {
   });
 });
 
+describe("type designation", () => {
+  it("keeps TypePlate inline and does not float a spaced panel", () => {
+    const plate = readFileSync(path.join(process.cwd(), "components/TypePlate.tsx"), "utf8");
+    const wizard = readFileSync(path.join(process.cwd(), "components/OrderWizard.tsx"), "utf8");
+    expect(wizard).toContain("<TypePlate compact={typeStr.compact} />");
+    expect(plate).not.toMatch(/\bspaced\b/);
+    expect(wizard).not.toMatch(/TypePlate[^>]*spaced/);
+    expect(plate).not.toMatch(/\b(fixed|sticky|float)/);
+  });
+});
+
 describe("homepage starters", () => {
   it("keeps real-order presets in a closed details block so sheet links come first", () => {
     const home = readFileSync(path.join(process.cwd(), "components/HomePage.tsx"), "utf8");

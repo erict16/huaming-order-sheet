@@ -104,7 +104,7 @@ describe("hwvFormValues", () => {
     expect(texts[24]).toBe("149.4");
   });
 
-  it("writes commercial lead-time onto T02 via resolveDeliveryDate", () => {
+  it("writes delivery date or lead time onto T02 via resolveDeliveryDate", () => {
     const { texts } = hwvFormValues(
       deriveValues(SHEET_DEFAULTS.hwv, {
         family: "HWV",
@@ -113,6 +113,14 @@ describe("hwvFormValues", () => {
       }),
     );
     expect(texts[2]).toBe("90 days after PO / Hai Phong");
+    const cal = hwvFormValues({
+      ...hwviii400(),
+      delivery_date: "2026-06-15",
+      destination_port: "Melbourne",
+    });
+    expect(cal.texts[2]).toBe("2026-06-15 / Melbourne");
+    const lead = hwvFormValues({ ...hwviii400(), delivery_lead: "90 days after PO" });
+    expect(lead.texts[2]).toBe("90 days after PO");
     expect(hwvFormValues({ delivery_date: "custom", delivery_date_custom: "2026-12-01" }).texts[2]).toBe(
       "2026-12-01",
     );

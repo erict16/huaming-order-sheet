@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { APP_VERSION, defaultExportFormat, resolveExportPlan } from "./excel";
 import { getSheet } from "./schema";
@@ -5,6 +7,11 @@ import { getSheet } from "./schema";
 describe("export plan", () => {
   it("bumps the patch version", () => {
     expect(APP_VERSION).toBe("1.2.2");
+  });
+
+  it("dropped the unused exportExcel alias", () => {
+    const src = readFileSync(path.join(process.cwd(), "lib/excel.ts"), "utf8");
+    expect(src).not.toContain("export function exportExcel");
   });
 
   it("lets the user choose Word or official xlsm on OLTC / CMA7 / SHM-D", () => {
