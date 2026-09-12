@@ -1,5 +1,6 @@
 "use client";
 
+import { Radio, RadioGroup } from "@headlessui/react";
 import { CalendarDaysIcon } from "@heroicons/react/24/outline";
 import { t } from "@/lib/copy";
 import { chromeText } from "@/lib/i18n";
@@ -22,18 +23,34 @@ export default function Field({
   const hint = field.hint ? t(field.hint, lang) : "";
   const ph = field.placeholder ? t(field.placeholder, lang) : "";
   const span = field.span === 2 ? "sm:col-span-2" : "";
+  const controlId = field.key;
+  const labelId = `${controlId}-label`;
+  const hintId = hint ? `${controlId}-hint` : undefined;
 
   return (
     <div className={`block ${span}`}>
-      <span className="field-label">
+      <label id={labelId} htmlFor={controlId} className="field-label">
         {label}
         {field.unit ? <span className="ml-1 font-normal text-ink-muted">({field.unit})</span> : null}
         {field.required ? (
           <span className="ml-1 text-xs font-semibold text-rose-600">{chromeText("required", lang)}</span>
         ) : null}
-      </span>
-      <Control field={field} value={value} onChange={onChange} placeholder={ph} lang={lang} />
-      {hint ? <span className="mt-1.5 block text-xs leading-relaxed text-ink-muted">{hint}</span> : null}
+      </label>
+      <Control
+        field={field}
+        value={value}
+        onChange={onChange}
+        placeholder={ph}
+        lang={lang}
+        id={controlId}
+        labelledBy={labelId}
+        describedBy={hintId}
+      />
+      {hint ? (
+        <span id={hintId} className="mt-1.5 block text-xs leading-relaxed text-ink-muted">
+          {hint}
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -44,40 +61,48 @@ function Control({
   onChange,
   placeholder,
   lang,
+  id,
+  labelledBy,
+  describedBy,
 }: {
   field: FieldDef;
   value: string;
   onChange: (v: string) => void;
   placeholder: string;
   lang: Lang;
+  id: string;
+  labelledBy: string;
+  describedBy?: string;
 }) {
   if (field.type === "radio" && field.options) {
     return (
-      <div className="flex flex-wrap gap-2">
-        {field.options.map((opt) => {
-          const active = value === opt.value;
-          return (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => onChange(opt.value)}
-              className={`rounded-lg px-3.5 py-2.5 text-[15px] shadow-sm ring-1 ring-inset transition duration-150 active:translate-y-px ${
-                active
-                  ? "bg-navy text-white ring-navy"
-                  : "bg-white text-ink-soft ring-slate-300 hover:ring-slate-400"
-              }`}
-            >
-              {t(opt.label, lang)}
-            </button>
-          );
-        })}
-      </div>
+      <RadioGroup
+        value={value}
+        onChange={onChange}
+        aria-labelledby={labelledBy}
+        aria-describedby={describedBy}
+        aria-required={field.required || undefined}
+        className="flex flex-wrap gap-2"
+      >
+        {field.options.map((opt, i) => (
+          <Radio
+            key={opt.value}
+            id={i === 0 ? id : undefined}
+            value={opt.value}
+            className="inline-flex min-h-10 min-w-10 cursor-pointer items-center justify-center rounded-lg bg-white px-3.5 py-2.5 text-[15px] text-ink-soft shadow-sm ring-1 ring-inset ring-slate-300 transition-[color,background-color,box-shadow,transform] duration-150 active:translate-y-px focus:outline-none data-[checked]:bg-navy data-[checked]:text-white data-[checked]:ring-navy data-[focus]:outline-2 data-[focus]:outline-offset-2 data-[focus]:outline-steel [@media(hover:hover)]:data-[hover]:ring-slate-400"
+          >
+            {t(opt.label, lang)}
+          </Radio>
+        ))}
+      </RadioGroup>
     );
   }
 
   if (field.type === "combobox") {
     return (
       <Combobox
+        id={id}
+        describedBy={describedBy}
         options={field.options ?? []}
         value={value}
         onChange={onChange}
@@ -91,6 +116,8 @@ function Control({
   if (field.type === "select") {
     return (
       <SelectListbox
+        id={id}
+        describedBy={describedBy}
         options={field.options ?? []}
         value={value}
         onChange={onChange}
@@ -102,6 +129,11 @@ function Control({
   if (field.type === "textarea") {
     return (
       <textarea
+        id={id}
+        name={field.key}
+        aria-describedby={describedBy}
+        aria-required={field.required || undefined}
+        autoComplete="off"
         className="field-control min-h-28"
         value={value}
         placeholder={placeholder}
@@ -114,6 +146,11 @@ function Control({
     return (
       <div className="relative">
         <input
+          id={id}
+          name={field.key}
+          aria-describedby={describedBy}
+          aria-required={field.required || undefined}
+          autoComplete="off"
           className="field-control pr-10"
           type="date"
           value={value}
@@ -123,15 +160,24 @@ function Control({
             if (typeof el.showPicker === "function") el.showPicker();
           }}
         />
-        <CalendarDaysIcon className="pointer-events-none absolute right-3 top-1/2 size-5 -translate-y-1/2 text-ink-muted" />
+        <CalendarDaysIcon
+          className="pointer-events-none absolute right-3 top-1/2 size-5 -translate-y-1/2 text-ink-muted"
+          aria-hidden="true"
+        />
       </div>
     );
   }
 
   const input = (
     <input
+      id={id}
+      name={field.key}
+      aria-describedby={describedBy}
+      aria-required={field.required || undefined}
+      autoComplete="off"
       className={`field-control ${field.prefix ? "pl-8" : ""}`}
       type={field.type === "number" ? "number" : "text"}
+      inputMode={field.type === "number" ? "decimal" : undefined}
       value={value}
       placeholder={placeholder}
       onChange={(e) => onChange(e.target.value)}

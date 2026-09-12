@@ -14,6 +14,8 @@ export default function SearchableCombobox({
   placeholder,
   lang,
   allowCustom = false,
+  id,
+  describedBy,
 }: {
   options: FieldOption[];
   value: string;
@@ -21,6 +23,8 @@ export default function SearchableCombobox({
   placeholder?: string;
   lang: Lang;
   allowCustom?: boolean;
+  id?: string;
+  describedBy?: string;
 }) {
   const [query, setQuery] = useState("");
   const selected = options.find((o) => o.value === value);
@@ -45,6 +49,7 @@ export default function SearchableCombobox({
     <Combobox
       value={value || null}
       onChange={(next) => {
+        setQuery("");
         onChange(next ?? "");
       }}
       onClose={() => {
@@ -55,6 +60,9 @@ export default function SearchableCombobox({
     >
       <div className="relative">
         <ComboboxInput
+          id={id}
+          aria-describedby={describedBy}
+          autoComplete="off"
           className="field-control pr-10"
           displayValue={(v: string | null) => {
             if (query) return query;
@@ -68,20 +76,28 @@ export default function SearchableCombobox({
           }}
           placeholder={placeholder}
         />
-        <ComboboxButton className="absolute inset-y-0 right-0 flex items-center px-2.5">
-          <ChevronDownIcon className="size-5 text-ink-muted" />
+        <ComboboxButton
+          className="absolute inset-y-0 right-0 flex min-w-10 items-center justify-center px-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-steel"
+          aria-label={chromeText("search", lang)}
+        >
+          <ChevronDownIcon className="size-5 text-ink-muted" aria-hidden="true" />
         </ComboboxButton>
-        <ComboboxOptions transition className="plus-options">
+        <ComboboxOptions
+          anchor="bottom start"
+          portal
+          transition
+          className="plus-options w-[var(--input-width)]"
+        >
           {filtered.length === 0 ? (
-            <div className="px-3 py-2 text-sm text-ink-muted">{chromeText("noMatches", lang)}</div>
+            <div className="px-3 py-2.5 text-sm text-ink-muted">{chromeText("noMatches", lang)}</div>
           ) : (
             filtered.map((opt) => (
               <ComboboxOption key={opt.value} value={opt.value} className="plus-option group">
-                <span className={`block truncate ${selected?.value === opt.value ? "font-semibold" : ""}`}>
+                <span className={`block truncate pr-8 ${selected?.value === opt.value ? "font-semibold" : ""}`}>
                   {t(opt.label, lang)}
                 </span>
                 <span className="absolute inset-y-0 right-0 hidden items-center pr-3 text-steel group-data-[selected]:flex group-data-[focus]:text-white">
-                  <CheckIcon className="size-5" />
+                  <CheckIcon className="size-5" aria-hidden="true" />
                 </span>
               </ComboboxOption>
             ))
