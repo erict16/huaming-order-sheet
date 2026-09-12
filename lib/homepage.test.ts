@@ -132,6 +132,18 @@ describe("review and export chrome", () => {
   });
 });
 
+describe("wizard next validation", () => {
+  it("focuses the first missing required field instead of a confirm modal", () => {
+    const wizard = readFileSync(path.join(process.cwd(), "components/OrderWizard.tsx"), "utf8");
+    const field = readFileSync(path.join(process.cwd(), "components/Field.tsx"), "utf8");
+    expect(wizard).toContain("function handleNext");
+    expect(wizard).toContain("getElementById");
+    expect(wizard).toContain('chromeText("missing"');
+    expect(wizard).not.toMatch(/\bconfirm\s*\(/);
+    expect(field).toContain("id={controlId}");
+  });
+});
+
 describe("wizard step blurbs", () => {
   it("does not use a single-space blurb to hide help", () => {
     for (const sheet of SHEETS) {

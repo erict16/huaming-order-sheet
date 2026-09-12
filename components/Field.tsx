@@ -36,6 +36,7 @@ export default function Field({
     return (
       <RadioGroup
         as="fieldset"
+        id={controlId}
         value={value}
         onChange={onChange}
         aria-required={field.required || undefined}

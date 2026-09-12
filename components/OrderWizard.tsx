@@ -28,7 +28,7 @@ import {
 } from "@/lib/schema";
 import { clearValues, loadValues, saveValues } from "@/lib/storage";
 import { typeFromValues } from "@/lib/typeString";
-import type { Lang, OrderValues, SheetId } from "@/lib/types";
+import type { FieldDef, Lang, OrderValues, SheetId } from "@/lib/types";
 import { useLang } from "@/lib/useLang";
 import FamilyPicker from "./FamilyPicker";
 import Field from "./Field";
@@ -53,6 +53,8 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
     sheet ? defaultExportFormat(sheet) : "excel",
   );
   const footerRef = useRef<HTMLDivElement>(null);
+  const pendingFocus = useRef<string | null>(null);
+  const [showMissing, setShowMissing] = useState(false);
 
   useLayoutEffect(() => {
     const el = footerRef.current;
@@ -106,10 +108,32 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
     () => (sheet ? missingRequired(sheet, values) : []),
     [sheet, values],
   );
+  const current = sheet?.steps[step];
+  const stepMissing = useMemo(() => {
+    if (!current) return [];
+    const keys = new Set(
+      current.sections.flatMap((section) => applicableFields(section, values).map((f) => f.key)),
+    );
+    return missing.filter((f) => keys.has(f.key));
+  }, [current, missing, values]);
 
-  if (!sheet) return null;
+  useEffect(() => {
+    if (!stepMissing.length) setShowMissing(false);
+  }, [stepMissing.length]);
 
-  const current = sheet.steps[step];
+  useEffect(() => {
+    const key = pendingFocus.current;
+    if (!key) return;
+    const delay = reduceMotion ? 0 : 130;
+    const t = window.setTimeout(() => {
+      pendingFocus.current = null;
+      focusControl(key, !reduceMotion);
+    }, delay);
+    return () => window.clearTimeout(t);
+  }, [step, reduceMotion]);
+
+  if (!sheet || !current) return null;
+
   const stepCount = sheet.steps.length;
 
   function setField(key: string, v: string) {
@@ -121,8 +145,30 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
     window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
   }
 
+  function handleNext() {
+    if (!sheet) return;
+    const first = missing[0];
+    if (!first) {
+      go(step + 1);
+      return;
+    }
+    setShowMissing(true);
+    const idx = sheet.steps.findIndex((s) =>
+      s.sections.some((section) => applicableFields(section, values).some((f) => f.key === first.key)),
+    );
+    if (idx >= 0 && idx !== step) {
+      pendingFocus.current = first.key;
+      setStep(idx);
+      window.scrollTo({ top: 0, behavior: "auto" });
+      return;
+    }
+    window.requestAnimationFrame(() => focusControl(first.key, !reduceMotion));
+  }
+
   function handleClear() {
     clearValues(id);
+    pendingFocus.current = null;
+    setShowMissing(false);
     setValues(deriveValues({}, SHEET_DEFAULTS[id] ?? {}));
     setStep(0);
   }
@@ -235,16 +281,7 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
 
             {current.kind === "review" ? (
               <div className="scroll-mb-[var(--wizard-footer-h,7.5rem)] space-y-4">
-                {missing.length ? (
-                  <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                    <p className="font-semibold">{chromeText("missing", lang)}</p>
-                    <ul className="mt-1 list-disc pl-5">
-                      {missing.map((f) => (
-                        <li key={f.key}>{t(f.label, lang)}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
+                <MissingBanner fields={missing} lang={lang} />
                 {exportErr ? (
                   <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
                     {exportErr}
@@ -261,8 +298,14 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
               </div>
             ) : null}
 
-            {current.kind !== "family" && current.kind !== "review"
-              ? current.sections.map((section) => {
+            {current.kind !== "family" && current.kind !== "review" ? (
+              <>
+                {showMissing && stepMissing.length ? (
+                  <div className="mb-5">
+                    <MissingBanner fields={stepMissing} lang={lang} />
+                  </div>
+                ) : null}
+                {current.sections.map((section) => {
                   const fields = applicableFields(section, values).map((f) =>
                     resolveFieldOptions(f, values),
                   );
@@ -313,8 +356,9 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
                       )}
                     </section>
                   );
-                })
-              : null}
+                })}
+              </>
+            ) : null}
           </motion.div>
         </AnimatePresence>
       </div>
@@ -340,7 +384,8 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
               type="button"
               className="btn-primary min-h-10"
               disabled={familyBlocked}
-              onClick={() => go(step + 1)}
+              aria-describedby={showMissing && stepMissing.length ? "missing-hint" : undefined}
+              onClick={handleNext}
             >
               {chromeText("next", lang)}
               <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
@@ -377,6 +422,38 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function focusControl(key: string, smooth: boolean) {
+  const el = document.getElementById(key);
+  if (!el) return;
+  const node =
+    el instanceof HTMLInputElement ||
+    el instanceof HTMLTextAreaElement ||
+    el instanceof HTMLSelectElement ||
+    el instanceof HTMLButtonElement
+      ? el
+      : (el.querySelector<HTMLElement>("input, textarea, select, button, [role='radio']") ?? el);
+  node.scrollIntoView({ block: "center", behavior: smooth ? "smooth" : "auto" });
+  node.focus({ preventScroll: true });
+}
+
+function MissingBanner({ fields, lang }: { fields: FieldDef[]; lang: Lang }) {
+  if (!fields.length) return null;
+  return (
+    <div
+      id="missing-hint"
+      role="alert"
+      className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+    >
+      <p className="font-semibold">{chromeText("missing", lang)}</p>
+      <ul className="mt-1 list-disc pl-5">
+        {fields.map((f) => (
+          <li key={f.key}>{t(f.label, lang)}</li>
+        ))}
+      </ul>
     </div>
   );
 }
