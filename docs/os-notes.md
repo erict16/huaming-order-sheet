@@ -78,10 +78,19 @@ Word export should keep HV in SDT 19, vector in SDT 10, and put `MV … kV` / `L
 
 - **Word shafts 78–85:** OLTC SDTs 78–85 write H1–H4 / V1–V4 (`wordMap.oltcSdtValues`). Single length uses 78 / 82. Excel ticks catalogue quantities on rows 154–158 (Sheet1 has no H1–H4 length cells).
 - **Excel H22 / H26 / H27 / H97:** in-tank overload, flux, tap winding, temperature sensor (`osCells.oltcCells`). Strings match official ku lists. `linear_end` / `linear_middle` have no Excel option (skip).
-- **Dry Word:** official `dry-order-sheet.docx` is filled in-place (`fillDocx` + `dryMap`).
+- **Excel AD23:** OLTC side HV / LV / MV (`oltc_side`).
+- **Excel H117:** rain cover 不配 / 配 (`rain_cover`). 出线盒 H146 is not mapped.
+- **Excel H21 / S21:** constant kVA → H21; decreasing → S21 kVA / AB21 from-position.
+- **Excel H25:** asymmetric steps `2. - ( ) ~+( )`. Symmetric stays H24.
+- **Excel S30:** variable Ust max / AB30 min. Constant stays I30.
+- **Excel Z18:** ambient ku strings from `ambient_band`. Wizard −25/45/60～+50 maps onto Excel +55.
+- **Excel S14:** destination / 交货地点 (`destination_port`).
+- **Dry Word:** official `dry-order-sheet.docx` is filled in-place (`fillDocx` + `dryMap`). Extra ticks from existing keys: `ins_fill` catalog/provided, `tap_winding` diagrams, `ust_mode` variable. Altitude and CZ terminals stay off (no keys). No CVT.
 - **SHM-D default:** Excel (`shm-d-order-specification-v1.2.xlsm`) because the 2025.3 `.doc` is not fillable. Choosing Word downloads the blank `.doc`.
+- **CMA7 leftover Word SDTs:** protect dropdowns (13 / 15), nameplate/docs language (23 / 25), remarks leftovers (29). Do not tick printed standard-included items or write order qty into docs copies (26 / 28).
 
 ## Remaining wizard gaps
 
 - CV2-500 three-phase (catalogue III is 350/600).
 - Tap code 10181W (not in Fig 3-3).
+- SHM-D 2025.3 `.doc` checkboxes (not a fillable form).
