@@ -10,15 +10,14 @@ import { t } from "./copy";
 import { typeFromValues } from "./typeString";
 import type { Lang, OrderValues, SheetDef } from "./types";
 import { cma7CheckValues, cma7SdtValues } from "./cma7Map";
-import { dryCheckValues, drySdtValues } from "./dryMap";
 import { oltcCheckValues, oltcSdtValues, WORD_TEMPLATE } from "./wordMap";
 
-export const APP_VERSION = "1.2.3";
-const SCHEMA_VERSION = "3";
+export const APP_VERSION = "1.2.2";
+export const SCHEMA_VERSION = "3";
 
 export type ExportFormat = "word" | "excel";
 
-type ExportPlan =
+export type ExportPlan =
   | { kind: "word"; file: string; mime: string }
   | { kind: "xlsm"; file: string }
   | { kind: "xlsx" };
@@ -34,14 +33,12 @@ function fileStem(sheet: SheetDef, values: OrderValues): string {
   return `${stem}_${ref}`.replace(/[^A-Za-z0-9._×x+-]+/g, "-");
 }
 
-function templateUrl(file: string): string {
+export function templateUrl(file: string): string {
   const base = (process.env.NEXT_PUBLIC_BASE_PATH || "").replace(/\/$/, "");
   return `${base}/templates/${file}`;
 }
 
 export function defaultExportFormat(sheet: SheetDef): ExportFormat {
-  // SHM-D Word is a 2025.3 .doc, not a fillable form. Official fill is the xlsm.
-  if (sheet.id === "shm-d") return "excel";
   return WORD_TEMPLATE[sheet.id] ? "word" : "excel";
 }
 
@@ -59,7 +56,7 @@ export function resolveExportPlan(sheet: SheetDef, format: ExportFormat): Export
   return { kind: "xlsx" };
 }
 
-function buildWorkbook(sheet: SheetDef, values: OrderValues): XLSX.WorkBook {
+export function buildWorkbook(sheet: SheetDef, values: OrderValues): XLSX.WorkBook {
   const { spaced, compact } = typeFromValues(sheet.id, values);
 
   const readable: (string | number)[][] = [[
@@ -160,11 +157,6 @@ export async function exportOrderSheet(
       downloadBuf(filled, `HM-OS_${safe}.docx`, plan.mime);
       return;
     }
-    if (sheet.id === "dry") {
-      const filled = await fillDocx(template, drySdtValues(values), dryCheckValues(values));
-      downloadBuf(filled, `HM-OS_${safe}.docx`, plan.mime);
-      return;
-    }
     downloadBuf(template, `HM-OS_${safe}.${plan.file.split(".").pop()}`, plan.mime);
     return;
   }
@@ -180,4 +172,9 @@ export async function exportOrderSheet(
 
   const wb = buildWorkbook(sheet, values);
   XLSX.writeFile(wb, `HM-OS_${safe}.xlsx`);
+}
+
+/** @deprecated use exportOrderSheet */
+export function exportExcel(sheet: SheetDef, values: OrderValues): void {
+  void exportOrderSheet(sheet, values);
 }

@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -17,7 +17,7 @@ import {
   exportOrderSheet,
   hasWordExport,
   type ExportFormat,
-} from "@/lib/exportClient";
+} from "@/lib/excel";
 import { chromeText } from "@/lib/i18n";
 import { applyPreset, hydrateSheetValues, pendingPresetKey } from "@/lib/presets";
 import {
@@ -28,7 +28,7 @@ import {
 } from "@/lib/schema";
 import { clearValues, loadValues, saveValues } from "@/lib/storage";
 import { typeFromValues } from "@/lib/typeString";
-import type { FieldDef, Lang, OrderValues, SheetId } from "@/lib/types";
+import type { Lang, OrderValues, SheetId } from "@/lib/types";
 import { useLang } from "@/lib/useLang";
 import FamilyPicker from "./FamilyPicker";
 import Field from "./Field";
@@ -42,7 +42,6 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
   const id = sheetId as SheetId;
   const sheet = getSheet(id);
   const { lang } = useLang();
-  const reduceMotion = useReducedMotion();
   const [values, setValues] = useState<OrderValues>(SHEET_DEFAULTS[id] ?? {});
   const [loaded, setLoaded] = useState(false);
   const [step, setStep] = useState(0);
@@ -52,28 +51,6 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
   const [exportFormat, setExportFormat] = useState<ExportFormat>(
     sheet ? defaultExportFormat(sheet) : "excel",
   );
-  const footerRef = useRef<HTMLDivElement>(null);
-  const pendingFocus = useRef<string | null>(null);
-  const [showMissing, setShowMissing] = useState(false);
-
-  useLayoutEffect(() => {
-    const el = footerRef.current;
-    if (!el) return;
-    const root = document.documentElement;
-    const apply = () => {
-      const h = Math.ceil(el.getBoundingClientRect().height);
-      el.parentElement?.style.setProperty("--wizard-footer-h", `${h}px`);
-      root.style.scrollPaddingBottom = `${h}px`;
-    };
-    apply();
-    const ro = new ResizeObserver(apply);
-    ro.observe(el);
-    return () => {
-      ro.disconnect();
-      el.parentElement?.style.removeProperty("--wizard-footer-h");
-      root.style.scrollPaddingBottom = "";
-    };
-  }, [lang, step, savedFlash, exporting, exportFormat]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -108,32 +85,10 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
     () => (sheet ? missingRequired(sheet, values) : []),
     [sheet, values],
   );
-  const current = sheet?.steps[step];
-  const stepMissing = useMemo(() => {
-    if (!current) return [];
-    const keys = new Set(
-      current.sections.flatMap((section) => applicableFields(section, values).map((f) => f.key)),
-    );
-    return missing.filter((f) => keys.has(f.key));
-  }, [current, missing, values]);
 
-  useEffect(() => {
-    if (!stepMissing.length) setShowMissing(false);
-  }, [stepMissing.length]);
+  if (!sheet) return null;
 
-  useEffect(() => {
-    const key = pendingFocus.current;
-    if (!key) return;
-    const delay = reduceMotion ? 0 : 130;
-    const t = window.setTimeout(() => {
-      pendingFocus.current = null;
-      focusControl(key, !reduceMotion);
-    }, delay);
-    return () => window.clearTimeout(t);
-  }, [step, reduceMotion]);
-
-  if (!sheet || !current) return null;
-
+  const current = sheet.steps[step];
   const stepCount = sheet.steps.length;
 
   function setField(key: string, v: string) {
@@ -142,33 +97,11 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
 
   function go(next: number) {
     setStep(Math.max(0, Math.min(stepCount - 1, next)));
-    window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
-  }
-
-  function handleNext() {
-    if (!sheet) return;
-    const first = missing[0];
-    if (!first) {
-      go(step + 1);
-      return;
-    }
-    setShowMissing(true);
-    const idx = sheet.steps.findIndex((s) =>
-      s.sections.some((section) => applicableFields(section, values).some((f) => f.key === first.key)),
-    );
-    if (idx >= 0 && idx !== step) {
-      pendingFocus.current = first.key;
-      setStep(idx);
-      window.scrollTo({ top: 0, behavior: "auto" });
-      return;
-    }
-    window.requestAnimationFrame(() => focusControl(first.key, !reduceMotion));
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function handleClear() {
     clearValues(id);
-    pendingFocus.current = null;
-    setShowMissing(false);
     setValues(deriveValues({}, SHEET_DEFAULTS[id] ?? {}));
     setStep(0);
   }
@@ -200,33 +133,25 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
       <div className="text-center">
         <p className="text-sm text-ink-muted">{t(sheet.meta.tag, lang)}</p>
-        <h1 className="mt-1 text-balance text-[1.75rem] font-semibold leading-tight text-navy sm:text-[2rem]">
-          {t(sheet.meta.title, lang)}
-        </h1>
+        <h1 className="mt-1 text-[1.75rem] font-semibold leading-tight text-navy sm:text-[2rem]">{t(sheet.meta.title, lang)}</h1>
         <p className="mt-2 text-sm text-ink-muted">
-          {chromeText("stepOf", lang, { n: step + 1, total: sheet.steps.length })}
-          <span className="text-ink-soft"> · {t(current.title, lang)}</span>
+          {step + 1}/{sheet.steps.length} {t(current.title, lang)}
         </p>
       </div>
 
-      <nav
-        className="mt-5 flex items-center justify-center gap-1 overflow-x-auto"
-        aria-label={chromeText("stepOf", lang, { n: step + 1, total: sheet.steps.length })}
-      >
+      <nav className="mt-5 flex items-center justify-center gap-1.5" aria-label={chromeText("stepOf", lang, { n: step + 1, total: sheet.steps.length })}>
         {sheet.steps.map((s, i) => (
           <button
             key={s.id}
             type="button"
             onClick={() => go(i)}
             title={t(s.title, lang)}
-            aria-label={t(s.title, lang)}
-            aria-current={i === step ? "step" : undefined}
-            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold tabular-nums transition-colors duration-150 active:translate-y-px focus:outline-none focus-visible:ring-2 focus-visible:ring-steel focus-visible:ring-offset-2 ${
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold transition duration-150 active:translate-y-px ${
               i === step
                 ? "bg-navy text-white"
                 : i < step
                   ? "bg-navy-50 text-navy"
-                  : "bg-white text-ink-muted ring-1 ring-slate-200 hover:bg-navy-50"
+                  : "text-ink-muted hover:bg-white"
             }`}
           >
             {i + 1}
@@ -234,24 +159,24 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
         ))}
       </nav>
 
-      {typeStr.compact && current.kind !== "review" ? (
+      {typeStr.compact ? (
         <div className="mt-5">
-          <TypePlate compact={typeStr.compact} />
+          <TypePlate compact={typeStr.compact} spaced={typeStr.spaced} />
         </div>
       ) : null}
 
       {t(current.blurb, lang).trim() ? (
-        <p className="mt-4 text-pretty text-sm text-ink-soft">{t(current.blurb, lang)}</p>
+        <p className="mt-4 text-sm text-ink-soft">{t(current.blurb, lang)}</p>
       ) : null}
 
-      <div className="mt-6 overflow-x-clip overflow-y-visible pb-[var(--wizard-footer-h,7.5rem)]">
+      <div className="mt-6 overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div
             key={current.id}
-            initial={reduceMotion ? false : { opacity: 0 }}
+            initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={reduceMotion ? undefined : { opacity: 0 }}
-            transition={{ duration: reduceMotion ? 0 : 0.12 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.12 }}
           >
             {step === 0 && current.kind !== "family" ? (
               <PresetPicker
@@ -263,7 +188,7 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
             ) : null}
 
             {current.kind === "family" && sheet.families ? (
-              <div className="scroll-mb-[var(--wizard-footer-h,7.5rem)] space-y-5">
+              <div className="space-y-5">
                 <FamilyPicker
                   families={sheet.families}
                   value={values.family || ""}
@@ -280,8 +205,17 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
             ) : null}
 
             {current.kind === "review" ? (
-              <div className="scroll-mb-[var(--wizard-footer-h,7.5rem)] space-y-4">
-                <MissingBanner fields={missing} lang={lang} />
+              <div className="space-y-4">
+                {missing.length ? (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                    <p className="font-semibold">{chromeText("missing", lang)}</p>
+                    <ul className="mt-1 list-disc pl-5">
+                      {missing.map((f) => (
+                        <li key={f.key}>{t(f.label, lang)}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
                 {exportErr ? (
                   <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
                     {exportErr}
@@ -292,26 +226,19 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
                   onChange={setExportFormat}
                   canWord={canWord}
                   lang={lang}
-                  sheetId={id}
                 />
                 <ReviewPanel sheet={sheet} values={values} typeStr={typeStr.compact} />
               </div>
             ) : null}
 
-            {current.kind !== "family" && current.kind !== "review" ? (
-              <>
-                {showMissing && stepMissing.length ? (
-                  <div className="mb-5">
-                    <MissingBanner fields={stepMissing} lang={lang} />
-                  </div>
-                ) : null}
-                {current.sections.map((section) => {
+            {current.kind !== "family" && current.kind !== "review"
+              ? current.sections.map((section) => {
                   const fields = applicableFields(section, values).map((f) =>
                     resolveFieldOptions(f, values),
                   );
                   if (!fields.length) return null;
                   return (
-                    <section key={section.id} className="card mb-5 scroll-mb-[var(--wizard-footer-h,7.5rem)] p-5 sm:p-6">
+                    <section key={section.id} className="card mb-5 p-5 sm:p-6">
                       <h2 className="text-lg font-semibold text-navy">{t(section.title, lang)}</h2>
                       {section.hint ? (
                         <p className="mt-1 text-sm text-ink-soft">{t(section.hint, lang)}</p>
@@ -322,6 +249,11 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
                         </div>
                       ) : (
                         <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                          {section.id === "oltc" && typeStr.compact ? (
+                            <div className="sm:col-span-2">
+                              <TypePlate compact={typeStr.compact} spaced={typeStr.spaced} />
+                            </div>
+                          ) : null}
                           {fields.map((field) => {
                             if (field.key === "designer_phone") return null;
                             if (field.key === "designer_phone_cc") {
@@ -356,114 +288,54 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
                       )}
                     </section>
                   );
-                })}
-              </>
-            ) : null}
+                })
+              : null}
           </motion.div>
         </AnimatePresence>
       </div>
 
-      <div
-        ref={footerRef}
-        className="no-print sticky bottom-0 z-20 mt-8 flex flex-wrap items-center gap-2 border-t border-slate-200 bg-[#f4f6f8] pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
-      >
-        <div className="flex min-w-0 flex-wrap gap-2">
-          {step === 0 ? (
-            <Link href="/" className="btn-secondary min-h-10">
-              <ArrowLeftIcon className="h-4 w-4" aria-hidden="true" />
-              {chromeText("backHome", lang)}
-            </Link>
-          ) : (
-            <button type="button" className="btn-secondary min-h-10" onClick={() => go(step - 1)}>
-              <ArrowLeftIcon className="h-4 w-4" aria-hidden="true" />
-              {chromeText("prev", lang)}
-            </button>
-          )}
-          {step < sheet.steps.length - 1 ? (
-            <button
-              type="button"
-              className="btn-primary min-h-10"
-              disabled={familyBlocked}
-              aria-describedby={showMissing && stepMissing.length ? "missing-hint" : undefined}
-              onClick={handleNext}
-            >
-              {chromeText("next", lang)}
-              <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="btn-primary min-h-10"
-              disabled={exporting}
-              aria-busy={exporting}
-              onClick={() => void handleExport()}
-            >
-              {exporting
-                ? chromeText("exporting", lang)
-                : exportFormat === "word"
-                  ? chromeText("exportWord", lang)
-                  : chromeText("exportExcel", lang)}
-            </button>
-          )}
-        </div>
-        <div className="flex flex-wrap gap-2 sm:ml-auto">
+      <div className="no-print sticky bottom-0 z-20 mt-8 flex flex-wrap gap-2 border-t border-slate-200 bg-[#f4f6f8]/95 py-3 backdrop-blur">
+        {step === 0 ? (
+          <Link href="/" className="btn-secondary">
+            <ArrowLeftIcon className="h-4 w-4" />
+            {chromeText("backHome", lang)}
+          </Link>
+        ) : (
+          <button type="button" className="btn-secondary" onClick={() => go(step - 1)}>
+            <ArrowLeftIcon className="h-4 w-4" />
+            {chromeText("prev", lang)}
+          </button>
+        )}
+        {step < sheet.steps.length - 1 ? (
           <button
             type="button"
-            className="btn-secondary min-h-10"
-            onClick={handleSave}
-            aria-live="polite"
+            className="btn-primary"
+            disabled={familyBlocked}
+            onClick={() => go(step + 1)}
           >
-            {savedFlash ? <CheckIcon className="h-4 w-4" aria-hidden="true" /> : null}
-            {savedFlash ? chromeText("savedFlash", lang) : chromeText("save", lang)}
+            {chromeText("next", lang)}
+            <ArrowRightIcon className="h-4 w-4" />
           </button>
-          <button type="button" className="btn-secondary min-h-10 text-rose-700" onClick={handleClear}>
-            <TrashIcon className="h-4 w-4" aria-hidden="true" />
-            {chromeText("clear", lang)}
+        ) : (
+          <button type="button" className="btn-primary" disabled={exporting} onClick={() => void handleExport()}>
+            {exporting
+              ? "…"
+              : exportFormat === "word"
+                ? chromeText("exportWord", lang)
+                : chromeText("exportExcel", lang)}
           </button>
-        </div>
+        )}
+        <button type="button" className="btn-secondary ml-auto" onClick={handleSave}>
+          {savedFlash ? <CheckIcon className="h-4 w-4" /> : null}
+          {savedFlash ? chromeText("savedFlash", lang) : chromeText("save", lang)}
+        </button>
+        <button type="button" className="btn-secondary text-rose-700" onClick={handleClear}>
+          <TrashIcon className="h-4 w-4" />
+          {chromeText("clear", lang)}
+        </button>
       </div>
     </div>
   );
-}
-
-function focusControl(key: string, smooth: boolean) {
-  const el = document.getElementById(key);
-  if (!el) return;
-  const node =
-    el instanceof HTMLInputElement ||
-    el instanceof HTMLTextAreaElement ||
-    el instanceof HTMLSelectElement ||
-    el instanceof HTMLButtonElement
-      ? el
-      : (el.querySelector<HTMLElement>("input, textarea, select, button, [role='radio']") ?? el);
-  node.scrollIntoView({ block: "center", behavior: smooth ? "smooth" : "auto" });
-  node.focus({ preventScroll: true });
-}
-
-function MissingBanner({ fields, lang }: { fields: FieldDef[]; lang: Lang }) {
-  if (!fields.length) return null;
-  return (
-    <div
-      id="missing-hint"
-      role="alert"
-      className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
-    >
-      <p className="font-semibold">{chromeText("missing", lang)}</p>
-      <ul className="mt-1 list-disc pl-5">
-        {fields.map((f) => (
-          <li key={f.key}>{t(f.label, lang)}</li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function exportFormatHint(sheetId: SheetId, format: ExportFormat, lang: Lang): string {
-  if (format === "word" && sheetId === "shm-d") return chromeText("exportWordBlank", lang);
-  if (format === "excel" && (sheetId === "hwv" || sheetId === "octc" || sheetId === "dry")) {
-    return chromeText("exportExcelGeneric", lang);
-  }
-  return "";
 }
 
 function ExportFormatControl({
@@ -471,42 +343,25 @@ function ExportFormatControl({
   onChange,
   canWord,
   lang,
-  sheetId,
 }: {
   format: ExportFormat;
   onChange: (v: ExportFormat) => void;
   canWord: boolean;
   lang: Lang;
-  sheetId: SheetId;
 }) {
-  const hint = exportFormatHint(sheetId, format, lang);
   return (
-    <fieldset
-      className="rounded-xl border border-slate-200 bg-white px-4 py-4"
-      aria-describedby={hint ? "export-format-hint" : undefined}
-    >
+    <fieldset className="rounded-xl bg-white px-4 py-3 shadow-sm ring-1 ring-slate-200/80">
       <legend className="px-1 text-sm font-semibold text-navy">{chromeText("exportFormat", lang)}</legend>
       <div className="mt-2">
         <SegmentedControl
-          fullWidth
           value={format}
           onChange={onChange}
           options={[
-            {
-              value: "word",
-              label: chromeText("exportWord", lang),
-              disabled: !canWord,
-              title: canWord ? undefined : chromeText("exportWordUnavailable", lang),
-            },
+            { value: "word", label: chromeText("exportWord", lang), disabled: !canWord },
             { value: "excel", label: chromeText("exportExcel", lang) },
           ]}
         />
       </div>
-      {hint ? (
-        <p id="export-format-hint" className="mt-2 text-xs leading-relaxed text-ink-muted">
-          {hint}
-        </p>
-      ) : null}
     </fieldset>
   );
 }

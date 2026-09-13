@@ -2,7 +2,7 @@ import { operatingDesignation } from "./positions";
 import { typeFromValues } from "./typeString";
 import type { OrderValues } from "./types";
 
-type CellValue = string | number;
+export type CellValue = string | number;
 export type CellWrites = Record<string, CellValue>;
 
 function s(v: string | undefined): string {
@@ -24,33 +24,6 @@ function pipeWith(v: string): string | undefined {
   if (v === "with") return "1. With(std.)";
   if (v === "without") return "2. Without";
   return undefined;
-}
-
-/** Wizard stores official Word pipe strings, not with/without. */
-function parsePipe(v: string): { present?: string; bleeder?: string; groove?: string } {
-  const t = v.toLowerCase();
-  if (!t) return {};
-  if (t === "with" || t === "without") return { present: t };
-  if (t.includes("blind")) return { present: "without" };
-  const bleeder = t.includes("without bleeder") ? "without" : t.includes("with bleeder") ? "with" : undefined;
-  const groove = t.includes("without groove") ? "without" : t.includes("with groove") ? "with" : undefined;
-  return { present: "with", bleeder, groove };
-}
-
-function writePipeRow(
-  out: CellWrites,
-  spec: string,
-  bleederKey: string,
-  grooveKey: string,
-  heightKey: string,
-  addrs: { present: string; bleeder: string; groove: string; height: string },
-  std: { bleederWithout: boolean; grooveWith: boolean },
-) {
-  const p = parsePipe(spec);
-  set(out, addrs.present, pipeWith(p.present || spec));
-  set(out, addrs.bleeder, pipeBleeder(bleederKey || p.bleeder || "", std.bleederWithout));
-  set(out, addrs.groove, pipeGroove(grooveKey || p.groove || "", std.grooveWith));
-  set(out, addrs.height, pipeHeight(heightKey));
 }
 
 function pipeBleeder(v: string, stdWithout: boolean): string | undefined {
@@ -138,23 +111,6 @@ function nameplateOs(v: string): string | undefined {
   return undefined;
 }
 
-/** Sheet1 H63. Official ku 资料 A191–A196; Data Source B27–B31 has no Chinese. */
-function shmDDocsLang(v: string): string | undefined {
-  if (v === "zh") return "中文";
-  if (v === "en") return "English";
-  if (v === "ru") return "Russian";
-  if (v === "pt") return "Portuguese";
-  return undefined;
-}
-
-/** Sheet1 H77. Official ku 资料 A224–A229 / Data Source B27–B32. No Chinese. */
-function cma7DocsLang(v: string): string | undefined {
-  if (v === "en") return "English";
-  if (v === "ru") return "Russian";
-  if (v === "pt") return "Portuguese";
-  return undefined;
-}
-
 function paintOs(values: OrderValues): string | undefined {
   const paint = s(values.paint);
   if (paint === "other") return s(values.paint_other) || undefined;
@@ -163,95 +119,11 @@ function paintOs(values: OrderValues): string | undefined {
   return paint;
 }
 
-/** CMA7/SHM-D ku list: only RAL7040 carries -std. */
 function paintOsStd(values: OrderValues): string | undefined {
-  const paint = s(values.paint);
-  if (paint === "other") return s(values.paint_other) || undefined;
-  if (paint === "ANSI70") return "ANSI 70";
-  if (paint === "RAL7040") return "RAL7040-std.";
-  if (!paint) return undefined;
-  return paint;
-}
-
-function corrosiveOsStd(v: string): string | undefined {
-  if (!v || v === "none") return undefined;
-  if (v === "C5-M") return "C5-M-std.";
-  return v;
-}
-
-function quantityValue(values: OrderValues): CellValue | undefined {
-  const q = n(values.quantity);
-  if (q != null) return q;
-  const t = s(values.quantity);
-  return t || undefined;
-}
-
-function separateVolt(v: string): string | undefined {
-  const map: Record<string, string> = {
-    "120_ac": "120V AC",
-    "220_ac": "220V AC",
-    "230_ac": "230V AC",
-    "240_ac": "240V AC",
-    "110_ac": "110V AC",
-    "48_dc": "48V DC",
-    "110_dc": "110V DC",
-    "125_dc": "125V DC",
-    "220_dc": "220V DC",
-  };
-  return map[v];
-}
-
-function resistorOhm(v: string): string | undefined {
-  const t = s(v);
-  if (!t) return undefined;
-  if (/[Ωω]|ohm/i.test(t)) return t;
-  return `${t}Ω`;
-}
-
-function writeResistorRows(
-  out: CellWrites,
-  values: OrderValues,
-  cells: { flag: string; ohm1: string; qty1: string; zero1: string; ohm2: string; qty2: string },
-  flags: { without: string; same: string; different: string },
-) {
-  const rs = s(values.resistor_sig);
-  if (rs === "without") {
-    set(out, cells.flag, flags.without);
-    return;
-  }
-  if (rs !== "1" && rs !== "2" && rs !== "3") return;
-  const ohm1 = s(values.resistor_ohm);
-  const ohm2 = s(values.resistor_ohm_2);
-  const ohm3 = s(values.resistor_ohm_3);
-  const different = (rs !== "1" && ohm2 && ohm2 !== ohm1) || (rs === "3" && ohm3 && ohm3 !== ohm1);
-  if (different) {
-    set(out, cells.flag, flags.different);
-    set(out, cells.ohm1, resistorOhm(ohm1));
-    set(out, cells.qty1, 1);
-    if (ohm2) {
-      set(out, cells.ohm2, resistorOhm(ohm2));
-      set(out, cells.qty2, rs === "3" && ohm3 && ohm3 === ohm2 ? 2 : 1);
-    }
-  } else {
-    set(out, cells.flag, flags.same);
-    set(out, cells.ohm1, resistorOhm(ohm1));
-    set(out, cells.qty1, Number(rs));
-  }
-  if (s(values.resistor_zero_first) === "yes") set(out, cells.zero1, "0Ω");
-}
-
-function cma7Controller(v: string): string | undefined {
-  if (!v) return undefined;
-  if (v === "none") return "Without";
-  if (v.startsWith("hmc3c") || v === "HMC-3C") return "HMC-3C(Terminal Type)";
-  if (v.startsWith("etsz6") || v === "ET-SZ6") return "Without";
-  if (v === "SHM-KX") return "SHM-KX/ZB";
-  if (v === "HMIET") return "HMIET-I(Standard Version)";
-  return undefined;
-}
-
-function minPosLine(v: string): string {
-  return `Min. effective number of turns at position ( ${v} )`;
+  const p = paintOs(values);
+  if (!p) return undefined;
+  if (s(values.paint) === "other" || s(values.paint) === "ANSI70") return p;
+  return `${p}-std.`;
 }
 
 function applicationOs(values: OrderValues): string | undefined {
@@ -296,32 +168,6 @@ function freqOs(v: string): string | undefined {
   return undefined;
 }
 
-/** Sheet1 Z18. Official ku A80–A83. Wizard −25/45/60～+50 maps onto Excel +55. */
-function ambientOs(values: OrderValues): string | undefined {
-  const band = s(values.ambient_band);
-  if (band === "-25~50") return "-25~+55°C";
-  if (band === "-45~50") return "-45~+55°C";
-  if (band === "-60~50") return "-60~+55°C";
-  if (band === "-25~+55°C" || band === "-45~+55°C" || band === "-60~+55°C" || band === "0~+55°C") {
-    return band;
-  }
-  const temp = s(values.ambient_temp);
-  if (temp === "-25~+55°C" || temp === "-45~+55°C" || temp === "-60~+55°C" || temp === "0~+55°C") {
-    return temp;
-  }
-  const min = n(values.ambient_min);
-  const max = n(values.ambient_max);
-  if (min == null || max == null) return undefined;
-  const lo = Math.abs(min);
-  const hi = Math.abs(max);
-  if (lo === 0 && hi === 55) return "0~+55°C";
-  if (hi !== 55) return undefined;
-  if (lo === 25) return "-25~+55°C";
-  if (lo === 45) return "-45~+55°C";
-  if (lo === 60) return "-60~+55°C";
-  return undefined;
-}
-
 function fluidOs(v: string): string | undefined {
   if (v === "mineral") return "1. Mineral oil";
   if (v === "natural_ester") return "2. Natural ester oil";
@@ -330,72 +176,7 @@ function fluidOs(v: string): string | undefined {
   return undefined;
 }
 
-/** Sheet1 H22. Official ku A102–A103; do not write IEC 60354. */
-function overloadOs(values: OrderValues): string | undefined {
-  const mode = s(values.overload_mode);
-  if (mode === "iec") return "1. IEC 60076-7 / ANSI C57.92";
-  if (mode !== "above") return undefined;
-  const pct = s(values.overload_pct);
-  const hours = s(values.overload_hours);
-  return `2. >IEC 60076-7 / ANSI C57.92 ( ${pct} )% overload ( ${hours} )hours`;
-}
-
-/** Sheet1 H26. Official ku A116–A118. */
-function fluxOs(v: string): string | undefined {
-  if (v === "cfvv") return "1. Constant flux voltage regulation";
-  if (v === "vfvv") return "2. Variable flux voltage regulation";
-  if (v === "combined") return "3. Compound voltage regulation";
-  return undefined;
-}
-
-/** Sheet1 H27. Official ku G17–G26. linear_end / linear_middle have no Excel option. */
-function tapWindingOs(v: string): string | undefined {
-  const map: Record<string, string> = {
-    star_neutral: "1. Star,in neutral",
-    star_middle: "2. Star,in center",
-    star_end: "3. Star,at line end",
-    delta_end: "4. Delta,at line end",
-    delta_middle: "5. Delta, in center",
-    "1plus2": "6. 1+2 phases",
-  };
-  return map[v];
-}
-
-/** Sheet1 H97. Official ku B471–B473. `other` is not on the list. */
-function tempSensorOs(values: OrderValues): string | undefined {
-  const t = s(values.temp_sensor);
-  if (t === "without") return "1. Without";
-  if (t !== "with") return undefined;
-  const kind = s(values.temp_sensor_type);
-  if (kind === "BWTY") return "3. With BWTY";
-  if (kind === "PT100" || !kind) return "2. With PT100";
-  return undefined;
-}
-
-/** Sheet1 H117. Official ku B261–B262 防雨罩. Data Source B32–B34 出线盒 is H146 — do not invent. */
-function rainCoverOs(v: string): string | undefined {
-  if (v === "no" || v === "without") return "1. 不配";
-  if (v === "yes" || v === "with") return "2. 配";
-  return undefined;
-}
-
-function kvaNumber(values: OrderValues): number | undefined {
-  const mva = n(values.rated_power_mva);
-  if (mva == null) return undefined;
-  return mva * 1000;
-}
-
-/** Sheet1 H25. Official `2. - ( ) ~+( ) steps`. */
-function asymmetricStepsOs(values: OrderValues): string | undefined {
-  const minus = s(values.range_minus);
-  const plus = s(values.range_plus);
-  if (!minus && !plus) return undefined;
-  return `2. - ( ${minus} ) ~+( ${plus} ) steps`;
-}
-
 const SHAFTS = [800, 1000, 1200, 1500, 2000] as const;
-const SHAFT_H_KEYS = ["h1", "h2", "h3", "h4"] as const;
-const SHAFT_V_KEYS = ["v1", "v2", "v3", "v4"] as const;
 
 function shaftQty(mm: number | undefined): { len: number; row: number } | undefined {
   if (!mm) return undefined;
@@ -404,59 +185,7 @@ function shaftQty(mm: number | undefined): { len: number; row: number } | undefi
   return undefined;
 }
 
-function shaftSegMm(values: OrderValues, keys: readonly string[]): number[] {
-  const out: number[] = [];
-  for (const k of keys) {
-    const mm = n(values[k]);
-    if (mm != null) out.push(mm);
-  }
-  return out;
-}
-
-/** Rows 154–158: quantity ticks per catalogue length. No H1–H4 / V1–V4 length cells on Sheet1. */
-function writeShaftColumn(out: CellWrites, col: "H" | "Z", mms: number[]) {
-  const qty: Partial<Record<(typeof SHAFTS)[number], number>> = {};
-  for (const mm of mms) {
-    if ((SHAFTS as readonly number[]).includes(mm)) {
-      const len = mm as (typeof SHAFTS)[number];
-      qty[len] = (qty[len] || 0) + 1;
-    }
-  }
-  SHAFTS.forEach((len, i) => {
-    const count = qty[len];
-    if (count) set(out, `${col}${154 + i}`, count);
-  });
-}
-
-function writeOltcShafts(values: OrderValues, out: CellWrites) {
-  const multi = s(values.shaft_multi) === "yes";
-  const hSegs = shaftSegMm(values, SHAFT_H_KEYS);
-  const vSegs = shaftSegMm(values, SHAFT_V_KEYS);
-  if (multi && hSegs.length) writeShaftColumn(out, "H", hSegs);
-  else {
-    const hShaft = shaftQty(n(values.drive_shaft_horizontal_mm));
-    if (hShaft) set(out, `H${hShaft.row}`, 1);
-  }
-  if (multi && vSegs.length) writeShaftColumn(out, "Z", vSegs);
-  else {
-    const vShaft = shaftQty(n(values.drive_shaft_vertical_mm));
-    if (vShaft) set(out, `Z${vShaft.row}`, 1);
-  }
-}
-
-function shaftRemark(values: OrderValues): string {
-  if (s(values.shaft_multi) !== "yes") return "";
-  const parts: string[] = [];
-  for (const k of [...SHAFT_H_KEYS, ...SHAFT_V_KEYS]) {
-    const mm = s(values[k]);
-    if (mm) parts.push(`${k.toUpperCase()}=${mm} mm`);
-  }
-  return parts.join("; ");
-}
-
-function designationCells(
-  values: OrderValues,
-): { maxLine: string; midLine: string; minLine: string; pos: number; mid: 0 | 1 | 3 } | undefined {
+function designationCells(values: OrderValues): { maxLine: string; midLine: string; pos: number; mid: 0 | 1 | 3 } | undefined {
   const pos = n(values.oltc_tap_positions) ?? n(values.mdu_positions);
   if (!pos) return undefined;
   const midRaw = n(values.oltc_tap_mid);
@@ -468,7 +197,7 @@ function designationCells(
   const midLine = d.mid
     ? `Mid-position(s) ( ${d.mid} )\nstop at position ( ${d.stop} )`
     : `Mid-position(s) (  )\nstop at position ( ${d.min} )`;
-  return { maxLine, midLine, minLine: minPosLine(d.min), pos, mid };
+  return { maxLine, midLine, pos, mid };
 }
 
 /** Combine country calling code + local number as `+86 138…`. Does not double `+`. */
@@ -499,19 +228,15 @@ function resolvedPhoneCc(values: OrderValues): string {
   return s(values.designer_phone_cc) === "other" ? s(values.designer_phone_cc_other) : s(values.designer_phone_cc);
 }
 
-export function formatDesignerPhone(values: OrderValues): string {
-  return formatIntlPhone(resolvedPhoneCc(values), values.designer_phone);
-}
-
 function commonHeader(values: OrderValues, out: CellWrites) {
   set(out, "H5", s(values.designer_name));
   set(out, "H6", s(values.designer_email));
-  set(out, "Z5", formatDesignerPhone(values));
+  set(out, "Z5", formatIntlPhone(resolvedPhoneCc(values), values.designer_phone));
   set(out, "Z3", s(values.order_date));
   set(out, "H8", s(values.buyer));
   set(out, "H9", s(values.end_user));
   set(out, "H11", s(values.country));
-  set(out, "H12", quantityValue(values));
+  set(out, "H12", n(values.quantity) ?? s(values.quantity));
   set(out, "H13", s(values.project));
   set(out, "S13", s(values.order_no));
   set(out, "H14", resolveDeliveryDate(values));
@@ -546,8 +271,6 @@ function relayCells(values: OrderValues, out: CellWrites) {
 export function oltcCells(values: OrderValues): CellWrites {
   const out: CellWrites = {};
   commonHeader(values, out);
-  // Sheet1 S14 交货地点.
-  set(out, "S14", s(values.destination_port));
 
   const { compact } = typeFromValues("oltc", values);
   set(out, "H16", s(values.family));
@@ -560,19 +283,10 @@ export function oltcCells(values: OrderValues): CellWrites {
   set(out, "H17", txKindOs(s(values.tx_kind)));
   set(out, "H18", freqOs(s(values.frequency_hz)));
   set(out, "H19", fluidOs(s(values.insulating_fluid)));
-  set(out, "Z18", ambientOs(values));
-  set(out, "H22", overloadOs(values));
-  set(out, "H26", fluxOs(s(values.flux)));
-  set(out, "H27", tapWindingOs(s(values.tap_winding)));
+  set(out, "Z18", s(values.ambient_temp));
 
-  const kva = kvaNumber(values);
-  // Sheet1 H21 constant kVA; decreasing → S21 kVA / AB21 from-position. ku A95–A96.
-  if (s(values.capacity_mode) === "decreasing") {
-    set(out, "S21", kva);
-    set(out, "AB21", s(values.capacity_from_pos));
-  } else if (kva != null) {
-    set(out, "H21", kva);
-  }
+  const mva = n(values.rated_power_mva);
+  if (mva != null) set(out, "I21", mva * 1000);
 
   const hv = s(values.hv_kv);
   const mv = s(values.mv_kv);
@@ -581,22 +295,10 @@ export function oltcCells(values: OrderValues): CellWrites {
     set(out, "H23", `HV(${hv || "     "}) kV\nMV(${mv || "     "}) kV\nLV(${lv || "     "}) kV`);
   }
   set(out, "O23", vectorGroupOs(values));
-  const side = s(values.oltc_side);
-  if (side === "hv") set(out, "AD23", "HV side");
-  else if (side === "lv") set(out, "AD23", "LV side");
-  else if (side === "mv") set(out, "AD23", "MV side");
 
-  const minus = s(values.range_minus);
-  const plus = s(values.range_plus);
-  const asymmetric =
-    s(values.range_shape) === "asymmetric" || Boolean(minus && plus && minus !== plus);
-  if (asymmetric) {
-    set(out, "H25", asymmetricStepsOs(values));
-  } else {
-    const pm = n(values.plus_minus);
-    if (pm && values.regulation !== "linear") {
-      set(out, "H24", `1. ±( ${pm} ) steps`);
-    }
+  const pm = n(values.plus_minus);
+  if (pm && values.regulation !== "linear") {
+    set(out, "H24", `1. ±( ${pm} ) steps`);
   }
   set(out, "Z24", s(values.tap_range_pct) ? `x  ( ${s(values.tap_range_pct)} ) %` : undefined);
 
@@ -605,16 +307,8 @@ export function oltcCells(values: OrderValues): CellWrites {
   if (inA != null) set(out, "I28", inA);
   const imax = n(values.imax_a);
   if (imax != null) set(out, "Z28", imax);
-  // Sheet1 I30 constant Ust. Variable: S30 max / AB30 min. ku A132–A133.
-  if (s(values.ust_mode) === "variable") {
-    const ustMax = n(values.ust_max_v);
-    if (ustMax != null) set(out, "S30", ustMax);
-    const ustMin = n(values.ust_min_v);
-    if (ustMin != null) set(out, "AB30", ustMin);
-  } else {
-    const ust = n(values.step_voltage_v);
-    if (ust != null) set(out, "I30", ust);
-  }
+  const ust = n(values.step_voltage_v);
+  if (ust != null) set(out, "I30", ust);
   set(out, "H31", s(values.recovery_voltage_kv) ? `( ${s(values.recovery_voltage_kv)} ) kV` : undefined);
 
   set(out, "H32", potentialOs(s(values.potential_connection)));
@@ -638,8 +332,6 @@ export function oltcCells(values: OrderValues): CellWrites {
   set(out, "AH78", flangeOs(s(values.flange_type)));
   set(out, "H104", topGearOs(s(values.top_gear)));
   set(out, "H96", prvOs(s(values.pressure_relief)));
-  set(out, "H97", tempSensorOs(values));
-  set(out, "H117", rainCoverOs(s(values.rain_cover)));
 
   const des = designationCells(values);
   if (des) {
@@ -653,60 +345,42 @@ export function oltcCells(values: OrderValues): CellWrites {
 
   relayCells(values, out);
 
-  writePipeRow(
-    out,
-    s(values.pipe_q),
-    s(values.pipe_q_bleeder),
-    s(values.pipe_q_groove),
-    s(values.pipe_q_height),
-    { present: "H149", bleeder: "O149", groove: "V149", height: "AC149" },
-    { bleederWithout: true, grooveWith: true },
-  );
-  writePipeRow(
-    out,
-    s(values.pipe_s),
-    s(values.pipe_s_bleeder),
-    s(values.pipe_s_groove),
-    s(values.pipe_s_height),
-    { present: "H150", bleeder: "O150", groove: "V150", height: "AC150" },
-    { bleederWithout: false, grooveWith: true },
-  );
-  writePipeRow(
-    out,
-    s(values.pipe_r),
-    s(values.pipe_r_bleeder),
-    s(values.pipe_r_groove),
-    s(values.pipe_r_height),
-    { present: "H151", bleeder: "O151", groove: "V151", height: "AC151" },
-    { bleederWithout: true, grooveWith: false },
-  );
+  set(out, "H149", pipeWith(s(values.pipe_q)));
+  set(out, "O149", pipeBleeder(s(values.pipe_q_bleeder), true));
+  set(out, "V149", pipeGroove(s(values.pipe_q_groove), true));
+  set(out, "AC149", pipeHeight(s(values.pipe_q_height)));
+
+  set(out, "H150", pipeWith(s(values.pipe_s)));
+  set(out, "O150", pipeBleeder(s(values.pipe_s_bleeder), false));
+  set(out, "V150", pipeGroove(s(values.pipe_s_groove), true));
+  set(out, "AC150", pipeHeight(s(values.pipe_s_height)));
+
+  set(out, "H151", pipeWith(s(values.pipe_r)));
+  set(out, "O151", pipeBleeder(s(values.pipe_r_bleeder), true));
+  set(out, "V151", pipeGroove(s(values.pipe_r_groove), false));
+  set(out, "AC151", pipeHeight(s(values.pipe_r_height)));
 
   const e2 = s(values.pipe_e2);
-  if (e2 === "without" || /blind/i.test(e2)) set(out, "H152", "1. Without（std.）");
-  else if (e2 === "R" || (e2 && e2 === s(values.pipe_r))) set(out, "H152", "2. Same as pipe R");
-  else if (e2 === "Q" || (e2 && e2 === s(values.pipe_q))) set(out, "H152", "3. Same as pipe Q");
-  else if (e2 === "S" || (e2 && e2 === s(values.pipe_s))) set(out, "H152", "4. Same as pipe S");
+  if (e2 === "without") set(out, "H152", "1. Without（std.）");
+  if (e2 === "R") set(out, "H152", "2. Same as pipe R");
+  if (e2 === "Q") set(out, "H152", "3. Same as pipe Q");
+  if (e2 === "S") set(out, "H152", "4. Same as pipe S");
 
-  writeOltcShafts(values, out);
+  const hShaft = shaftQty(n(values.drive_shaft_horizontal_mm));
+  if (hShaft) set(out, `H${hShaft.row}`, 1);
+  const vShaft = shaftQty(n(values.drive_shaft_vertical_mm));
+  if (vShaft) set(out, `Z${vShaft.row}`, 1);
 
   set(out, "H167", paintOs(values));
   const corrosive = s(values.corrosive_class);
   if (corrosive && corrosive !== "none") set(out, "H168", corrosive);
   set(out, "H171", nameplateOs(s(values.nameplate_language)));
   set(out, "H169", nameplateOs(s(values.nameplate_language)));
-  set(out, "H170", quantityValue(values));
 
-  // Sheet1 has no oil-filter cell (ZXJY is a separate OS). Leftover goes on Remark A173.
-  const filter = s(values.oil_filter);
-  const notes = [
-    s(values.notes),
-    filter && filter !== "none" ? filter : "",
-    compact ? `Type: ${compact}` : "",
-    shaftRemark(values),
-  ]
+  const notes = [s(values.notes), compact ? `Type: ${compact}` : ""]
     .filter(Boolean)
     .join("\n");
-  set(out, "A173", notes);
+  set(out, "H172", notes);
 
   return out;
 }
@@ -727,7 +401,6 @@ function cma7Motor(values: OrderValues, out: CellWrites) {
     "415_3": 415,
     "440_3": 440,
     "220_3": 220,
-    "220_240": 220,
     "220_1": 220,
     "230_1": 230,
     "240_1": 240,
@@ -735,27 +408,15 @@ function cma7Motor(values: OrderValues, out: CellWrites) {
   };
   if (mv && volt[mv] != null) set(out, "H22", volt[mv]);
 
-  if (s(values.control_from) === "separate") {
-    set(out, "H25", "2. Separate from motor circuit");
-    set(out, "H26", separateVolt(s(values.control_voltage)));
-  } else if (s(values.control_from) === "motor" || mv) {
-    set(out, "H25", "1. Supply from motor circuit-std.");
-  }
+  if (s(values.control_from) === "separate") set(out, "H25", "2. Separate from motor circuit");
+  else if (s(values.control_from) === "motor" || mv) set(out, "H25", "1. Supply from motor circuit-std.");
   const cProt = s(values.control_protect);
   if (cProt === "1pole") set(out, "H27", "2. 1-pole miniature circuit breaker");
   else if (cProt === "2pole") set(out, "H27", "3. 2-pole miniature circuit breaker");
   else if (cProt === "without") set(out, "H27", "1. Without-std.");
 
-  if (s(values.heat_from) === "separate") {
-    set(out, "H34", "2. Separate from motor circuit");
-    set(out, "H35", separateVolt(s(values.heat_voltage)));
-  } else if (s(values.heat_from) === "motor") {
-    set(out, "H34", "1. Supply from motor circuit-std.");
-  }
-  const hProt = s(values.heat_protect);
-  if (hProt === "1pole") set(out, "H36", "2. 1-pole miniature circuit breaker");
-  else if (hProt === "2pole") set(out, "H36", "3. 2-pole miniature circuit breaker");
-  else if (hProt === "without") set(out, "H36", "1. Without-std.");
+  if (s(values.heat_from) === "separate") set(out, "H34", "2. Separate from motor circuit");
+  else if (s(values.heat_from) === "motor") set(out, "H34", "1. Supply from motor circuit-std.");
 
   const hk = s(values.heater_kind) || (s(values.heater) === "no" ? "without" : s(values.heater) === "yes" ? "resistor" : "");
   if (hk === "thermostat") set(out, "H38", "Heater with thermostat");
@@ -779,19 +440,6 @@ function cma7Motor(values: OrderValues, out: CellWrites) {
   if (s(values.socket_x10) === "without") set(out, "H47", "1. Without-std.");
   else if (s(values.socket_x10) === "universal" || s(values.socket_x10) === "other") {
     set(out, "H47", "2. With（include residual current circuit breaker ）");
-    const spec = s(values.socket_x10) === "universal" ? "Universal" : s(values.socket_country);
-    set(out, "H48", spec);
-  }
-
-  const noType = s(values.pos_no_type);
-  if (noType === "1bbm" || noType === "2bbm") {
-    set(out, "H52", "2. With");
-    set(out, "H53", noType === "2bbm" ? 2 : 1);
-  } else if (noType === "1mbb" || noType === "2mbb") {
-    set(out, "H52", "2. With");
-    set(out, "H54", noType === "2mbb" ? 2 : 1);
-  } else if (noType === "without") {
-    set(out, "H52", "1. Without-std.");
   }
 
   const bcd = s(values.bcd_qty) || (s(values.position_tx) === "bcd" ? "1" : "");
@@ -799,38 +447,24 @@ function cma7Motor(values: OrderValues, out: CellWrites) {
   else if (bcd === "1" || bcd === "2" || bcd === "3") set(out, "H50", Number(bcd));
   const ma = s(values.ma_qty) || (s(values.position_tx) === "4_20" ? "1" : "");
   if (ma === "without") set(out, "H51", "Without-std.");
-  else if (ma === "1" || ma === "2" || ma === "3") set(out, "H51", Number(ma));
+  else if (ma === "1" || ma === "2" || ma === "3") set(out, "H51", ma === "1" ? "4-20mA" : ma);
 
-  writeResistorRows(
-    out,
-    values,
-    { flag: "H55", ohm1: "H56", qty1: "V56", zero1: "H57", ohm2: "H58", qty2: "V58" },
-    {
-      without: "1. Without-std.",
-      same: "2. With(same resistance)",
-      different: "3. With(different resistance)",
-    },
-  );
+  if (s(values.resistor_sig) === "without") set(out, "H55", "1. Without-std.");
+  else if (s(values.resistor_sig) === "1" || s(values.resistor_sig) === "2" || s(values.resistor_sig) === "3") {
+    set(out, "H55", "2. With(same resistance)");
+  }
 
   const avr = s(values.avr_model) || s(values.controller);
-  set(out, "H61", cma7Controller(avr));
-
-  // V66/V67 are requested m; AB66/AB67 stay CEILING supply formulas.
-  const cable = n(values.avr_cable_m);
-  if (cable != null && cable > 0) {
-    set(out, "H65", "2. 配");
-    set(out, "V66", cable);
-    set(out, "V67", cable);
-  }
+  if (avr === "none" || avr === "") set(out, "H61", "Without");
+  else if (avr.startsWith("hmc3c") || avr === "HMC-3C") set(out, "H61", "HMC-3C");
+  else if (avr.startsWith("etsz6") || avr === "ET-SZ6") set(out, "H61", "Without");
+  else if (avr === "SHM-KX") set(out, "H61", "SHM_KX");
+  else if (avr === "HMIET") set(out, "H61", "HMIET-I");
 
   if (s(values.door_hinge) === "right") set(out, "H69", "Right-hand");
   else if (s(values.door_hinge) === "left") set(out, "H69", "Left-hand");
-  const bot = s(values.bottom_plate);
-  if (bot === "nobore") set(out, "H70", "Dummy plate");
-  else if (bot === "other") {
-    set(out, "H70", "For other specific requirements, the drawing provided by the customer is necessary");
-  } else if (bot === "holes50" || bot === "gland") set(out, "H70", "2xΦ50 hole-std.");
-  if (bot === "gland") set(out, "H71", "With");
+  if (s(values.bottom_plate) === "nobore") set(out, "H70", "Dummy plate");
+  else if (s(values.bottom_plate) === "holes50" || s(values.bottom_plate) === "gland") set(out, "H70", "2xΦ50 hole-std.");
   if (s(values.padlock) === "yes" || s(values.padlock) === "with") set(out, "H73", "With");
   else if (s(values.padlock) === "no" || s(values.padlock) === "without") set(out, "H73", "Without-std.");
 }
@@ -851,35 +485,16 @@ export function cma7Cells(values: OrderValues): CellWrites {
   } else if (des) {
     set(out, "P17", des.midLine);
   }
-  if (s(values.pos_min)) set(out, "AB17", minPosLine(s(values.pos_min)));
-  else if (des) set(out, "AB17", des.minLine);
   if (n(values.mdu_positions) != null) set(out, "Z16", n(values.mdu_positions)!);
   else if (des) set(out, "Z16", des.pos);
   cma7Motor(values, out);
-  set(out, "Z14", s(values.destination_port));
   set(out, "H75", paintOsStd(values));
-  set(out, "H76", corrosiveOsStd(s(values.corrosive_class)));
-  set(out, "H77", cma7DocsLang(s(values.nameplate_language)));
-  set(out, "H78", quantityValue(values));
   set(out, "H79", nameplateOs(s(values.nameplate_language)));
-  const ohm3 = s(values.resistor_ohm_3);
-  const ohm2 = s(values.resistor_ohm_2);
-  const extraR =
-    s(values.resistor_sig) === "3" && ohm3 && ohm3 !== s(values.resistor_ohm) && ohm3 !== ohm2
-      ? `3rd resistor: ${resistorOhm(ohm3)}/pos`
-      : "";
-  const notes = [s(values.notes), s(values.matching_oltc) ? `OLTC: ${s(values.matching_oltc)}` : "", extraR]
+  const notes = [s(values.notes), s(values.matching_oltc) ? `OLTC: ${s(values.matching_oltc)}` : ""]
     .filter(Boolean)
     .join("\n");
-  set(out, "D83", notes || undefined);
+  set(out, "A83", notes || undefined);
   return out;
-}
-
-function shmDProtect(v: string): string | undefined {
-  if (v === "without") return "Without-std.";
-  if (v === "1pole") return "1-pole miniature circuit breaker without signal output";
-  if (v === "2pole") return "2-pole miniature circuit breaker without signal output";
-  return undefined;
 }
 
 /** SHM-D Order Specification-V1.2 Sheet1 */
@@ -887,22 +502,14 @@ export function shmDCells(values: OrderValues): CellWrites {
   const out: CellWrites = {};
   commonHeader(values, out);
   set(out, "H16", s(values.shm_model) || "SHM-D");
-  set(out, "Z14", s(values.destination_port));
   const des = designationCells(values);
-  if (s(values.pos_max)) {
-    set(out, "H17", `Max. effective number of turns at position ( ${s(values.pos_max)} )`);
-  } else if (des) {
+  if (des) {
     set(out, "H17", des.maxLine);
-  }
-  if (s(values.pos_mid)) {
-    set(out, "P17", `Mid-position(s) ( ${s(values.pos_mid)} )`);
-  } else if (des) {
     set(out, "P17", des.midLine);
+    set(out, "Z16", des.pos);
+  } else if (n(values.mdu_positions) != null) {
+    set(out, "Z16", n(values.mdu_positions)!);
   }
-  if (s(values.pos_min)) set(out, "AB17", minPosLine(s(values.pos_min)));
-  else if (des) set(out, "AB17", des.minLine);
-  if (n(values.mdu_positions) != null) set(out, "Z16", n(values.mdu_positions)!);
-  else if (des) set(out, "Z16", des.pos);
 
   const mv = s(values.motor_voltage);
   if (mv === "220_240" || mv === "") {
@@ -913,55 +520,12 @@ export function shmDCells(values: OrderValues): CellWrites {
     set(out, "H20", "400");
   } else if (mv === "415_3") {
     set(out, "H20", "415");
-  } else if (mv === "440_3") {
-    set(out, "H20", "440");
   } else if (mv === "220_3" || mv === "220_1" || mv === "230_1" || mv === "240_1") {
     set(out, "H20", "AC 220-240V 50/60Hz");
   }
 
-  if (s(values.control_from) === "separate") {
-    set(out, "H23", "2. Separate from motor circuit");
-    set(out, "H24", separateVolt(s(values.control_voltage)));
-  } else if (s(values.control_from) === "motor") {
-    set(out, "H23", "1. Supply from motor circuit-std.");
-  }
-  set(out, "H25", shmDProtect(s(values.control_protect)));
-
-  if (s(values.heat_from) === "separate") {
-    set(out, "H29", "2. Separate from motor circuit");
-    set(out, "H30", separateVolt(s(values.heat_voltage)));
-  } else if (s(values.heat_from) === "motor") {
-    set(out, "H29", "1. Supply from motor circuit-std.");
-  }
-  set(out, "H31", shmDProtect(s(values.heat_protect)));
-
   if (s(values.heater) === "yes") set(out, "H32", "Heater with thermostat-std.");
   if (s(values.heater) === "no") set(out, "H32", "Without");
-
-  if (s(values.hand_lamp) === "yes") set(out, "H34", "With-std.");
-
-  if (s(values.socket_x10) === "universal") set(out, "H37", "Universal-std.");
-  else if (s(values.socket_x10) === "other") set(out, "H37", s(values.socket_country));
-
-  if (s(values.emergency_stop) === "yes") set(out, "H38", "With");
-
-  const bcd = s(values.bcd_qty) || (s(values.position_tx) === "bcd" ? "1" : "");
-  if (bcd === "without") set(out, "H40", 0);
-  else if (bcd === "1" || bcd === "2" || bcd === "3") set(out, "H40", Number(bcd));
-  const ma = s(values.ma_qty) || (s(values.position_tx) === "4_20" ? "1" : "");
-  if (ma === "without") set(out, "H41", "Without");
-  else if (ma === "1" || ma === "2" || ma === "3") set(out, "H41", Number(ma));
-
-  writeResistorRows(
-    out,
-    values,
-    { flag: "H43", ohm1: "H44", qty1: "V44", zero1: "H45", ohm2: "H46", qty2: "V46" },
-    {
-      without: "1. Without-std.",
-      same: "2. With-Same resistances",
-      different: "3. With-Dffirent resistances",
-    },
-  );
 
   const ctrl = s(values.controller);
   if (ctrl === "none") set(out, "H49", "Without");
@@ -969,27 +533,12 @@ export function shmDCells(values: OrderValues): CellWrites {
   if (ctrl === "SHM-KX") set(out, "H49", "SHM_KX");
   if (ctrl === "HMIET") set(out, "H49", "HMIET-I");
 
-  const fiber = n(values.fiber_length_m);
-  if (fiber != null) set(out, "H53", fiber);
-
-  if (s(values.door_hinge) === "right") set(out, "H55", "Right-hand");
-  else if (s(values.door_hinge) === "left") set(out, "H55", "Left-hand");
-  if (s(values.padlock) === "yes" || s(values.padlock) === "with") set(out, "H59", "With");
-  else if (s(values.padlock) === "no" || s(values.padlock) === "without") set(out, "H59", "Without-std.");
-
   set(out, "H61", paintOsStd(values));
-  set(out, "H62", corrosiveOsStd(s(values.corrosive_class)));
-  set(out, "H64", quantityValue(values));
-  set(
-    out,
-    "H63",
-    shmDDocsLang(s(values.nameplate_language)) || shmDDocsLang(s(values.hmi_language)),
-  );
   set(out, "H65", nameplateOs(s(values.nameplate_language)));
   const notes = [s(values.notes), s(values.matching_oltc) ? `OLTC: ${s(values.matching_oltc)}` : ""]
     .filter(Boolean)
     .join("\n");
-  set(out, "E67", notes || undefined);
+  set(out, "A67", notes || undefined);
   return out;
 }
 

@@ -1,17 +1,10 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { APP_VERSION, defaultExportFormat, resolveExportPlan } from "./excel";
 import { getSheet } from "./schema";
 
 describe("export plan", () => {
   it("bumps the patch version", () => {
-    expect(APP_VERSION).toBe("1.2.3");
-  });
-
-  it("dropped the unused exportExcel alias", () => {
-    const src = readFileSync(path.join(process.cwd(), "lib/excel.ts"), "utf8");
-    expect(src).not.toContain("export function exportExcel");
+    expect(APP_VERSION).toBe("1.2.2");
   });
 
   it("lets the user choose Word or official xlsm on OLTC / CMA7 / SHM-D", () => {
@@ -61,16 +54,5 @@ describe("export plan", () => {
       mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     });
     expect(resolveExportPlan(hwv, "excel")).toEqual({ kind: "xlsx" });
-  });
-
-  it("exports dry-type as the official CZ Word OS", () => {
-    const dry = getSheet("dry")!;
-    expect(defaultExportFormat(dry)).toBe("word");
-    expect(resolveExportPlan(dry, "word")).toEqual({
-      kind: "word",
-      file: "dry-order-sheet.docx",
-      mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    });
-    expect(resolveExportPlan(dry, "excel")).toEqual({ kind: "xlsx" });
   });
 });

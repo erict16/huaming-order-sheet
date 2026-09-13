@@ -11,27 +11,26 @@ export default function HomePage() {
   const { lang } = useLang();
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
-      <h1 className="text-balance text-xl font-semibold tracking-tight text-navy sm:text-2xl">
+    <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
+      <h1 className="text-2xl font-bold tracking-tight text-navy sm:text-3xl">
         {chromeText("appName", lang)}
       </h1>
-      <p className="mt-1.5 max-w-prose text-pretty text-sm text-ink-soft">{chromeText("heroLead", lang)}</p>
-      <h2 className="mt-6 text-sm font-medium text-ink-muted">{chromeText("pickSheet", lang)}</h2>
-      <ul className="mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <p className="mt-2 text-sm text-ink-soft">{chromeText("heroLead", lang)}</p>
+      <h2 className="mt-8 text-sm font-medium text-ink-soft">
+        {chromeText("pickSheet", lang)}
+      </h2>
+      <ul className="card mt-3 divide-y divide-slate-100 overflow-hidden">
         {SHEETS.map((sheet) => (
-          <li key={sheet.id} className="border-t border-slate-100 first:border-t-0">
+          <li key={sheet.id}>
             <Link
               href={`/sheet/${sheet.id}/`}
-              className="flex min-h-12 items-center gap-4 px-4 py-2.5 transition-colors duration-150 hover:bg-navy-50 active:translate-y-px focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-steel"
+              className="flex items-center justify-between gap-4 px-5 py-4 transition duration-150 hover:bg-navy-50 active:translate-y-px"
             >
-              <div className="min-w-0 flex-1">
-                <p className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                  <span className="font-mono text-xs font-semibold text-steel">{t(sheet.meta.short, lang)}</span>
-                  <span className="font-semibold text-navy">{t(sheet.meta.title, lang)}</span>
-                </p>
-                <p className="text-sm text-ink-muted">{t(sheet.meta.tag, lang)}</p>
+              <div>
+                <p className="font-semibold text-navy">{t(sheet.meta.title, lang)}</p>
+                <p className="mt-0.5 text-sm text-ink-muted">{t(sheet.meta.tag, lang)}</p>
               </div>
-              <span className="shrink-0 text-sm font-semibold text-steel">{chromeText("start", lang)}</span>
+              <span className="text-sm font-semibold text-steel">{chromeText("start", lang)} →</span>
             </Link>
           </li>
         ))}
