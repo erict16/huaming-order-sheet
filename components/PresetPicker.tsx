@@ -1,11 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRightIcon } from "@heroicons/react/20/solid";
+import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import { t } from "@/lib/copy";
 import { chromeText } from "@/lib/i18n";
 import { ORDER_PRESETS, type OrderPreset } from "@/lib/presets";
 import { useLang } from "@/lib/useLang";
+
+function familyLabel(family: string): string {
+  if (family === "CV2") return "CV2 / VCV";
+  if (family === "CM2") return "CM2 / VCM";
+  return family;
+}
 
 export default function PresetPicker({
   onApply,
@@ -19,34 +25,37 @@ export default function PresetPicker({
   if (!presets.length) return null;
 
   return (
-    <details className="mb-4 rounded-lg border border-slate-200 bg-white">
-      <summary className="cursor-pointer list-none px-5 py-3 text-sm font-semibold text-navy marker:content-none [&::-webkit-details-marker]:hidden">
-        <span className="flex items-center justify-between gap-3">
-          <span>{chromeText("presets", lang)}</span>
-          <span className="text-xs font-normal text-ink-muted">{presets.length}</span>
+    <details className="group mb-4 rounded-xl border border-slate-200 bg-white">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-4 py-2.5 text-sm font-semibold text-navy marker:content-none focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel [&::-webkit-details-marker]:hidden">
+        <span>{chromeText("presets", lang)}</span>
+        <span className="flex items-center gap-2">
+          <span className="tabular-nums text-xs font-normal text-ink-muted">{presets.length}</span>
+          <ChevronDownIcon className="size-5 text-ink-muted transition-transform duration-150 group-open:rotate-180" aria-hidden="true" />
         </span>
       </summary>
-      <p className="px-5 pb-2 text-sm text-ink-muted">{chromeText("presetsHint", lang)}</p>
-      <ul className="grid gap-3 px-5 pb-5 sm:grid-cols-2">
+      <p className="px-4 pb-2 text-sm text-ink-muted">
+        {chromeText("presetsHintN", lang, { n: presets.length })}
+      </p>
+      <ul className="divide-y divide-slate-100 border-t border-slate-100">
         {presets.map((preset) => {
           const body = (
             <>
-              <div className="flex items-start justify-between gap-3">
-                <span className="inline-flex items-center rounded-md bg-navy/10 px-2 py-0.5 text-xs font-semibold text-navy ring-1 ring-inset ring-navy/15">
-                  {preset.family}
-                  {preset.family === "CV2" ? " / VCV" : preset.family === "CM2" ? " / VCM" : ""}
+              <span className="w-[4.75rem] shrink-0 font-mono text-xs font-semibold leading-5 text-navy">
+                {familyLabel(preset.family)}
+              </span>
+              <span className="min-w-0 flex-1 text-left">
+                <span className="block font-semibold text-navy">{t(preset.title, lang)}</span>
+                <span className="mt-0.5 block text-sm leading-relaxed text-ink-muted">
+                  {t(preset.blurb, lang)}
                 </span>
-                <span className="inline-flex size-7 items-center justify-center rounded-full bg-steel/10 text-steel">
-                  <ArrowRightIcon className="size-4" />
-                </span>
-              </div>
-              <p className="mt-2 font-semibold text-navy">{t(preset.title, lang)}</p>
-              <p className="mt-1 text-sm leading-relaxed text-ink-muted">{t(preset.blurb, lang)}</p>
-              <p className="mt-3 text-sm font-semibold text-steel">{chromeText("presetApply", lang)}</p>
+              </span>
+              <span className="shrink-0 self-center text-sm font-semibold text-steel">
+                {chromeText("presetApply", lang)}
+              </span>
             </>
           );
           const cls =
-            "block h-full w-full rounded-xl bg-white p-4 text-left shadow-sm ring-1 ring-slate-200/80 transition hover:shadow-card hover:ring-steel/40 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-steel";
+            "flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors duration-150 hover:bg-navy-50 active:translate-y-px focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-steel";
           return (
             <li key={preset.id}>
               {onApply ? (

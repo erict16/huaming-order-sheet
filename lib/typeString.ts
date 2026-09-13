@@ -1,7 +1,7 @@
 import { getFamily } from "./catalog";
 import type { OrderValues } from "./types";
 
-export interface TypeParts {
+interface TypeParts {
   family: string;
   phases: string;
   currentA: string;
@@ -22,14 +22,14 @@ function gradeToken(family: string, grade?: string): string {
   return grade ?? "";
 }
 
-export function composeOltcSpaced(p: TypeParts): string {
+function composeOltcSpaced(p: TypeParts): string {
   const grade = gradeToken(p.family, p.selectorGrade);
   return [p.family, p.phases, p.currentA, p.connection, p.umKv, grade, p.tapCode]
     .filter(Boolean)
     .join(" ");
 }
 
-export function composeOltcCompact(p: TypeParts): string {
+function composeOltcCompact(p: TypeParts): string {
   if (!p.family) return "";
   const n = Number(p.unitCount || "1");
   const prefix = n > 1 ? `${n}×` : "";
@@ -45,7 +45,7 @@ export function composeOltcCompact(p: TypeParts): string {
 }
 
 /** WSLIV-800Y/170-6x5B */
-export function composeOctc(p: TypeParts): string {
+function composeOctc(p: TypeParts): string {
   if (!p.family) return "";
   const series = p.octcSeries || "";
   const head = `${p.family}${series}`;
@@ -59,7 +59,7 @@ export function composeOctc(p: TypeParts): string {
 }
 
 /** 3×CZI-500/40.5-17 */
-export function composeDry(p: TypeParts): string {
+function composeDry(p: TypeParts): string {
   if (!p.family) return "";
   const n = Number(p.unitCount || "1");
   const prefix = n > 1 ? `${n}×` : "";

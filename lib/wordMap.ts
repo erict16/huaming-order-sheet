@@ -119,7 +119,6 @@ function txKindWord(v: string): string | undefined {
 function fluxWord(v: string): string | undefined {
   if (v === "cfvv") return "Constant";
   if (v === "vfvv") return "Variable";
-  if (v === "combined") return "Combined";
   return undefined;
 }
 
@@ -127,6 +126,33 @@ function kvaOf(values: OrderValues): string | undefined {
   const mva = n(values.rated_power_mva);
   if (mva == null) return undefined;
   return String(mva >= 20 ? mva * 1000 : Math.round(mva * 1000));
+}
+
+/** SDT 20 is “OLTC on _ kV side” (a kV), not an HV/LV/MV dropdown. */
+function oltcOnKvWord(values: OrderValues): string | undefined {
+  const side = s(values.oltc_side);
+  if (side === "lv") return s(values.oltc_on_kv) || s(values.lv_kv) || undefined;
+  if (side === "mv") return s(values.oltc_on_kv) || s(values.mv_kv) || undefined;
+  return s(values.oltc_on_kv) || s(values.hv_kv) || undefined;
+}
+
+/** No side, oil-filter, or destination-port SDT/checkbox. Those go on remarks (53 with MV, else 95). */
+function oltcRemarks(values: OrderValues): string | undefined {
+  const lines: string[] = [];
+  const push = (line: string) => {
+    if (line && !lines.includes(line)) lines.push(line);
+  };
+  const mv = s(values.mv_kv);
+  if (mv) {
+    push(`MV ${mv} kV`);
+    if (s(values.lv_kv)) push(`LV ${s(values.lv_kv)} kV`);
+  }
+  if (s(values.oltc_side) === "lv") push("OLTC on LV");
+  const filter = s(values.oil_filter);
+  if (filter && filter !== "none") push(filter);
+  push(s(values.destination_port));
+  push(s(values.notes));
+  return lines.join("\n") || undefined;
 }
 
 function rangeLeft(values: OrderValues): string | undefined {
@@ -151,11 +177,15 @@ function rangeRight(values: OrderValues): string | undefined {
   return undefined;
 }
 
-export const OLTC_CHECKBOX_COUNT = 40;
+const OLTC_CHECKBOX_COUNT = 40;
 
 /**
  * Legacy FORMCHECKBOX order in oltc-order-sheet.docx (40 boxes).
- * Word shows a tick only when `w:checked/@w:val="1"`.
+ * Indices from nearby labels in word/document.xml. Tick only when
+ * `w:checked/@w:val="1"`. Flux / oltc_side are SDTs, not boxes.
+ *
+ * Leftover (no wizard key): 13 special regulation; 26–28 CM/CM2 head
+ * diagrams; 29–31 CMD/SHZV head diagrams; 38 shaft standard / 39 sketch.
  */
 export function oltcCheckValues(values: OrderValues): boolean[] {
   const on = new Array<boolean>(OLTC_CHECKBOX_COUNT).fill(false);
@@ -183,7 +213,6 @@ export function oltcCheckValues(values: OrderValues): boolean[] {
     star_middle: 10,
     star_end: 11,
     delta_end: 12,
-    special: 13,
     delta_middle: 14,
     "1plus2": 15,
     linear_end: 16,
@@ -201,31 +230,24 @@ export function oltcCheckValues(values: OrderValues): boolean[] {
   const support = s(values.support_flange);
   if (support === "with") tick(22);
   else if (support === "special") tick(23);
-  else if (s(values.flange_type) === "bell" || support === "without") tick(21);
+  else tick(21);
 
   const fam = s(values.family);
-  const amp = n(values.oltc_current_a) ?? 0;
-  if (fam === "CMD" || fam === "SHZV" || fam === "SHZVG") {
-    tick(28);
-    if (amp > 600) tick(31);
-    else tick(29);
-  } else if (fam === "CM" || fam === "CM2") {
-    tick(24);
-    tick(25);
-  } else if (fam === "CV" || fam === "SV" || fam === "CV2") {
-    tick(24);
+  const gear = s(values.top_gear);
+  if (fam === "CV" || fam === "SV" || fam === "CV2" || fam === "CM" || fam === "CM2") {
+    if (gear === "right") tick(24);
+    else if (gear === "left") tick(25);
   }
 
-  if (s(values.pressure_relief) === "none" || s(values.pressure_relief) === "burst" || !s(values.pressure_relief)) {
-    tick(33);
-  } else {
-    tick(34);
-  }
+  if (s(values.protective_relay)) tick(32);
 
-  if (s(values.temp_sensor) === "with") tick(36);
-  else tick(35);
+  const prv = s(values.pressure_relief);
+  if (prv === "prv_50" || prv === "prv_130") tick(35);
+  else tick(34);
 
-  tick(38);
+  if (s(values.temp_sensor) === "with") tick(37);
+  else tick(36);
+
   return on;
 }
 
@@ -259,7 +281,7 @@ export function oltcSdtValues(values: OrderValues): Array<string | undefined> {
     set(16, kva);
   }
   set(19, s(values.hv_kv));
-  set(20, s(values.oltc_on_kv) || s(values.hv_kv));
+  set(20, oltcOnKvWord(values));
   const steps = n(values.oltc_tap_positions);
   if (steps) set(21, String(steps));
   set(22, rangeLeft(values));
@@ -299,17 +321,13 @@ export function oltcSdtValues(values: OrderValues): Array<string | undefined> {
   set(51, s(values.wind_ca_pf));
   set(52, s(values.recovery_voltage_kv));
   {
-    const wind = [
-      s(values.mv_kv) ? `MV ${s(values.mv_kv)} kV` : "",
-      s(values.lv_kv) ? `LV ${s(values.lv_kv)} kV` : "",
-      s(values.notes),
-    ]
-      .filter(Boolean)
-      .join("\n");
-    set(53, wind || undefined);
+    const remarks = oltcRemarks(values);
+    if (s(values.mv_kv)) set(53, remarks);
+    else set(95, remarks);
   }
 
-  set(54, s(values.phases) === "I" ? "1x" : "3x");
+  if (s(values.phases) === "I") set(54, "1x");
+  else if (s(values.phases)) set(54, "3x");
   set(55, FAMILY_ROW[s(values.family)]);
   set(56, s(values.phases));
   set(57, s(values.oltc_current_a));
@@ -346,18 +364,27 @@ export function oltcSdtValues(values: OrderValues): Array<string | undefined> {
     set(76, "flange without valve ");
   }
 
-  const h = s(values.drive_shaft_horizontal_mm);
-  const v = s(values.drive_shaft_vertical_mm);
-  if (h) set(78, h);
-  if (v) set(82, v);
+  const h1 = s(values.h1) || s(values.drive_shaft_horizontal_mm);
+  const v1 = s(values.v1) || s(values.drive_shaft_vertical_mm);
+  if (h1) set(78, h1);
+  if (s(values.h2)) set(79, s(values.h2));
+  if (s(values.h3)) set(80, s(values.h3));
+  if (s(values.h4)) set(81, s(values.h4));
+  if (v1) set(82, v1);
+  if (s(values.v2)) set(83, s(values.v2));
+  if (s(values.v3)) set(84, s(values.v3));
+  if (s(values.v4)) set(85, s(values.v4));
 
   set(87, paintWord(values));
   set(88, s(values.corrosive_class));
   set(89, langWord(s(values.nameplate_language)));
   set(91, langWord(s(values.nameplate_language)));
-  set(92, s(values.quantity) || "1");
-  if (s(values.temp_sensor) === "with") set(77, s(values.temp_sensor_type) || "PT100");
-  if (!out[53]) set(95, s(values.notes));
+  set(92, s(values.quantity));
+  if (s(values.temp_sensor) === "with") {
+    const kind = s(values.temp_sensor_type);
+    if (kind === "PT100" || !kind) set(77, "PT100 (WZP-441type)");
+    else set(77, kind);
+  }
 
   return out;
 }

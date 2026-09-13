@@ -6,13 +6,16 @@ import {
   CORROSIVE_OPTS,
   CTRL_OPTS,
   CTRL_VOLT_OPTS,
+  CMA7_BOTTOM_OPTS,
   DELIVERY_DATE_OPTS,
   HWV_CTRL_OPTS,
   HWV_FAMILIES,
   MOTOR_VOLT_OPTS,
+  OCTC_LEAD_OPTS,
   OLTC_FAMILIES,
   PAINT_OPTS,
   POS_TX_OPTS,
+  SHAFT_LEN_OPTS,
   VECTOR_GROUP_OPTS,
 } from "./catalog";
 import { SHEETS, allFields, getSheet, resolveFieldOptions } from "./schema";
@@ -38,11 +41,24 @@ describe("orderFields", () => {
       const lead = allFields(sheet, {}).find(({ field }) => field.key === "delivery_lead")!.field;
       expect(lead.type).toBe("radio");
       expect(lead.options?.map((o) => o.value)).toEqual(DELIVERY_DATE_OPTS.map((o) => o.value));
+      expect(allFields(sheet, {}).map(({ field }) => field.key)).not.toContain("delivery_date_custom");
+      const custom = allFields(sheet, { delivery_date: "custom" }).find(({ field }) => field.key === "delivery_date_custom");
+      expect(custom?.field.type, sheet.id).toBe("date");
+      const country = allFields(sheet, {}).find(({ field }) => field.key === "country")!.field;
+      expect(country.type, sheet.id).toBe("combobox");
+      expect(country.required, sheet.id).toBe(true);
+      expect(country.options?.some((o) => o.value === "Vietnam"), sheet.id).toBe(true);
       const contact = sheet.steps.find((st) => st.id === "contact");
       expect(contact, sheet.id).toBeTruthy();
       const reviewIdx = sheet.steps.findIndex((st) => st.kind === "review");
       const contactIdx = sheet.steps.findIndex((st) => st.id === "contact");
       expect(contactIdx, sheet.id).toBe(reviewIdx - 1);
+    }
+  });
+
+  it("exposes destination_port on every sheet that maps it", () => {
+    for (const id of ["oltc", "dry", "octc", "hwv", "cma7", "shm-d"] as const) {
+      expect(allFields(getSheet(id)!, {}).map(({ field }) => field.key), id).toContain("destination_port");
     }
   });
 
@@ -61,9 +77,19 @@ describe("orderFields", () => {
       "door_hinge",
       "avr_model",
       "pos_max",
+      "drawing_no",
+      "destination_port",
+      "resistor_zero_first",
+      "resistor_ohm",
     ]) {
       expect(keys, k).toContain(k);
     }
+    expect(allFields(cma7, { resistor_sig: "3" }).map(({ field }) => field.key)).toEqual(
+      expect.arrayContaining(["resistor_ohm_2", "resistor_ohm_3"]),
+    );
+    // bottom_plate "other": CMA7 Word C58; cma7Map still ticks holes50 for unknown values.
+    expect(CMA7_BOTTOM_OPTS.map((o) => o.value)).toEqual(["holes50", "gland", "nobore", "other"]);
+    expect(allFields(cma7, { bottom_plate: "other" }).map(({ field }) => field.key)).toContain("bottom_plate_other");
     const oltcKeys = allFields(getSheet("oltc")!, {}).map(({ field }) => field.key);
     expect(oltcKeys).toContain("mv_kv");
     expect(oltcKeys).toContain("vector_group");
@@ -75,6 +101,9 @@ describe("orderFields", () => {
     const side = allFields(getSheet("oltc")!, {}).find(({ field }) => field.key === "oltc_side")!.field;
     expect(resolveFieldOptions(side, { mv_kv: "22" }).options?.map((o) => o.value)).toContain("mv");
     expect(resolveFieldOptions(side, {}).options?.map((o) => o.value)).toEqual(["hv", "lv"]);
+    expect(allFields(getSheet("octc")!, {}).map(({ field }) => field.key)).toContain("rain_cover");
+    expect(allFields(getSheet("oltc")!, {}).map(({ field }) => field.key)).toContain("destination_port");
+    expect(allFields(getSheet("dry")!, {}).map(({ field }) => field.key)).toContain("destination_port");
   });
 
   it("exposes winding data, supporting flange and regulation location on the OLTC sheet", () => {
@@ -229,6 +258,25 @@ describe("HWV sheet", () => {
   });
 });
 
+describe("drive shafts H1–H4 / V1–V4", () => {
+  it("keeps single-length selects and exposes optional segments on OLTC and OCTC", () => {
+    expect(SHAFT_LEN_OPTS.map((o) => o.value)).toEqual(["800", "1000", "1200", "1500", "2000"]);
+    for (const id of ["oltc", "octc"] as const) {
+      const keys = allFields(getSheet(id)!, {}).map(({ field }) => field.key);
+      expect(keys, id).toContain("drive_shaft_horizontal_mm");
+      expect(keys, id).toContain("drive_shaft_vertical_mm");
+      expect(keys, id).toContain("shaft_multi");
+      expect(keys, id).not.toContain("h1");
+      const multi = allFields(getSheet(id)!, { shaft_multi: "yes" }).map(({ field }) => field.key);
+      // h1–h4 / v1–v3: octcMap T55–T61. v4: Word OLTC SDT 85; octcMap has no V4 cell.
+      expect(multi, id).toEqual(expect.arrayContaining(["h1", "h2", "h3", "h4", "v1", "v2", "v3", "v4"]));
+    }
+    const dryKeys = allFields(getSheet("dry")!, {}).map(({ field }) => field.key);
+    expect(dryKeys).toContain("drive_shaft_horizontal_mm");
+    expect(dryKeys).not.toContain("h1");
+  });
+});
+
 describe("CMA7 / SHM-D option lists", () => {
   it("offers ET-SZ6 and SHM-K on CTRL_OPTS (already on HWV)", () => {
     expect(CTRL_OPTS.map((o) => o.value)).toEqual(["none", "HMC-3C", "ET-SZ6", "SHM-K", "SHM-KX", "HMIET"]);
@@ -253,5 +301,43 @@ describe("CMA7 / SHM-D option lists", () => {
     const cma7Keys = allFields(getSheet("cma7")!, {}).map(({ field }) => field.key);
     expect(cma7Keys).toContain("bcd_qty");
     expect(cma7Keys).toContain("ma_qty");
+  });
+
+  it("covers SHM-D Excel groups the wizard can collect", () => {
+    const shm = allFields(getSheet("shm-d")!, { socket_x10: "other", resistor_sig: "1" }).map(({ field }) => field.key);
+    for (const k of [
+      "pos_max",
+      "pos_mid",
+      "pos_min",
+      "control_from",
+      "control_protect",
+      "heat_from",
+      "hand_lamp",
+      "socket_x10",
+      "bcd_qty",
+      "ma_qty",
+      "resistor_sig",
+      "door_hinge",
+      "padlock",
+      "destination_port",
+    ]) {
+      expect(shm, k).toContain(k);
+    }
+    // shmDCells / cma7Map do not write these yet; keys match the Excel rows.
+    expect(shm).toContain("emergency_stop"); // SHM-D Excel A38 急停按钮
+    expect(shm).toContain("fiber_length_m"); // SHM-D Excel A53 4-core multimode fibre
+    expect(MOTOR_VOLT_OPTS.map((o) => o.value)).toContain("220_240");
+  });
+});
+
+describe("OCTC official extras", () => {
+  it("collects port / SN / lead / flange the Word map already fills", () => {
+    const keys = allFields(getSheet("octc")!, {}).map(({ field }) => field.key);
+    expect(keys).toContain("destination_port");
+    expect(keys).toContain("transformer_sn");
+    expect(keys).toContain("huaming_sn");
+    expect(keys).toContain("octc_lead");
+    expect(keys).toContain("flange_type");
+    expect(OCTC_LEAD_OPTS.map((o) => o.value)).toEqual(["A", "B", "C"]);
   });
 });

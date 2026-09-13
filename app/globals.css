@@ -8,7 +8,7 @@
 
 @layer base {
   body {
-    @apply bg-[#f4f6f8] text-ink antialiased;
+    @apply bg-[#f4f6f8] text-ink antialiased touch-manipulation;
   }
 
   h1, h2, h3 {
@@ -21,26 +21,42 @@
     @apply mb-1.5 block text-sm font-medium text-ink-soft;
   }
 
+  .field-set {
+    @apply m-0 min-w-0 border-0 p-0;
+  }
+
+  .field-set > legend {
+    float: none;
+    width: 100%;
+    padding-inline: 0;
+  }
+
   .field-control {
-    @apply w-full rounded-lg bg-white px-3.5 py-3 text-base text-ink shadow-sm
-      outline outline-1 -outline-offset-1 outline-slate-300 transition
+    @apply w-full min-h-10 touch-manipulation rounded-lg bg-white px-3.5 py-3 text-base text-ink shadow-sm
+      outline outline-1 -outline-offset-1 outline-slate-300
+      transition-[outline-color,outline-width,outline-offset,box-shadow] duration-150
       placeholder:text-slate-400
-      hover:outline-slate-400
-      focus:outline-2 focus:-outline-offset-2 focus:outline-steel;
+      [@media(hover:hover)]:hover:outline-slate-400
+      focus:outline-none
+      focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-steel;
   }
 
   .plus-trigger {
-    @apply field-control relative flex w-full items-center justify-between gap-2 pr-10 text-left;
+    @apply field-control relative flex w-full min-h-10 items-center justify-between gap-2 pr-10 text-left;
   }
 
   .plus-options {
-    @apply absolute z-40 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white py-1 text-sm shadow-panel
+    @apply z-50 overflow-auto overscroll-contain rounded-lg bg-white py-1 text-sm shadow-panel
       ring-1 ring-slate-200/80
-      transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0;
+      transition-opacity duration-100 ease-out data-[closed]:opacity-0
+      [--anchor-gap:4px] [--anchor-padding:8px];
+    width: var(--input-width, var(--button-width, 100%));
+    max-height: min(15rem, var(--anchor-max-height, 15rem), calc(100dvh - 6rem - env(safe-area-inset-bottom, 0px)));
+    padding-bottom: max(0.25rem, env(safe-area-inset-bottom, 0px));
   }
 
   .plus-option {
-    @apply relative cursor-default select-none px-3 py-2 text-ink
+    @apply relative flex min-h-10 cursor-default select-none items-center px-3 py-2 text-ink touch-manipulation
       data-[focus]:bg-navy data-[focus]:text-white;
   }
 
@@ -49,22 +65,19 @@
   }
 
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
-      transition-colors duration-150 active:translate-y-px focus:outline-none focus-visible:ring-4;
+    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
+      transition-colors duration-150 active:translate-y-px focus:outline-none focus-visible:ring-4
+      touch-manipulation;
   }
 
   .btn-primary {
-    @apply btn bg-navy text-white shadow-sm hover:bg-navy-800 focus-visible:ring-navy/25
+    @apply btn bg-navy text-white shadow-sm [@media(hover:hover)]:hover:bg-navy-800 focus-visible:ring-navy/25
       disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-navy;
   }
 
   .btn-secondary {
-    @apply btn border border-slate-300 bg-white text-ink-soft hover:border-slate-400 hover:bg-slate-50
+    @apply btn border border-slate-300 bg-white text-ink-soft [@media(hover:hover)]:hover:border-slate-400 [@media(hover:hover)]:hover:bg-slate-50
       focus-visible:ring-slate-300 disabled:opacity-40;
-  }
-
-  .badge {
-    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold;
   }
 }
 
@@ -79,4 +92,13 @@
   .no-print { display: none !important; }
   body { background: #fff; }
   header, footer { display: none !important; }
+}
+
+#main-content,
+:focus-visible {
+  scroll-margin-top: 6.5rem;
+}
+
+:focus-visible {
+  scroll-margin-bottom: 6.5rem;
 }

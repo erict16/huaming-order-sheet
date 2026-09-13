@@ -14,7 +14,7 @@ export const EARTH_INSULATION: Record<number, { pf: number; bil: number }> = {
   363: { pf: 510, bil: 1175 },
 };
 
-export const UM_UN_HINT: Record<number, string> = {
+const UM_UN_HINT: Record<number, string> = {
   12: "10 kV",
   17.5: "15 kV",
   40.5: "33 kV",
@@ -27,18 +27,7 @@ export const UM_UN_HINT: Record<number, string> = {
   363: "330 kV",
 };
 
-export const UM_KV = [12, 17.5, 40.5, 72.5, 126, 145, 170, 252, 300, 363] as const;
-
-export const SELECTOR_SIZES_BY_UM: Record<number, string[]> = {
-  40.5: ["B", "C"],
-  72.5: ["B", "C", "D", "DE"],
-  126: ["B", "C", "D", "DE"],
-  145: ["C", "D", "DE"],
-  170: ["B", "C", "D", "DE"],
-  252: ["C", "D", "DE"],
-  300: ["DE"],
-  363: ["DE"],
-};
+const UM_KV = [12, 17.5, 40.5, 72.5, 126, 145, 170, 252, 300, 363] as const;
 
 export function defaultSelectorGrade(um: number): string {
   if (!um) return "";
@@ -470,11 +459,6 @@ export const RELAY_OPTS = [
   ),
 ];
 
-export const GROOVE_OPTS = [
-  opt("with", "法兰带槽", "With groove", "С канавкой", "Có rãnh"),
-  opt("without", "法兰不带槽", "Without groove", "Без канавки", "Không rãnh"),
-];
-
 export const POTENTIAL_OPTS = [
   opt("without", "不带", "Without", "Без", "Không"),
   opt("with", "带（需绕组图）", "With (winding layout required)", "С (нужна схема обмотки)", "Có (cần sơ đồ quấn)"),
@@ -529,7 +513,8 @@ export const PIPE_HEIGHT_OPTS = [
   opt("231", "231 mm"),
 ];
 
-export const SHAFT_LEN_OPTS = [1000, 1200, 1500, 2000].map((n) => opt(String(n), `${n} mm`));
+/** In-tank Excel rows 154–158: 800 / 1000 / 1200 / 1500 / 2000 mm. */
+export const SHAFT_LEN_OPTS = [800, 1000, 1200, 1500, 2000].map((n) => opt(String(n), `${n} mm`));
 
 export const YES_NO = [
   opt("yes", "是", "Yes", "Да", "Có"),
@@ -552,6 +537,7 @@ export const MOTOR_VOLT_OPTS = [
   opt("415_3", "AC 415 V 三相", "AC 415 V 3-ph", "AC 415 В 3ф", "AC 415 V 3 pha"),
   opt("440_3", "AC 440 V 三相", "AC 440 V 3-ph", "AC 440 В 3ф", "AC 440 V 3 pha"),
   opt("220_3", "AC 220 V 三相", "AC 220 V 3-ph", "AC 220 В 3ф", "AC 220 V 3 pha"),
+  opt("220_240", "AC 220–240 V", "AC 220–240 V", "AC 220–240 В", "AC 220–240 V"),
   opt("220_1", "AC 220 V 单相", "AC 220 V 1-ph", "AC 220 В 1ф", "AC 220 V 1 pha"),
   opt("230_1", "AC 230 V 单相", "AC 230 V 1-ph", "AC 230 В 1ф", "AC 230 V 1 pha"),
   opt("240_1", "AC 240 V 单相", "AC 240 V 1-ph", "AC 240 В 1ф", "AC 240 V 1 pha"),
@@ -722,6 +708,7 @@ export const CMA7_BOTTOM_OPTS = [
   opt("holes50", "2×φ50 孔", "2× φ50 holes", "2× φ50", "2× φ50"),
   opt("gland", "2×φ50 + 电缆接头", "2× φ50 and cable gland", "2× φ50 и сальник", "2× φ50 + gland"),
   opt("nobore", "不开孔", "Without bore-hole", "Без отверстия", "Không khoét lỗ"),
+  opt("other", "其他（附图）", "Others (attach drawing)", "Другое (чертёж)", "Khác (kèm bản vẽ)"),
 ];
 
 export const CMA7_AVR_OPTS = [
@@ -775,6 +762,13 @@ export const OCTC_DRIVE_OPTS = [
   opt("SHM-D", "SHM-D 电动", "SHM-D motor", "SHM-D привод", "SHM-D động cơ"),
 ];
 
+/** Official OCTC Word C48–C50 lead output. */
+export const OCTC_LEAD_OPTS = [
+  opt("A", "A"),
+  opt("B", "B"),
+  opt("C", "C"),
+];
+
 export const SHM_MODEL_OPTS = [
   opt("SHM-D", "SHM-D"),
   opt("SHM-DL", "SHM-DL"),
@@ -796,6 +790,34 @@ export const DRY_MOUNT_OPTS = [
 export const SIDE_OPTS = [
   opt("right", "机构在右侧", "MDU on the right", "Привод справа", "Cơ cấu bên phải"),
   opt("left", "机构在左侧", "MDU on the left", "Привод слева", "Cơ cấu bên trái"),
+];
+
+/** Frequent Huaming markets. Combobox still accepts typed names. */
+export const COUNTRY_OPTS = [
+  opt("China", "中国", "China", "Китай", "Trung Quốc"),
+  opt("Vietnam", "越南", "Vietnam", "Вьетнам", "Việt Nam"),
+  opt("Indonesia", "印度尼西亚", "Indonesia", "Индонезия", "Indonesia"),
+  opt("Australia", "澳大利亚", "Australia", "Австралия", "Úc"),
+  opt("Thailand", "泰国", "Thailand", "Таиланд", "Thái Lan"),
+  opt("Cambodia", "柬埔寨", "Cambodia", "Камбоджа", "Campuchia"),
+  opt("India", "印度", "India", "Индия", "Ấn Độ"),
+  opt("Turkey", "土耳其", "Turkey", "Турция", "Thổ Nhĩ Kỳ"),
+  opt("Russia", "俄罗斯", "Russia", "Россия", "Nga"),
+  opt("Malaysia", "马来西亚", "Malaysia", "Малайзия", "Malaysia"),
+  opt("Singapore", "新加坡", "Singapore", "Сингапур", "Singapore"),
+  opt("Philippines", "菲律宾", "Philippines", "Филиппины", "Philippines"),
+  opt("Brazil", "巴西", "Brazil", "Бразилия", "Brazil"),
+  opt("UAE", "阿联酋", "UAE", "ОАЭ", "UAE"),
+  opt("Egypt", "埃及", "Egypt", "Египет", "Ai Cập"),
+  opt("South Africa", "南非", "South Africa", "ЮАР", "Nam Phi"),
+  opt("Bangladesh", "孟加拉", "Bangladesh", "Бангладеш", "Bangladesh"),
+  opt("Uzbekistan", "乌兹别克斯坦", "Uzbekistan", "Узбекистан", "Uzbekistan"),
+  opt("Kazakhstan", "哈萨克斯坦", "Kazakhstan", "Казахстан", "Kazakhstan"),
+  opt("New Zealand", "新西兰", "New Zealand", "Новая Зеландия", "New Zealand"),
+  opt("United Kingdom", "英国", "United Kingdom", "Великобритания", "Anh"),
+  opt("Germany", "德国", "Germany", "Германия", "Đức"),
+  opt("Italy", "意大利", "Italy", "Италия", "Ý"),
+  opt("USA", "美国", "USA", "США", "Mỹ"),
 ];
 
 /** Frequent Huaming markets first, then other common calling codes. */

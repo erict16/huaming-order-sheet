@@ -6,13 +6,12 @@ export type PhaseCode = "I" | "II" | "III";
 export type Connection = "Y" | "D";
 export type Regulation = "linear" | "reversing" | "coarse_fine";
 export type ChangeOver = "0" | "W" | "G";
-export type SelectorSize = "B" | "C" | "D" | "DE";
 
 export type OrderValues = Record<string, string>;
 
 export type I18nText = Record<Lang, string>;
 
-export type FieldType =
+type FieldType =
   | "text"
   | "number"
   | "select"
@@ -55,7 +54,7 @@ export interface StepDef {
   sections: SectionDef[];
 }
 
-export type FamilyCategory =
+type FamilyCategory =
   | "oil_combined"
   | "oil_compound"
   | "vacuum_combined"
@@ -78,7 +77,7 @@ export interface FamilyDef {
   desc: I18nText;
 }
 
-export interface SheetMeta {
+interface SheetMeta {
   id: SheetId;
   title: I18nText;
   short: I18nText;

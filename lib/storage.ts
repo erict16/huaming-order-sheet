@@ -1,6 +1,6 @@
 import type { OrderValues, SheetId } from "./types";
 
-export function storageKey(id: SheetId): string {
+function storageKey(id: SheetId): string {
   return `hm-os:${id}:v3`;
 }
 

@@ -1,15 +1,18 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { SHEET_DEFAULTS } from "./defaults";
 import { TEMPLATE_FILE } from "./osCells";
 import {
   applyPreset,
   getPreset,
   hydrateSheetValues,
   ORDER_PRESETS,
+  pendingPresetKey,
   PRESET_CONTACT_KEYS,
 } from "./presets";
 import { typeFromValues } from "./typeString";
+import { WORD_TEMPLATE } from "./wordMap";
 
 const ALLOWED_SHEETS = ["oltc", "octc", "dry", "cma7", "shm-d", "hwv"] as const;
 
@@ -112,11 +115,22 @@ describe("ORDER_PRESETS", () => {
   });
 
   it("omits buyer/designer contact fields from every preset", () => {
+    const blankAfterApply = [
+      "designer_name",
+      "designer_phone",
+      "designer_phone_cc",
+      "designer_email",
+      "buyer",
+      "end_user",
+    ] as const;
     for (const preset of ORDER_PRESETS) {
       for (const key of PRESET_CONTACT_KEYS) {
         expect(preset.values[key], `${preset.id}.${key}`).toBeUndefined();
       }
       const applied = applyPreset(preset);
+      for (const key of blankAfterApply) {
+        expect(applied[key], `applied ${preset.id}.${key}`).toBe("");
+      }
       for (const key of PRESET_CONTACT_KEYS) {
         expect(applied[key], `applied ${preset.id}.${key}`).toBe("");
       }
@@ -126,20 +140,125 @@ describe("ORDER_PRESETS", () => {
     }
   });
 
+  it("applyPreset blanks a salesperson card even if the starter object carries one", () => {
+    const base = getPreset("mee-tienyen-cv2")!;
+    const dirty = {
+      ...base,
+      values: {
+        ...base.values,
+        designer_name: "Alice",
+        designer_phone: "13800138000",
+        designer_phone_cc: "+86",
+        designer_email: "alice@huaming.com",
+        buyer: "Old Buyer",
+        end_user: "Old End",
+      },
+    };
+    const applied = applyPreset(dirty);
+    expect(applied.project).toBe("EVN Tiên Yên");
+    expect(applied.designer_name).toBe("");
+    expect(applied.designer_phone).toBe("");
+    expect(applied.designer_phone_cc).toBe("");
+    expect(applied.designer_email).toBe("");
+    expect(applied.buyer).toBe("");
+    expect(applied.end_user).toBe("");
+  });
+
+  it("does not treat destination_port as contact; applyPreset keeps it if a starter carries one", () => {
+    expect([...PRESET_CONTACT_KEYS]).toEqual([
+      "designer_name",
+      "designer_email",
+      "designer_phone",
+      "designer_phone_cc",
+      "designer_phone_cc_other",
+      "buyer",
+      "end_user",
+    ]);
+    expect((PRESET_CONTACT_KEYS as readonly string[])).not.toContain("destination_port");
+    for (const preset of ORDER_PRESETS) {
+      expect(preset.values.destination_port, preset.id).toBeUndefined();
+    }
+    const base = getPreset("mee-tienyen-cv2")!;
+    const withPort = {
+      ...base,
+      values: {
+        ...base.values,
+        destination_port: "Hai Phong",
+        designer_name: "Alice",
+        buyer: "Old Buyer",
+      },
+    };
+    const applied = applyPreset(withPort);
+    expect(applied.destination_port).toBe("Hai Phong");
+    expect(applied.project).toBe("EVN Tiên Yên");
+    expect(applied.designer_name).toBe("");
+    expect(applied.buyer).toBe("");
+  });
+
   it("hydrates ?preset= over stored drafts and still omits contact fields", () => {
-    const next = hydrateSheetValues(
-      "oltc",
-      "?preset=mee-tienyen-cv2",
-      { designer_phone_cc: "+86", designer_phone: "13800138000", buyer: "Old" },
-    );
+    const stored = {
+      designer_name: "Old Designer",
+      designer_phone: "13800138000",
+      designer_phone_cc: "+86",
+      designer_email: "old@example.com",
+      buyer: "Old Buyer",
+      end_user: "Old End",
+    };
+    const next = hydrateSheetValues("oltc", "?preset=mee-tienyen-cv2", stored);
     expect(next.project).toBe("EVN Tiên Yên");
     expect(next.country).toBe("Vietnam");
     expect(next.family).toBe("CV2");
     expect(next.oltc_current_a).toBe("350");
     expect(next.tap_code).toBe("10191W");
+    expect(next.designer_name).toBe("");
     expect(next.designer_phone_cc).toBe("");
     expect(next.designer_phone).toBe("");
+    expect(next.designer_email).toBe("");
     expect(next.buyer).toBe("");
+    expect(next.end_user).toBe("");
+
+    for (const preset of ORDER_PRESETS) {
+      const applied = hydrateSheetValues(preset.sheetId, `?preset=${preset.id}`, stored);
+      expect(applied.designer_name, preset.id).toBe("");
+      expect(applied.designer_phone, preset.id).toBe("");
+      expect(applied.designer_phone_cc, preset.id).toBe("");
+      expect(applied.designer_email, preset.id).toBe("");
+      expect(applied.buyer, preset.id).toBe("");
+      expect(applied.end_user, preset.id).toBe("");
+    }
+
+    const kept = hydrateSheetValues("oltc", "", stored);
+    expect(kept.designer_name).toBe("Old Designer");
+    expect(kept.buyer).toBe("Old Buyer");
+    expect(kept.end_user).toBe("Old End");
+  });
+
+  it("applies a pending preset id the same way as ?preset=, still blanking contact", () => {
+    const stored = { designer_name: "Old Designer", buyer: "Old Buyer" };
+    const next = hydrateSheetValues("oltc", "", stored, "mee-tienyen-cv2");
+    expect(next.project).toBe("EVN Tiên Yên");
+    expect(next.family).toBe("CV2");
+    expect(next.designer_name).toBe("");
+    expect(next.buyer).toBe("");
+    expect(hydrateSheetValues("octc", "", stored, "mee-tienyen-cv2").buyer).toBe("Old Buyer");
+    expect(pendingPresetKey("oltc")).toBe("hm-os:pending-preset:oltc");
+    expect(pendingPresetKey("shm-d")).toBe("hm-os:pending-preset:shm-d");
+  });
+
+  it("does not stash contact or multi-shaft segments in starters or sheet defaults", () => {
+    for (const preset of ORDER_PRESETS) {
+      expect(preset.values.shaft_multi, preset.id).toBeUndefined();
+      expect(preset.values.h1, preset.id).toBeUndefined();
+      expect(preset.values.h2, preset.id).toBeUndefined();
+      expect(preset.values.h3, preset.id).toBeUndefined();
+      expect(preset.values.h4, preset.id).toBeUndefined();
+      expect(WORD_TEMPLATE[preset.sheetId], preset.id).toBeTruthy();
+    }
+    for (const id of ALLOWED_SHEETS) {
+      for (const key of PRESET_CONTACT_KEYS) {
+        expect(SHEET_DEFAULTS[id][key], `${id}.${key}`).toBeUndefined();
+      }
+    }
   });
 });
 

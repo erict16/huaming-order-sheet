@@ -1,7 +1,7 @@
 import * as XLSX from "xlsx";
 import type { CellWrites } from "./osCells";
 
-export function applyCells(wb: XLSX.WorkBook, cells: CellWrites, sheetName = "Sheet1"): void {
+function applyCells(wb: XLSX.WorkBook, cells: CellWrites, sheetName = "Sheet1"): void {
   const ws = wb.Sheets[sheetName];
   if (!ws) throw new Error(`Sheet ${sheetName} missing`);
   for (const [addr, value] of Object.entries(cells)) {

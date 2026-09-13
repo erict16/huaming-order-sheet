@@ -34,14 +34,14 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="zh-CN">
+    <html lang="zh-CN" suppressHydrationWarning>
       <head>
         <link rel="icon" href={`${basePath}/brand/favicon-32.png`} type="image/png" sizes="32x32" />
         <link rel="icon" href={`${basePath}/brand/favicon-48.png`} type="image/png" sizes="48x48" />
         <link rel="shortcut icon" href={`${basePath}/brand/favicon-32.png`} type="image/png" />
         <link rel="apple-touch-icon" href={`${basePath}/brand/apple-touch-icon.png`} sizes="180x180" />
       </head>
-      <body className={`${sans.className} ${mono.variable} font-sans`}>
+      <body className={`${sans.className} ${mono.variable}`}>
         <Providers>{children}</Providers>
       </body>
     </html>
