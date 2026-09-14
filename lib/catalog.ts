@@ -906,7 +906,7 @@ export const HWV_APP_OPTS = [
 ];
 
 export const HWV_TX_OPTS = [
-  opt("separated", "独立绕组（非自耦）", "Separated winding", "Раздельные обмотки", "Cuộn tách"),
+  opt("separated", "独立绕组", "Separated winding", "Раздельные обмотки", "Cuộn tách"),
   opt("auto", "自耦变压器", "Auto-transformer", "Автотрансформатор", "MBA tự ngẫu"),
   opt("booster", "串联调压变", "Booster transformer", "Вольтодобавочный", "MBA tăng áp"),
 ];

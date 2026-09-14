@@ -169,7 +169,7 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
         <p className="mt-4 text-sm text-ink-soft">{t(current.blurb, lang)}</p>
       ) : null}
 
-      <div className="mt-6 overflow-hidden">
+      <div className="mt-6">
         <AnimatePresence mode="wait">
           <motion.div
             key={current.id}
@@ -254,36 +254,14 @@ export default function OrderWizard({ sheetId }: { sheetId: string }) {
                               <TypePlate compact={typeStr.compact} spaced={typeStr.spaced} />
                             </div>
                           ) : null}
-                          {fields.map((field) => {
-                            if (field.key === "designer_phone") return null;
-                            if (field.key === "designer_phone_cc") {
-                              const num = fields.find((f) => f.key === "designer_phone");
-                              return (
-                                <div key="phone" className="grid grid-cols-[minmax(8.5rem,11rem)_1fr] gap-3 sm:col-span-2">
-                                  <Field
-                                    field={field}
-                                    value={values.designer_phone_cc ?? ""}
-                                    onChange={(v) => setField("designer_phone_cc", v)}
-                                  />
-                                  {num ? (
-                                    <Field
-                                      field={num}
-                                      value={values.designer_phone ?? ""}
-                                      onChange={(v) => setField("designer_phone", v)}
-                                    />
-                                  ) : null}
-                                </div>
-                              );
-                            }
-                            return (
-                              <Field
-                                key={field.key}
-                                field={field}
-                                value={values[field.key] ?? ""}
-                                onChange={(v) => setField(field.key, v)}
-                              />
-                            );
-                          })}
+                          {fields.map((field) => (
+                            <Field
+                              key={field.key}
+                              field={field}
+                              value={values[field.key] ?? ""}
+                              onChange={(v) => setField(field.key, v)}
+                            />
+                          ))}
                         </div>
                       )}
                     </section>

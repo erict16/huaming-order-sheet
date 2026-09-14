@@ -30,7 +30,13 @@ export default function SelectListbox({
           </span>
           <ChevronDownIcon className="pointer-events-none absolute right-2.5 top-1/2 size-5 -translate-y-1/2 text-ink-muted" />
         </ListboxButton>
-        <ListboxOptions transition className="plus-options">
+        <ListboxOptions
+          anchor="bottom start"
+          portal
+          modal={false}
+          transition
+          className="plus-options w-[var(--button-width)]"
+        >
           {items.map((opt) => (
             <ListboxOption key={opt.value || "__empty"} value={opt.value} className="plus-option group">
               <span className={`block truncate ${opt.value === value ? "font-semibold" : ""}`}>

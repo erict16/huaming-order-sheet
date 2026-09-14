@@ -71,7 +71,13 @@ export default function SearchableCombobox({
         <ComboboxButton className="absolute inset-y-0 right-0 flex items-center px-2.5">
           <ChevronDownIcon className="size-5 text-ink-muted" />
         </ComboboxButton>
-        <ComboboxOptions transition className="plus-options">
+        <ComboboxOptions
+          anchor="bottom start"
+          portal
+          modal={false}
+          transition
+          className="plus-options w-[var(--input-width)]"
+        >
           {filtered.length === 0 ? (
             <div className="px-3 py-2 text-sm text-ink-muted">{chromeText("noMatches", lang)}</div>
           ) : (

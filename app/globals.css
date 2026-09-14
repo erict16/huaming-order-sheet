@@ -34,7 +34,7 @@
   }
 
   .plus-options {
-    @apply absolute z-40 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white py-1 text-sm shadow-panel
+    @apply z-50 max-h-60 overflow-auto rounded-lg bg-white py-1 text-sm shadow-panel
       ring-1 ring-slate-200/80
       transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0;
   }

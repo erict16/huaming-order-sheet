@@ -17,6 +17,17 @@ describe("ice chrome", () => {
     expect(shell).toContain("max-w-3xl");
     expect(wizard.indexOf("<FamilyPicker")).toBeLessThan(wizard.lastIndexOf("<PresetPicker"));
   });
+
+  it("portals listbox menus so Q/S/R/E2 and shaft dropdowns do not grow a scrollbar on the card", () => {
+    const listbox = readFileSync(path.join(process.cwd(), "components/SelectListbox.tsx"), "utf8");
+    const css = readFileSync(path.join(process.cwd(), "app/globals.css"), "utf8");
+    const wizard = readFileSync(path.join(process.cwd(), "components/OrderWizard.tsx"), "utf8");
+    expect(listbox).toContain("anchor=\"bottom start\"");
+    expect(listbox).toContain("portal");
+    expect(listbox).toContain("modal={false}");
+    expect(css).not.toMatch(/\.plus-options[\s\S]*?\babsolute\b/);
+    expect(wizard).not.toContain("overflow-hidden");
+  });
 });
 
 describe("homepage starters", () => {

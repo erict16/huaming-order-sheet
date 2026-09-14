@@ -3,6 +3,7 @@ import {
   currentsFor,
   defaultOctcSeries,
   defaultSelectorGrade,
+  DELIVERY_LEAD_VALUES,
   EARTH_INSULATION,
   getFamily,
 } from "./catalog";
@@ -128,8 +129,7 @@ export function deriveValues(prev: OrderValues, patch: OrderValues): OrderValues
     if (p) next.octc_contact = contactFromPositions(p);
   }
 
-  const leadPhrases = ["90 days after PO", "120 days after PO", "150 days after PO", "180 days after PO", "TBC"];
-  if (leadPhrases.includes(next.delivery_date || "")) {
+  if (DELIVERY_LEAD_VALUES.includes(next.delivery_date || "")) {
     next.delivery_lead = next.delivery_date;
     next.delivery_date = "";
   }

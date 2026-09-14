@@ -1,14 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   APP_OPTS,
-  COUNTRY_CODE_OPTS,
   CONN_OPTS,
   CORROSIVE_OPTS,
   CTRL_OPTS,
   CTRL_VOLT_OPTS,
-  DELIVERY_DATE_OPTS,
   HWV_CTRL_OPTS,
   HWV_FAMILIES,
+  HWV_TX_OPTS,
   MOTOR_VOLT_OPTS,
   OLTC_FAMILIES,
   PAINT_OPTS,
@@ -18,31 +17,23 @@ import {
 import { SHEETS, allFields, getSheet, resolveFieldOptions } from "./schema";
 
 describe("orderFields", () => {
-  it("keeps 报价单号 on the order step and contact at the last step before review", () => {
+  it("keeps 报价单号 on the order step and ends on review, without a contact step", () => {
     for (const sheet of SHEETS) {
       const keys = allFields(sheet, {}).map(({ field }) => field.key);
       expect(keys, sheet.id).toContain("order_no");
-      expect(keys, sheet.id).toContain("designer_name");
-      expect(keys, sheet.id).toContain("designer_phone");
+      expect(keys, sheet.id).not.toContain("designer_name");
+      expect(keys, sheet.id).not.toContain("designer_phone");
+      expect(keys, sheet.id).not.toContain("designer_phone_cc");
       expect(keys, sheet.id).not.toContain("designer_email");
-      expect(keys, sheet.id).toContain("designer_phone_cc");
-      const cc = allFields(sheet, {}).find(({ field }) => field.key === "designer_phone_cc")!.field;
-      expect(cc.type, sheet.id).toBe("combobox");
-      expect(COUNTRY_CODE_OPTS.find((o) => o.value === "+86")?.label.zh).toBe("+86");
-      expect(COUNTRY_CODE_OPTS.find((o) => o.value === "+84")?.label.zh).toBe("+84");
+      expect(keys, sheet.id).not.toContain("delivery_lead");
       const orderNo = allFields(sheet, {}).find(({ field }) => field.key === "order_no")!.field;
       expect(orderNo.label.zh).toBe("报价单号");
       expect(orderNo.label.en).toBe("Quotation No.");
       const delivery = allFields(sheet, {}).find(({ field }) => field.key === "delivery_date")!.field;
       expect(delivery.type).toBe("date");
-      const lead = allFields(sheet, {}).find(({ field }) => field.key === "delivery_lead")!.field;
-      expect(lead.type).toBe("radio");
-      expect(lead.options?.map((o) => o.value)).toEqual(DELIVERY_DATE_OPTS.map((o) => o.value));
-      const contact = sheet.steps.find((st) => st.id === "contact");
-      expect(contact, sheet.id).toBeTruthy();
+      expect(sheet.steps.find((st) => st.id === "contact"), sheet.id).toBeUndefined();
       const reviewIdx = sheet.steps.findIndex((st) => st.kind === "review");
-      const contactIdx = sheet.steps.findIndex((st) => st.id === "contact");
-      expect(contactIdx, sheet.id).toBe(reviewIdx - 1);
+      expect(reviewIdx, sheet.id).toBe(sheet.steps.length - 1);
     }
   });
 
@@ -65,7 +56,7 @@ describe("orderFields", () => {
       expect(keys, k).toContain(k);
     }
     const oltcKeys = allFields(getSheet("oltc")!, {}).map(({ field }) => field.key);
-    expect(oltcKeys).toContain("mv_kv");
+    expect(oltcKeys).not.toContain("mv_kv");
     expect(oltcKeys).toContain("vector_group");
     expect(oltcKeys).toContain("oltc_side");
     expect(oltcKeys).not.toContain("oltc_on_kv");
@@ -73,8 +64,8 @@ describe("orderFields", () => {
       expect.arrayContaining(["ambient_min", "ambient_max"]),
     );
     const side = allFields(getSheet("oltc")!, {}).find(({ field }) => field.key === "oltc_side")!.field;
-    expect(resolveFieldOptions(side, { mv_kv: "22" }).options?.map((o) => o.value)).toContain("mv");
-    expect(resolveFieldOptions(side, {}).options?.map((o) => o.value)).toEqual(["hv", "lv"]);
+    expect(side.options?.map((o) => o.value)).toEqual(["hv", "lv"]);
+    expect(resolveFieldOptions(side, { mv_kv: "22" }).options?.map((o) => o.value)).toEqual(["hv", "lv"]);
   });
 
   it("exposes winding data, supporting flange and regulation location on the OLTC sheet", () => {
@@ -191,6 +182,21 @@ describe("transformer / accessories polish", () => {
     expect(CTRL_VOLT_OPTS.map((o) => o.value)).toEqual(
       expect.arrayContaining(["230_ac", "240_ac", "125_dc"]),
     );
+  });
+
+  it("labels 独立绕组 without 非自耦 and drops 中压额定电压", () => {
+    expect(HWV_TX_OPTS.find((o) => o.value === "separated")?.label.zh).toBe("独立绕组");
+    for (const id of ["oltc", "octc", "hwv"] as const) {
+      const keys = allFields(getSheet(id)!, {}).map(({ field }) => field.key);
+      expect(keys, id).not.toContain("mv_kv");
+    }
+  });
+
+  it("puts 出轴方向 on its own row so the two shaft lengths sit together", () => {
+    const oltc = allFields(getSheet("oltc")!, {});
+    expect(oltc.find(({ field }) => field.key === "top_gear")?.field.span).toBe(2);
+    expect(oltc.find(({ field }) => field.key === "drive_shaft_horizontal_mm")?.field.span).not.toBe(2);
+    expect(oltc.find(({ field }) => field.key === "drive_shaft_vertical_mm")?.field.span).not.toBe(2);
   });
 
   it("puts I / Imax and tx_kind on OLTC, OCTC and HWV", () => {

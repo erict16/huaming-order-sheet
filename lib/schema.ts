@@ -1,8 +1,6 @@
 import {
   APP_OPTS,
-  COUNTRY_CODE_OPTS,
   CONN_OPTS,
-  DELIVERY_DATE_OPTS,
   CTRL_OPTS,
   CTRL_VOLT_OPTS,
   COMM_OPTS,
@@ -92,7 +90,6 @@ import type {
   SectionDef,
   SheetDef,
   SheetId,
-  StepDef,
 } from "./types";
 
 function orderFields(): FieldDef[] {
@@ -108,44 +105,9 @@ function orderFields(): FieldDef[] {
       key: "delivery_date",
       label: L("要货期", "Delivery date", "Срок поставки", "Ngày giao"),
       type: "date",
-    },
-    {
-      key: "delivery_lead",
-      label: L("或按合同后天数", "Or days after PO", "Или дней после PO", "Hoặc số ngày sau PO"),
-      type: "radio",
-      options: DELIVERY_DATE_OPTS,
-      span: 2,
-      hint: L("点输入框出日历。不选日期就按合同后天数。", "Click the field for a calendar. Skip the date to use days-after-PO.", "Календарь в поле. Без даты — срок после PO.", "Bấm ô để mở lịch. Không chọn ngày thì theo số ngày sau PO."),
+      hint: L("点输入框选日期。", "Click the field for a calendar.", "Нажмите поле, чтобы открыть календарь.", "Bấm ô để mở lịch."),
     },
   ];
-}
-
-function contactFields(): FieldDef[] {
-  return [
-    { key: "designer_name", label: L("设计人", "Designer", "Проектировщик", "Người thiết kế"), type: "text" },
-    {
-      key: "designer_phone_cc",
-      label: L("区号", "Country code", "Код страны", "Mã vùng"),
-      type: "combobox",
-      options: COUNTRY_CODE_OPTS,
-      placeholder: L("选或填 +84", "Pick or type +84", "Выберите или введите +84", "Chọn hoặc gõ +84"),
-    },
-    {
-      key: "designer_phone",
-      label: L("电话号码", "Phone number", "Номер", "Số điện thoại"),
-      type: "text",
-      placeholder: L("不填区号", "Number only", "Только номер", "Chỉ số"),
-    },
-  ];
-}
-
-function contactStep(): StepDef {
-  return {
-    id: "contact",
-    title: L("联系人", "Contact", "Контакт", "Liên hệ"),
-    blurb: L("导出前填设计人。可空。", "Designer contact before export. Optional.", "Контакт проектировщика. Необязательно.", "Người thiết kế trước khi xuất. Có thể trống."),
-    sections: [{ id: "contact", title: L("联系人", "Contact", "Контакт", "Liên hệ"), fields: contactFields() }],
-  };
 }
 
 function transformerFields(opts?: { fluid?: boolean; txKind?: boolean }): FieldDef[] {
@@ -172,7 +134,6 @@ function transformerFields(opts?: { fluid?: boolean; txKind?: boolean }): FieldD
     { key: "transformer_type", label: L("变压器型号", "Transformer type", "Тип трансформатора", "Kiểu MBA"), type: "text" },
     { key: "rated_power_mva", label: L("额定容量", "Rated power", "Номинальная мощность", "Công suất định mức"), type: "number", unit: "MVA", required: true },
     { key: "hv_kv", label: L("高压额定电压", "HV rated voltage", "Ном. напряжение ВН", "Điện áp cao"), type: "number", unit: "kV" },
-    { key: "mv_kv", label: L("中压额定电压", "MV rated voltage", "Ном. напряжение СН", "Điện áp trung"), type: "number", unit: "kV", hint: L("三绕组才填。两绕组留空。", "Only for three-winding. Leave blank on two-winding.", "Только для трёхобмоточного.", "Chỉ MBA ba cuộn. Hai cuộn để trống.") },
     { key: "lv_kv", label: L("低压额定电压", "LV rated voltage", "Ном. напряжение НН", "Điện áp hạ"), type: "number", unit: "kV" },
     { key: "vector_group", label: L("联结组别", "Vector group", "Группа соединения", "Tổ đấu dây"), type: "select", options: VECTOR_GROUP_OPTS },
     {
@@ -206,7 +167,7 @@ function transformerFields(opts?: { fluid?: boolean; txKind?: boolean }): FieldD
       type: "radio",
       options: OLTC_SIDE_OPTS.filter((o) => o.value !== "mv"),
       span: 2,
-      hint: L("电压填上面高压/低压。有中压时会出现中压侧。", "Voltages are HV/LV above. MV side appears once MV is filled.", "Напряжения ВН/НН выше. СН — когда заполнено.", "Điện áp cao/hạ ở trên. Có trung áp mới hiện phía trung."),
+      hint: L("电压填上面高压/低压。", "Voltages are HV/LV above.", "Напряжения ВН/НН выше.", "Điện áp cao/hạ ở trên."),
     },
     { key: "ambient_band", label: L("环境温度", "Ambient temperature", "Температура среды", "Nhiệt độ môi trường"), type: "radio", options: OLTC_AMBIENT_OPTS, span: 2 },
     {
@@ -419,7 +380,14 @@ function mechanicalFields(): FieldDef[] {
       span: 2,
       hint: L("Word 表这一行：Without / With / Special。不带也要勾 Without。", "Word OS row: Without / With / Special. Tick Without if not required.", "В бланке Word: Without / With / Special.", "Phiếu Word: Without / With / Special. Không mang cũng phải tick Without."),
     },
-    { key: "top_gear", label: L("出轴方向", "Top gear output", "Выход верхнего редуктора", "Hướng trục ra"), type: "radio", options: TOP_GEAR_OPTS, hint: L("齿轮盒出轴，不是机构装在哪一侧。", "Shaft output of the top gear, not which side the MDU hangs.", "Выход вала, не сторона привода.", "Trục ra hộp bánh, không phải bên cơ cấu.") },
+    {
+      key: "top_gear",
+      label: L("出轴方向", "Top gear output", "Выход верхнего редуктора", "Hướng trục ra"),
+      type: "radio",
+      options: TOP_GEAR_OPTS,
+      span: 2,
+      hint: L("齿轮盒出轴，不是机构装在哪一侧。", "Shaft output of the top gear, not which side the MDU hangs.", "Выход вала, не сторона привода.", "Trục ra hộp bánh, không phải bên cơ cấu."),
+    },
     { key: "drive_shaft_horizontal_mm", label: L("水平传动轴长度", "Horizontal drive shaft", "Горизонтальный вал", "Trục ngang"), type: "select", unit: "mm", options: SHAFT_LEN_OPTS },
     { key: "drive_shaft_vertical_mm", label: L("垂直传动轴长度", "Vertical drive shaft", "Вертикальный вал", "Trục đứng"), type: "select", unit: "mm", options: SHAFT_LEN_OPTS },
   ];
@@ -604,7 +572,7 @@ const oltcSheet: SheetDef = {
         { id: "notes", title: L("备注", "Notes", "Примечания", "Ghi chú"), fields: [notesField] },
       ],
     },
-    contactStep(),
+
     {
       id: "review",
       kind: "review",
@@ -686,7 +654,7 @@ const octcSheet: SheetDef = {
         { id: "notes", title: L("备注", "Notes", "Примечания", "Ghi chú"), fields: [notesField] },
       ],
     },
-    contactStep(),
+
     { id: "review", kind: "review", title: L("核对导出", "Review & export", "Проверка и экспорт", "Kiểm tra và xuất"), blurb: L("核对后选 Word 或 Excel 下载。", "Then download Word or Excel.", "Затем Word или Excel.", "Sau đó tải Word hoặc Excel."), sections: [] },
   ],
 };
@@ -758,7 +726,7 @@ const drySheet: SheetDef = {
         { id: "notes", title: L("备注", "Notes", "Примечания", "Ghi chú"), fields: [notesField] },
       ],
     },
-    contactStep(),
+
     { id: "review", kind: "review", title: L("核对导出", "Review & export", "Проверка и экспорт", "Kiểm tra và xuất"), blurb: L("核对后选 Word 或 Excel 下载。", "Then download Word or Excel.", "Затем Word или Excel.", "Sau đó tải Word hoặc Excel."), sections: [] },
   ],
 };
@@ -908,7 +876,7 @@ const cma7Sheet: SheetDef = {
         { id: "notes", title: L("备注", "Notes", "Примечания", "Ghi chú"), fields: [notesField] },
       ],
     },
-    contactStep(),
+
     { id: "review", kind: "review", title: L("核对导出", "Review & export", "Проверка и экспорт", "Kiểm tra và xuất"), blurb: L("核对后选 Word 或 Excel 下载。", "Then download Word or Excel.", "Затем Word или Excel.", "Sau đó tải Word hoặc Excel."), sections: [] },
   ],
 };
@@ -1002,7 +970,7 @@ const shmSheet: SheetDef = {
         { id: "notes", title: L("备注", "Notes", "Примечания", "Ghi chú"), fields: [notesField] },
       ],
     },
-    contactStep(),
+
     { id: "review", kind: "review", title: L("核对导出", "Review & export", "Проверка и экспорт", "Kiểm tra và xuất"), blurb: L("核对后选 Word 或 Excel 下载。", "Then download Word or Excel.", "Затем Word или Excel.", "Sau đó tải Word hoặc Excel."), sections: [] },
   ],
 };
@@ -1360,7 +1328,7 @@ const hwvSheet: SheetDef = {
         { id: "notes", title: L("备注", "Notes", "Примечания", "Ghi chú"), fields: [notesField] },
       ],
     },
-    contactStep(),
+
     {
       id: "review",
       kind: "review",
@@ -1398,10 +1366,6 @@ export function missingRequired(sheet: SheetDef, values: OrderValues): FieldDef[
 }
 
 export function resolveFieldOptions(field: FieldDef, values: OrderValues): FieldDef {
-  if (field.key === "oltc_side") {
-    const opts = String(values.mv_kv ?? "").trim() ? OLTC_SIDE_OPTS : OLTC_SIDE_OPTS.filter((o) => o.value !== "mv");
-    return { ...field, options: opts };
-  }
   if (field.key === "plus_minus") {
     const steps = values.regulation === "coarse_fine" ? PM_STEP_OPTIONS_G : PM_STEP_OPTIONS_W;
     return {
